@@ -10,12 +10,12 @@ Every git worktree on the machine, each one saying what it would cost to delete 
 
 ### done
 
-- [x] `0008` Find every git worktree under a set of roots <sup>feature · p0 · scan</sup>
-- [x] `0009` Group worktrees under the repository that owns them <sup>feature · p0 · chrome</sup>
-- [x] `0010` Judge staleness from git activity, not directory mtime <sup>feature · p0 · verdict</sup>
-- [x] `0011` Say what would be lost by deleting a worktree <sup>feature · p0 · verdict</sup>
-- [x] `0012` Remove, prune and lock worktrees behind a confirmation <sup>feature · p0 · actions</sup>
-- [x] `0013` Lenses, sort and filter over the list <sup>feature · p1 · chrome</sup>
+- [x] [`0008`](https://github.com/oddurs/caligula/blob/main/cairn/items/0008-find-every-git-worktree-under-a-set-of-roots.md) Find every git worktree under a set of roots <sup>feature · p0 · scan</sup>
+- [x] [`0009`](https://github.com/oddurs/caligula/blob/main/cairn/items/0009-group-worktrees-under-the-repository-that-owns-them.md) Group worktrees under the repository that owns them <sup>feature · p0 · chrome</sup>
+- [x] [`0010`](https://github.com/oddurs/caligula/blob/main/cairn/items/0010-judge-staleness-from-git-activity-not-directory-mtime.md) Judge staleness from git activity, not directory mtime <sup>feature · p0 · verdict</sup>
+- [x] [`0011`](https://github.com/oddurs/caligula/blob/main/cairn/items/0011-say-what-would-be-lost-by-deleting-a-worktree.md) Say what would be lost by deleting a worktree <sup>feature · p0 · verdict</sup>
+- [x] [`0012`](https://github.com/oddurs/caligula/blob/main/cairn/items/0012-remove-prune-and-lock-worktrees-behind-a-confirmation.md) Remove, prune and lock worktrees behind a confirmation <sup>feature · p0 · actions</sup>
+- [x] [`0013`](https://github.com/oddurs/caligula/blob/main/cairn/items/0013-lenses-sort-and-filter-over-the-list.md) Lenses, sort and filter over the list <sup>feature · p1 · chrome</sup>
 
 ## v0.2 — Clear a repo in one pass
 
@@ -25,16 +25,16 @@ Mark many worktrees at once and clear a repository's dead ones in a single pass.
 
 ### backlog
 
-- [ ] `0014` Restore the terminal when the program panics <sup>bug · p0 · runtime</sup>
-- [ ] `0015` Mark several worktrees at once <sup>feature · p0 · chrome</sup>
-- [ ] `0016` Remove every marked worktree behind one confirmation <sup>feature · p0 · actions</sup>
-- [ ] `0017` Sweep a repository: mark everything safe to remove in it <sup>feature · p0 · actions</sup>
-- [ ] `0018` Tell untracked scratch from modified tracked files in the verdict <sup>feature · p0 · verdict</sup>
-- [ ] `0019` Attribute stashes to the worktree that made them <sup>feature · p1 · verdict</sup>
-- [ ] `0020` Snapshot-test the rendered frame against a fixture repository <sup>chore · p0 · testing</sup>
-- [ ] `0021` Work in a terminal narrower than 100 columns <sup>bug · p1 · chrome</sup>
-- [ ] `0022` Show the whole error when an action fails <sup>bug · p1 · actions</sup>
-- [ ] `0023` Say what the scan is doing while it runs <sup>chore · p2 · runtime</sup>
+- [ ] [`0014`](https://github.com/oddurs/caligula/blob/main/cairn/items/0014-restore-the-terminal-when-the-program-panics.md) Restore the terminal when the program panics <sup>bug · p0 · runtime</sup>
+- [ ] [`0015`](https://github.com/oddurs/caligula/blob/main/cairn/items/0015-mark-several-worktrees-at-once.md) Mark several worktrees at once <sup>feature · p0 · chrome</sup>
+- [ ] [`0016`](https://github.com/oddurs/caligula/blob/main/cairn/items/0016-remove-every-marked-worktree-behind-one-confirmation.md) Remove every marked worktree behind one confirmation <sup>feature · p0 · actions</sup>
+- [ ] [`0017`](https://github.com/oddurs/caligula/blob/main/cairn/items/0017-sweep-a-repository-mark-everything-safe-to-remove-in-it.md) Sweep a repository: mark everything safe to remove in it <sup>feature · p0 · actions</sup>
+- [ ] [`0018`](https://github.com/oddurs/caligula/blob/main/cairn/items/0018-tell-untracked-scratch-from-modified-tracked-files-in-the-verdict.md) Tell untracked scratch from modified tracked files in the verdict <sup>feature · p0 · verdict</sup>
+- [ ] [`0019`](https://github.com/oddurs/caligula/blob/main/cairn/items/0019-attribute-stashes-to-the-worktree-that-made-them.md) Attribute stashes to the worktree that made them <sup>feature · p1 · verdict</sup>
+- [ ] [`0020`](https://github.com/oddurs/caligula/blob/main/cairn/items/0020-snapshot-test-the-rendered-frame-against-a-fixture-repository.md) Snapshot-test the rendered frame against a fixture repository <sup>chore · p0 · testing</sup>
+- [ ] [`0021`](https://github.com/oddurs/caligula/blob/main/cairn/items/0021-work-in-a-terminal-narrower-than-100-columns.md) Work in a terminal narrower than 100 columns <sup>bug · p1 · chrome</sup>
+- [ ] [`0022`](https://github.com/oddurs/caligula/blob/main/cairn/items/0022-show-the-whole-error-when-an-action-fails.md) Show the whole error when an action fails <sup>bug · p1 · actions</sup>
+- [ ] [`0023`](https://github.com/oddurs/caligula/blob/main/cairn/items/0023-say-what-the-scan-is-doing-while-it-runs.md) Say what the scan is doing while it runs <sup>chore · p2 · runtime</sup>
 
 ## v0.3 — Your machine, your rules
 
@@ -44,17 +44,17 @@ Configured for your disk, and no longer losing work when it removes something.
 
 ### backlog
 
-- [ ] `0024` Where does archived work go, and when does it expire? <sup>spike · p0 · actions</sup>
-- [ ] `0025` Archive uncommitted work before destroying it <sup>feature · p0 · actions</sup>
-- [ ] `0026` Restore archived work <sup>feature · p2 · actions</sup>
-- [ ] `0027` Read roots, thresholds and ignores from a config file <sup>feature · p0 · config</sup>
-- [ ] `0028` Ignore repositories and paths by glob <sup>feature · p1 · config</sup>
-- [ ] `0029` Remember the lens, sort and folding between runs <sup>feature · p2 · config</sup>
-- [ ] `0030` Rebind keys in the config file <sup>feature · p2 · config</sup>
-- [ ] `0031` Find worktree directories no repository claims <sup>feature · p0 · scan</sup>
-- [ ] `0032` Describe the machine without starting the interface <sup>feature · p0 · cli</sup>
-- [ ] `0033` Machine-readable output <sup>feature · p1 · cli</sup>
-- [ ] `0034` Filter the non-interactive output the way the lenses do <sup>feature · p1 · cli</sup>
+- [ ] [`0024`](https://github.com/oddurs/caligula/blob/main/cairn/items/0024-where-does-archived-work-go-and-when-does-it-expire.md) Where does archived work go, and when does it expire? <sup>spike · p0 · actions</sup>
+- [ ] [`0025`](https://github.com/oddurs/caligula/blob/main/cairn/items/0025-archive-uncommitted-work-before-destroying-it.md) Archive uncommitted work before destroying it <sup>feature · p0 · actions</sup>
+- [ ] [`0026`](https://github.com/oddurs/caligula/blob/main/cairn/items/0026-restore-archived-work.md) Restore archived work <sup>feature · p2 · actions</sup>
+- [ ] [`0027`](https://github.com/oddurs/caligula/blob/main/cairn/items/0027-read-roots-thresholds-and-ignores-from-a-config-file.md) Read roots, thresholds and ignores from a config file <sup>feature · p0 · config</sup>
+- [ ] [`0028`](https://github.com/oddurs/caligula/blob/main/cairn/items/0028-ignore-repositories-and-paths-by-glob.md) Ignore repositories and paths by glob <sup>feature · p1 · config</sup>
+- [ ] [`0029`](https://github.com/oddurs/caligula/blob/main/cairn/items/0029-remember-the-lens-sort-and-folding-between-runs.md) Remember the lens, sort and folding between runs <sup>feature · p2 · config</sup>
+- [ ] [`0030`](https://github.com/oddurs/caligula/blob/main/cairn/items/0030-rebind-keys-in-the-config-file.md) Rebind keys in the config file <sup>feature · p2 · config</sup>
+- [ ] [`0031`](https://github.com/oddurs/caligula/blob/main/cairn/items/0031-find-worktree-directories-no-repository-claims.md) Find worktree directories no repository claims <sup>feature · p0 · scan</sup>
+- [ ] [`0032`](https://github.com/oddurs/caligula/blob/main/cairn/items/0032-describe-the-machine-without-starting-the-interface.md) Describe the machine without starting the interface <sup>feature · p0 · cli</sup>
+- [ ] [`0033`](https://github.com/oddurs/caligula/blob/main/cairn/items/0033-machine-readable-output.md) Machine-readable output <sup>feature · p1 · cli</sup>
+- [ ] [`0034`](https://github.com/oddurs/caligula/blob/main/cairn/items/0034-filter-the-non-interactive-output-the-way-the-lenses-do.md) Filter the non-interactive output the way the lenses do <sup>feature · p1 · cli</sup>
 
 ## v1.0 — The promise
 
@@ -64,17 +64,17 @@ Installable in one command on macOS and Linux, and documented for a stranger.
 
 ### backlog
 
-- [ ] `0035` fmt, clippy and the suite green on macOS and Linux in CI <sup>chore · p0 · packaging</sup>
-- [ ] `0036` Run every action by hand on Linux <sup>chore · p0 · runtime</sup>
-- [ ] `0037` Tagged releases with binaries for both platforms <sup>chore · p1 · packaging</sup>
-- [ ] `0038` A README a stranger can install and use from <sup>docs · p0 · docs</sup>
-- [ ] `0039` Publish to crates.io <sup>chore · p0 · packaging</sup>
-- [ ] `0040` Homebrew tap and formula <sup>chore · p1 · packaging</sup>
-- [ ] `0041` Freeze the keymap <sup>chore · p0 · chrome</sup>
-- [ ] `0042` A man page and --help that cannot disagree <sup>docs · p1 · docs</sup>
-- [ ] `0043` CHANGELOG and a version policy <sup>docs · p1 · docs</sup>
-- [ ] `0044` Every failure reaches the user <sup>chore · p0 · runtime</sup>
-- [ ] `0045` Hold up on a machine with 500 repositories <sup>chore · p1 · runtime</sup>
+- [ ] [`0035`](https://github.com/oddurs/caligula/blob/main/cairn/items/0035-fmt-clippy-and-the-suite-green-on-macos-and-linux-in-ci.md) fmt, clippy and the suite green on macOS and Linux in CI <sup>chore · p0 · packaging</sup>
+- [ ] [`0036`](https://github.com/oddurs/caligula/blob/main/cairn/items/0036-run-every-action-by-hand-on-linux.md) Run every action by hand on Linux <sup>chore · p0 · runtime</sup>
+- [ ] [`0037`](https://github.com/oddurs/caligula/blob/main/cairn/items/0037-tagged-releases-with-binaries-for-both-platforms.md) Tagged releases with binaries for both platforms <sup>chore · p1 · packaging</sup>
+- [ ] [`0038`](https://github.com/oddurs/caligula/blob/main/cairn/items/0038-a-readme-a-stranger-can-install-and-use-from.md) A README a stranger can install and use from <sup>docs · p0 · docs</sup>
+- [ ] [`0039`](https://github.com/oddurs/caligula/blob/main/cairn/items/0039-publish-to-crates-io.md) Publish to crates.io <sup>chore · p0 · packaging</sup>
+- [ ] [`0040`](https://github.com/oddurs/caligula/blob/main/cairn/items/0040-homebrew-tap-and-formula.md) Homebrew tap and formula <sup>chore · p1 · packaging</sup>
+- [ ] [`0041`](https://github.com/oddurs/caligula/blob/main/cairn/items/0041-freeze-the-keymap.md) Freeze the keymap <sup>chore · p0 · chrome</sup>
+- [ ] [`0042`](https://github.com/oddurs/caligula/blob/main/cairn/items/0042-a-man-page-and-help-that-cannot-disagree.md) A man page and --help that cannot disagree <sup>docs · p1 · docs</sup>
+- [ ] [`0043`](https://github.com/oddurs/caligula/blob/main/cairn/items/0043-changelog-and-a-version-policy.md) CHANGELOG and a version policy <sup>docs · p1 · docs</sup>
+- [ ] [`0044`](https://github.com/oddurs/caligula/blob/main/cairn/items/0044-every-failure-reaches-the-user.md) Every failure reaches the user <sup>chore · p0 · runtime</sup>
+- [ ] [`0045`](https://github.com/oddurs/caligula/blob/main/cairn/items/0045-hold-up-on-a-machine-with-500-repositories.md) Hold up on a machine with 500 repositories <sup>chore · p1 · runtime</sup>
 
 ## later — Good ideas without a date
 
@@ -84,9 +84,9 @@ Good ideas without a date yet.
 
 ### backlog
 
-- [ ] `0046` Preview the diff in the detail pane <sup>feature · p3 · chrome</sup>
-- [ ] `0047` Refresh when the disk changes <sup>feature · p3 · runtime</sup>
-- [ ] `0048` Mouse: click to select, scroll to scroll <sup>feature · p3 · chrome</sup>
-- [ ] `0049` Who is using this worktree? <sup>spike · p3 · git</sup>
-- [ ] `0050` Create worktrees <sup>feature · p3 · actions</sup>
+- [ ] [`0046`](https://github.com/oddurs/caligula/blob/main/cairn/items/0046-preview-the-diff-in-the-detail-pane.md) Preview the diff in the detail pane <sup>feature · p3 · chrome</sup>
+- [ ] [`0047`](https://github.com/oddurs/caligula/blob/main/cairn/items/0047-refresh-when-the-disk-changes.md) Refresh when the disk changes <sup>feature · p3 · runtime</sup>
+- [ ] [`0048`](https://github.com/oddurs/caligula/blob/main/cairn/items/0048-mouse-click-to-select-scroll-to-scroll.md) Mouse: click to select, scroll to scroll <sup>feature · p3 · chrome</sup>
+- [ ] [`0049`](https://github.com/oddurs/caligula/blob/main/cairn/items/0049-who-is-using-this-worktree.md) Who is using this worktree? <sup>spike · p3 · git</sup>
+- [ ] [`0050`](https://github.com/oddurs/caligula/blob/main/cairn/items/0050-create-worktrees.md) Create worktrees <sup>feature · p3 · actions</sup>
 

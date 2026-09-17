@@ -20,7 +20,7 @@ default_type = "feature"
 default_status = "backlog"
 # filename_max = 255      # longest filename your filesystem accepts, in bytes;
                           # titles are only shortened as much as this demands
-# url = "https://github.com/OWNER/REPO/blob/main"   # makes rendered items clickable
+url = "https://github.com/oddurs/caligula/blob/main"   # makes rendered items clickable
 
 # ─── Item types ──────────────────────────────────────────────────────────────
 # `template` seeds the body of new items of that type, so every bug report and
@@ -268,6 +268,6 @@ checkbox = true           # render items as a task list
 show_ids = true
 progress = true           # per-milestone progress bar
 group_by_status = true    # sub-group each section by status
-link_items = false        # requires project.url
+link_items = true         # requires project.url
 # header = "docs/roadmap-intro.md"   # spliced in above the generated body
 # footer = "docs/roadmap-outro.md"
