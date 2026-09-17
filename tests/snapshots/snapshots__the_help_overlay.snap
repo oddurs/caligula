@@ -1,0 +1,34 @@
+---
+source: tests/snapshots.rs
+expression: "render(&mut app, 120, 30)"
+---
+ caligula  1 repo · 7 worktrees (6 linked) · 1 dirty · 4 stale · 4 safe to remove
+╭ sort activity · lens all ──────────────────────╮╭────────────────────────────────────────────────────────────────────╮
+│ ▾ fixture          ╭ keys ──────────────────────────────────────────────────────────────────────╮                    │
+│ │ ◆ main           │ j / k · ↓ / ↑  move                                                        │                    │
+│ │ ● feat/ahead     │ J / K          jump to next / previous repo                                │                    │
+│ │ ● chore/clean    │ g / G          first / last row                                            │                    │
+│ │ ● (3head000)     │ ← / → · enter  fold or unfold a repo                                       │                    │
+│ │ ● feat/dirty     │ z / Z          fold all / unfold all                                       │                    │
+│ │ ✗ docs/gone      │ PgUp / PgDn    scroll the detail pane                                      │                    │
+│ │ ● fix/locked     │                                                                            │                    │
+│                    │ d              remove the worktree (asks first)                            │                    │
+│                    │ D              remove the worktree and delete its branch                   │ge — safe to remove │
+│                    │ p              prune the repo's stale worktree records                     │                    │
+│                    │ L              lock or unlock the worktree                                 │it                  │
+│                    │                                                                            │                    │
+│                    │ c              drop into a shell in the worktree                           │ge — safe to remove │
+│                    │ o              open it in the file manager                                 │                    │
+│                    │ y              copy its path to the clipboard                              │ge — safe to remove │
+│                    │                                                                            │                    │
+│                    │ f              cycle lens: all → dirty → salvageable → stale → safe        │iles                │
+│                    │ s              cycle sort: activity → name → risk                          │                    │
+│                    │ /              filter by repo, branch or path                              │ge — safe to remove │
+│                    │ r              re-probe the selected repo                                  │                    │
+│                    │ R              rescan the disk from scratch                                │ge — safe to remove │
+│                    │ q              quit                                                        │                    │
+│                    │                                                                            │                    │
+│                    │                                                                            │                    │
+│                    ╰────────────────────────────────────────────────────────────────────────────╯                    │
+╰────────────────────────────────────────────────╯╰────────────────────────────────────────────────────────────────────╯
+ j/k move  ←/→ fold  d remove  D +branch  p prune  c shell  f lens  s sort  / find  ? help

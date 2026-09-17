@@ -1,0 +1,24 @@
+---
+source: tests/snapshots.rs
+expression: "render(&mut app, 200, 20)"
+---
+ caligula  1 repo · 7 worktrees (6 linked) · 1 dirty · 4 stale · 4 safe to remove
+╭ sort activity · lens all ────────────────────────────────╮╭──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│ ▾ fixture                                       6wt 1●   ││ fixture                                                                                                                                  │
+│ │ ◆ main                                             2h  ││ /fixture/repo                                                                                                                            │
+│ │ ● feat/ahead                                 ↑1    1d  ││                                                                                                                                          │
+│ │ ● chore/clean                                      9d  ││ origin    git@github.com:fixture/fixture.git                                                                                             │
+│ │ ● (3head000)                                      40d  ││ base      main                                                                                                                           │
+│ │ ● feat/dirty                                 ~2   90d  ││ worktrees 7 (6 linked)                                                                                                                   │
+│ │ ✗ docs/gone                                   !    1y  ││ dirty     1                                                                                                                              │
+│ │ ● fix/locked                                  L    1y  ││                                                                                                                                          │
+│                                                          ││ Worktrees                                                                                                                                │
+│                                                          ││   ◆ main                        Nothing to …lvage — safe to remove  2h                                                                   │
+│                                                          ││   ● feat/ahead                  1 off-base commit                   1d                                                                   │
+│                                                          ││   ● chore/clean                 Nothing to …lvage — safe to remove  9d                                                                   │
+│                                                          ││   ● (3head000)                  Nothing to …lvage — safe to remove  40d                                                                  │
+│                                                          ││   ● feat/dirty                  2 uncommitted files                 90d                                                                  │
+│                                                          ││   ● docs/gone                   Nothing to …lvage — safe to remove  1y                                                                   │
+│                                                          ││   ● fix/locked                  Nothing to …lvage — safe to remove  1y                                                                   │
+╰──────────────────────────────────────────────────────────╯╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+ j/k move  ←/→ fold  d remove  D +branch  p prune  c shell  f lens  s sort  / find  ? help

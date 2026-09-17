@@ -1,0 +1,24 @@
+---
+source: tests/snapshots.rs
+expression: "render_palette(&mut app, 120, 20)"
+---
+ 0 * Black White DarkGray Gray DarkGray Red DarkGray Yellow DarkGray Green
+ 1   DarkGray Cyan DarkGray
+ 2 * DarkGray Cyan White Red DarkGray White DarkGray
+ 3   DarkGray Green Gray Green DarkGray
+ 4   DarkGray Green Gray Yellow Green DarkGray
+ 5   DarkGray Cyan Gray Cyan DarkGray Gray DarkGray
+ 6   DarkGray Yellow Gray Yellow DarkGray Gray DarkGray
+ 7   DarkGray Red White Red DarkGray Gray DarkGray
+ 8   DarkGray Red Gray Green Red DarkGray Red DarkGray
+ 9   DarkGray Red Gray Green Red DarkGray
+10   DarkGray Cyan DarkGray
+11   DarkGray Green Gray Green DarkGray
+12   DarkGray Green DarkGray
+13   DarkGray Green Gray Yellow DarkGray
+14   DarkGray Green DarkGray
+15   DarkGray Cyan Gray Green DarkGray
+16   DarkGray Cyan DarkGray
+17   DarkGray Yellow Gray Green DarkGray
+18   DarkGray
+19   Cyan DarkGray Cyan DarkGray Cyan DarkGray Cyan DarkGray Cyan DarkGray Cyan DarkGray Cyan DarkGray Cyan DarkGray Cyan DarkGray Cyan DarkGray

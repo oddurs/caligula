@@ -26,11 +26,11 @@ render a frame through ratatui's `TestBackend` and compare with `insta`.
 
 ## Acceptance criteria
 
-- [ ] A fixture builder creates a repository with one worktree of each kind,
+- [x] A fixture builder creates a repository with one worktree of each kind,
       deterministically, in a temporary directory that is cleaned up
-- [ ] Snapshots cover: the list, a repository detail, a worktree detail with
+- [x] Snapshots cover: the list, a repository detail, a worktree detail with
       changes, the confirmation dialog, the help overlay
-- [ ] Snapshots are stable across runs: no timestamps, paths or ids leak in
-- [ ] At least one snapshot at 80 columns and one at 200
-- [ ] `scripts/task test` runs them; they pass on a machine that has never run
+- [x] Snapshots are stable across runs: no timestamps, paths or ids leak in
+- [x] At least one snapshot at 80 columns and one at 200
+- [x] `scripts/task test` runs them; they pass on a machine that has never run
       caligula before

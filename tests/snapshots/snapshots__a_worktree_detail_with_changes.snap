@@ -1,0 +1,24 @@
+---
+source: tests/snapshots.rs
+expression: "render(&mut app, 120, 20)"
+---
+ caligula  1 repo · 7 worktrees (6 linked) · 1 dirty · 4 stale · 4 safe to remove
+╭ sort activity · lens all ──────────────────────╮╭────────────────────────────────────────────────────────────────────╮
+│ ▾ fixture                             6wt 1●   ││ feat/dirty  ancient · last touched 90d                             │
+│ │ ◆ main                                   2h  ││ /fixture/dirty                                                     │
+│ │ ● feat/ahead                       ↑1    1d  ││                                                                    │
+│ │ ● chore/clean                            9d  ││ ┃ 2 uncommitted files                                              │
+│ │ ● (3head000)                            40d  ││                                                                    │
+│ │ ● feat/dirty                       ~2   90d  ││ branch    feat/dirty  no upstream · 0 commits off main             │
+│ │ ✗ docs/gone                         !    1y  ││ head      4c000000  init: the first commit                         │
+│ │ ● fix/locked                        L    1y  ││           Fixture · 90d ago                                        │
+│                                                ││ repo      fixture  /fixture/repo                                   │
+│                                                ││                                                                    │
+│                                                ││ Working tree (0 staged · 1 unstaged · 1 untracked)                 │
+│                                                ││   .M README.md                                                     │
+│                                                ││   ?? scratch.txt                                                   │
+│                                                ││                                                                    │
+│                                                ││ Recent commits                                                     │
+│                                                ││   4r000000  90d  init: the first commit                            │
+╰────────────────────────────────────────────────╯╰────────────────────────────────────────────────────────────────────╯
+ j/k move  ←/→ fold  d remove  D +branch  p prune  c shell  f lens  s sort  / find  ? help

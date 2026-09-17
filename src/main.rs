@@ -1,9 +1,6 @@
 //! caligula — a terminal browser for git worktrees.
 
-mod app;
-mod git;
-mod scan;
-mod ui;
+use caligula::{app, git, scan, ui};
 
 use std::path::PathBuf;
 use std::process::Command;

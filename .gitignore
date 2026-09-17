@@ -13,3 +13,7 @@
 
 # macOS
 .DS_Store
+
+# Snapshots rejected by a failing run, never committed
+*.snap.new
+*.pending-snap
