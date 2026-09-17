@@ -87,6 +87,9 @@ fn main() {
 
     let mut app = App::new();
     let mut scan = scan::start(args.roots.clone(), args.depth);
+    // ratatui::init installs the panic hook that restores the terminal, so do
+    // not add another: verified against a real panic in 0.29, and the reasoning
+    // is on cairn item 0014.
     let mut terminal = ratatui::init();
 
     loop {
