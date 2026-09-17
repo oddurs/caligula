@@ -1,0 +1,36 @@
+#!/bin/sh
+# Run once after cloning. Wires up the git hooks and checks the toolchain.
+set -eu
+
+cd "$(dirname "$0")/.."
+
+say() {
+  printf '  %s\n' "$1"
+}
+
+printf 'setting up caligula\n'
+
+git config core.hooksPath .githooks
+say "hooks: core.hooksPath = .githooks"
+
+if ! command -v cargo >/dev/null 2>&1; then
+  printf '\nno cargo on PATH. Install Rust from https://rustup.rs and run this again.\n' >&2
+  exit 1
+fi
+say "toolchain: $(rustc --version)"
+
+if command -v cairn >/dev/null 2>&1; then
+  say "cairn: $(cairn --version | head -1)"
+  # Registers the `cairn` merge driver in this clone's git config, so a merge
+  # that touched the backlog resolves the generated roadmap instead of
+  # conflicting on it. Safe to run again; cairn owns what it does.
+  cairn init --git >/dev/null 2>&1 || true
+  say "merge driver: registered for ROADMAP.md and cairn/items/*.md"
+else
+  say "cairn: not installed — caligula will read backlogs but not change them"
+  say "       https://oddurs.github.io/cairn"
+fi
+
+printf '\nready. Next:\n'
+printf '  scripts/task check              everything CI runs\n'
+printf '  scripts/agent start feat/thing  a worktree, a branch, and somewhere to work\n'

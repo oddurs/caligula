@@ -1,0 +1,25 @@
+#!/bin/sh
+# Settle the backlog after a merge.
+#
+# This is the hook `cairn init --git` installs, tracked in git instead. cairn
+# writes its copy to .git/hooks, which this repository never reads — core.hooksPath
+# points at .githooks — and which git does not clone anyway. Here it works for
+# everybody after one scripts/setup.
+#
+# Ids are allocated as one more than the highest in use, which no branch can
+# know, so two branches can each create the same one. Git merges them cleanly —
+# the filenames differ — and leaves a project that fails `cairn check`.
+set -eu
+
+command -v cairn >/dev/null 2>&1 || exit 0
+cd "$(git rev-parse --show-toplevel)"
+
+cairn renumber --quiet
+cairn render --quiet
+
+# A hook cannot politely amend the merge commit, so anything it changed is left
+# for a person to look at and commit.
+if ! git diff --quiet || ! git diff --cached --quiet; then
+  printf 'post-merge: the merge changed identifiers or the roadmap; review and commit:\n'
+  git status --short | sed 's/^/  /'
+fi

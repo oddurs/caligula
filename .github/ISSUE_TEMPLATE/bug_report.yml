@@ -1,0 +1,68 @@
+name: Bug report
+description: Something caligula does that it should not
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for the report.
+
+        **If caligula destroyed work, say so first and skip the rest of this
+        form if you need to.** A wrong verdict — "nothing to salvage" on a
+        worktree that held something — is the most serious thing this tool can
+        get wrong, and it is treated as a data-loss bug rather than a papercut.
+
+  - type: textarea
+    id: what-happens
+    attributes:
+      label: What happens
+      description: What you did, and what caligula did about it.
+      placeholder: |
+        Pressed `d` on a clean worktree and the branch was deleted too.
+    validations:
+      required: true
+
+  - type: textarea
+    id: what-should-happen
+    attributes:
+      label: What should happen
+    validations:
+      required: true
+
+  - type: textarea
+    id: state
+    attributes:
+      label: What git says
+      description: >
+        For a wrong verdict or a wrong age, the output of `git worktree list
+        --porcelain` and `git status --porcelain=v2 --branch` in the worktree
+        caligula got wrong is usually the whole answer.
+      render: text
+    validations:
+      required: false
+
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: Output of `caligula --version`.
+      placeholder: caligula 0.1.0
+    validations:
+      required: true
+
+  - type: input
+    id: git-version
+    attributes:
+      label: git version
+      placeholder: git version 2.55.0
+    validations:
+      required: true
+
+  - type: input
+    id: platform
+    attributes:
+      label: Platform
+      description: Operating system, terminal, and the terminal's size if the problem is visible.
+      placeholder: macOS 15.5, Ghostty, 140x44
+    validations:
+      required: true
