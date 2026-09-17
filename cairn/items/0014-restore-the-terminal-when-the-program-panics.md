@@ -5,7 +5,6 @@ type: bug
 status: dropped
 milestone: v0.2
 assignee: Oddur Sigurdsson
-claimed: 2026-09-17
 created: 2026-09-17
 updated: 2026-09-17
 priority: p0
