@@ -21,4 +21,4 @@ expression: "render(&mut app, 200, 20)"
 │                                                          ││   ● docs/gone                   Nothing to …lvage — safe to remove  1y                                                                   │
 │                                                          ││   ● fix/locked                  Nothing to …lvage — safe to remove  1y                                                                   │
 ╰──────────────────────────────────────────────────────────╯╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
- j/k move  ←/→ fold  d remove  D +branch  p prune  c shell  f lens  s sort  / find  ? help
+ j/k move  space mark  ←/→ fold  d remove  D +branch  p prune  c shell  f lens  s sort  / find  ? help

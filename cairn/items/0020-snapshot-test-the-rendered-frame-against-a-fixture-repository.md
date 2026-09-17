@@ -2,7 +2,7 @@
 id: 20
 title: Snapshot-test the rendered frame against a fixture repository
 type: chore
-status: backlog
+status: done
 milestone: v0.2
 created: 2026-09-17
 updated: 2026-09-17

@@ -6,29 +6,29 @@ expression: "render(&mut app, 120, 30)"
 ╭ sort activity · lens all ──────────────────────╮╭────────────────────────────────────────────────────────────────────╮
 │ ▾ fixture          ╭ keys ──────────────────────────────────────────────────────────────────────╮                    │
 │ │ ◆ main           │ j / k · ↓ / ↑  move                                                        │                    │
-│ │ ● feat/ahead     │ J / K          jump to next / previous repo                                │                    │
-│ │ ● chore/clean    │ g / G          first / last row                                            │                    │
-│ │ ● (3head000)     │ ← / → · enter  fold or unfold a repo                                       │                    │
-│ │ ● feat/dirty     │ z / Z          fold all / unfold all                                       │                    │
-│ │ ✗ docs/gone      │ PgUp / PgDn    scroll the detail pane                                      │                    │
-│ │ ● fix/locked     │                                                                            │                    │
+│ │ ● feat/ahead     │ space          mark a worktree, and step down                              │                    │
+│ │ ● chore/clean    │ J / K          jump to next / previous repo                                │                    │
+│ │ ● (3head000)     │ g / G          first / last row                                            │                    │
+│ │ ● feat/dirty     │ ← / → · enter  fold or unfold a repo                                       │                    │
+│ │ ✗ docs/gone      │ z / Z          fold all / unfold all                                       │                    │
+│ │ ● fix/locked     │ esc            clear the marking, then the filter                          │                    │
+│                    │ PgUp / PgDn    scroll the detail pane                                      │                    │
+│                    │                                                                            │ge — safe to remove │
 │                    │ d              remove the worktree (asks first)                            │                    │
-│                    │ D              remove the worktree and delete its branch                   │ge — safe to remove │
+│                    │ D              remove the worktree and delete its branch                   │it                  │
 │                    │ p              prune the repo's stale worktree records                     │                    │
-│                    │ L              lock or unlock the worktree                                 │it                  │
+│                    │ L              lock or unlock the worktree                                 │ge — safe to remove │
 │                    │                                                                            │                    │
 │                    │ c              drop into a shell in the worktree                           │ge — safe to remove │
 │                    │ o              open it in the file manager                                 │                    │
-│                    │ y              copy its path to the clipboard                              │ge — safe to remove │
+│                    │ y              copy its path to the clipboard                              │iles                │
 │                    │                                                                            │                    │
-│                    │ f              cycle lens: all → dirty → salvageable → stale → safe        │iles                │
+│                    │ f              cycle lens: all → dirty → salvageable → stale → safe        │ge — safe to remove │
 │                    │ s              cycle sort: activity → name → risk                          │                    │
 │                    │ /              filter by repo, branch or path                              │ge — safe to remove │
 │                    │ r              re-probe the selected repo                                  │                    │
-│                    │ R              rescan the disk from scratch                                │ge — safe to remove │
+│                    │ R              rescan the disk from scratch                                │                    │
 │                    │ q              quit                                                        │                    │
-│                    │                                                                            │                    │
-│                    │                                                                            │                    │
 │                    ╰────────────────────────────────────────────────────────────────────────────╯                    │
 ╰────────────────────────────────────────────────╯╰────────────────────────────────────────────────────────────────────╯
- j/k move  ←/→ fold  d remove  D +branch  p prune  c shell  f lens  s sort  / find  ? help
+ j/k move  space mark  ←/→ fold  d remove  D +branch  p prune  c shell  f lens  s sort  / find  ? help

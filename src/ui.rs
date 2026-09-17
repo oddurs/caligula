@@ -200,12 +200,16 @@ fn list(f: &mut Frame, area: Rect, app: &mut App) {
         let selected = i == app.selected;
         lines.push(match *row {
             Row::Repo { repo } => repo_line(&app.repos[repo], app, selected, text.width),
-            Row::Worktree { repo, wt } => worktree_line(
-                &app.repos[repo].worktrees[wt],
-                app.now,
-                selected,
-                text.width,
-            ),
+            Row::Worktree { repo, wt } => {
+                let worktree = &app.repos[repo].worktrees[wt];
+                worktree_line(
+                    worktree,
+                    app.now,
+                    selected,
+                    app.is_marked(worktree),
+                    text.width,
+                )
+            }
         });
     }
     f.render_widget(Paragraph::new(lines), text);
@@ -288,8 +292,14 @@ fn repo_line<'a>(repo: &'a Repo, app: &App, selected: bool, width: u16) -> Line<
     ])
 }
 
-fn worktree_line<'a>(wt: &'a Worktree, now: u64, selected: bool, width: u16) -> Line<'a> {
-    // " │ " + marker + " "
+fn worktree_line<'a>(
+    wt: &'a Worktree,
+    now: u64,
+    selected: bool,
+    marked: bool,
+    width: u16,
+) -> Line<'a> {
+    // mark gutter + "│ " + marker + " "
     const PREFIX: usize = 5;
     const AGE: usize = 5;
     const MIN_LABEL: usize = 6;
@@ -323,8 +333,18 @@ fn worktree_line<'a>(wt: &'a Worktree, now: u64, selected: bool, width: u16) -> 
         base.fg(TEXT)
     };
 
+    // A solid block in the first column, not a shade: the marking decides what a
+    // removal applies to, so it has to be readable at a glance and on a terminal
+    // with no colour at all.
+    let (gutter, gutter_style) = if marked {
+        ("▌", base.fg(ACCENT).add_modifier(Modifier::BOLD))
+    } else {
+        (" ", base.fg(DIM))
+    };
+
     Line::from(vec![
-        Span::styled(" │ ", base.fg(DIM)),
+        Span::styled(gutter, gutter_style),
+        Span::styled("│ ", base.fg(DIM)),
         Span::styled(marker.0, base.fg(marker.1)),
         Span::styled(" ", base),
         Span::styled(label, label_style),
@@ -686,6 +706,66 @@ fn footer(f: &mut Frame, area: Rect, app: &App) {
         return;
     }
 
+    let stakes = app.marked_stakes();
+    if stakes.worktrees > 0 {
+        let mut spans = vec![
+            Span::styled(
+                format!(" {} marked ", stakes.worktrees),
+                Style::default()
+                    .fg(Color::Black)
+                    .bg(ACCENT)
+                    .add_modifier(Modifier::BOLD),
+            ),
+            Span::raw(" "),
+        ];
+        if stakes.files > 0 {
+            spans.push(Span::styled(
+                format!(
+                    "{} uncommitted file{}",
+                    stakes.files,
+                    if stakes.files == 1 { "" } else { "s" }
+                ),
+                Style::default().fg(Color::Red),
+            ));
+        }
+        if stakes.commits > 0 {
+            if stakes.files > 0 {
+                spans.push(Span::styled(" · ", Style::default().fg(DIM)));
+            }
+            spans.push(Span::styled(
+                format!(
+                    "{} commit{} only there",
+                    stakes.commits,
+                    if stakes.commits == 1 { "" } else { "s" }
+                ),
+                Style::default().fg(Color::Yellow),
+            ));
+        }
+        if stakes.files == 0 && stakes.commits == 0 {
+            spans.push(Span::styled(
+                "nothing to salvage in any of them",
+                Style::default().fg(Color::Green),
+            ));
+        }
+        spans.push(Span::styled(
+            "   esc clears · d still removes the row under the cursor",
+            Style::default().fg(DIM),
+        ));
+        // A message is appended rather than allowed to replace this: what is
+        // marked decides what a removal applies to, and must not vanish for six
+        // seconds because a sort was cycled.
+        if let Some((msg, tone, at)) = &app.status
+            && at.elapsed().as_secs() < 6
+        {
+            spans.push(Span::styled(
+                format!("   {msg}"),
+                Style::default().fg(tone_color(*tone)),
+            ));
+        }
+        f.render_widget(Paragraph::new(Line::from(spans)), area);
+        return;
+    }
+
     if let Some((msg, tone, at)) = &app.status
         && at.elapsed().as_secs() < 6
     {
@@ -701,6 +781,7 @@ fn footer(f: &mut Frame, area: Rect, app: &App) {
 
     let keys = [
         ("j/k", "move"),
+        ("space", "mark"),
         ("←/→", "fold"),
         ("d", "remove"),
         ("D", "+branch"),
@@ -738,10 +819,12 @@ fn popup(area: Rect, width: u16, height: u16) -> Rect {
 fn help(f: &mut Frame, area: Rect) {
     let rows: &[(&str, &str)] = &[
         ("j / k · ↓ / ↑", "move"),
+        ("space", "mark a worktree, and step down"),
         ("J / K", "jump to next / previous repo"),
         ("g / G", "first / last row"),
         ("← / → · enter", "fold or unfold a repo"),
         ("z / Z", "fold all / unfold all"),
+        ("esc", "clear the marking, then the filter"),
         ("PgUp / PgDn", "scroll the detail pane"),
         ("", ""),
         ("d", "remove the worktree (asks first)"),
@@ -904,7 +987,7 @@ mod tests {
                 wt.ahead = ahead;
                 wt.behind = behind;
                 wt.untracked = dirty;
-                let line = worktree_line(&wt, now(), false, width);
+                let line = worktree_line(&wt, now(), false, false, width);
                 assert_eq!(
                     line.width(),
                     width as usize,

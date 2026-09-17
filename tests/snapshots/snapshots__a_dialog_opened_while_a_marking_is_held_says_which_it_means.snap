@@ -6,12 +6,12 @@ expression: "render(&mut app, 120, 20)"
 ╭ sort activity · lens all ──────────────────────╮╭────────────────────────────────────────────────────────────────────╮
 │ ▾ fixture                             6wt 1●   ││ chore/clean  recent · last touched 9d                              │
 │ │ ◆ main                                   2h  ││ /fixture/clean                                                     │
-│ │ ● feat/ahead                       ↑1    1d  ││                                                                    │
-│ │ ● chore/clean                            9d  ││ ┃ Nothing to salvage — safe to remove                              │
-│ │ ● (3head000)        ╭ Remove worktree? ────────────────────────────────────────────────────╮                       │
-│ │ ● feat/dirty        │ /fixture/clean                                                       │ts off main            │
-│ │ ✗ docs/gone         │ branch chore/clean                                                   │                       │
-│ │ ● fix/locked        │ Clean. Nothing would be lost.                                        │                       │
+│▌│ ● feat/ahead                       ↑1    1d  ││                                                                    │
+│ │ ● chore/clean       ╭ Remove worktree? ────────────────────────────────────────────────────╮                       │
+│ │ ● (3head000)        │ /fixture/clean                                                       │                       │
+│▌│ ● feat/dirty        │ branch chore/clean                                                   │ts off main            │
+│ │ ✗ docs/gone         │ Clean. Nothing would be lost.                                        │                       │
+│ │ ● fix/locked        │ 2 worktrees are marked. This removes only the one above.             │                       │
 │                       │                                                                      │                       │
 │                       │  y  do it     n  cancel                                              │                       │
 │                       │                                                                      │                       │
@@ -21,4 +21,4 @@ expression: "render(&mut app, 120, 20)"
 │                                                ││                                                                    │
 │                                                ││                                                                    │
 ╰────────────────────────────────────────────────╯╰────────────────────────────────────────────────────────────────────╯
- j/k move  space mark  ←/→ fold  d remove  D +branch  p prune  c shell  f lens  s sort  / find  ? help
+ 2 marked  2 uncommitted files · 1 commit only there   esc clears · d still removes the row under the cursor

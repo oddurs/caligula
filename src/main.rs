@@ -212,6 +212,14 @@ fn handle_key(app: &mut App, key: KeyEvent, scan: &mut Scan, args: &Args) {
     }
 
     match key.code {
+        // Esc unwinds what is held, innermost first: the marking decides what a
+        // removal applies to, so it must never survive a keystroke meant to
+        // cancel something else.
+        KeyCode::Esc if !app.marked.is_empty() => {
+            app.clear_marks();
+            app.say("Marking cleared", Tone::Info);
+        }
+        KeyCode::Char(' ') => app.toggle_mark(),
         KeyCode::Char('q') | KeyCode::Esc => {
             if app.filter.is_empty() {
                 app.quit = true;
@@ -269,6 +277,7 @@ fn handle_key(app: &mut App, key: KeyEvent, scan: &mut Scan, args: &Args) {
         KeyCode::Char('R') => {
             app.repos.clear();
             app.rows.clear();
+            app.clear_marks();
             app.selected = 0;
             app.offset = 0;
             app.scanning = true;

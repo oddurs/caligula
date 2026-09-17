@@ -4,21 +4,21 @@ expression: "render(&mut app, 120, 20)"
 ---
  caligula  1 repo · 7 worktrees (6 linked) · 1 dirty · 4 stale · 4 safe to remove
 ╭ sort activity · lens all ──────────────────────╮╭────────────────────────────────────────────────────────────────────╮
-│ ▾ fixture                             6wt 1●   ││ chore/clean  recent · last touched 9d                              │
-│ │ ◆ main                                   2h  ││ /fixture/clean                                                     │
+│ ▾ fixture                             6wt 1●   ││ (3head000)  stale · last touched 40d                               │
+│ │ ◆ main                                   2h  ││ /fixture/detached                                                  │
 │ │ ● feat/ahead                       ↑1    1d  ││                                                                    │
-│ │ ● chore/clean                            9d  ││ ┃ Nothing to salvage — safe to remove                              │
+│▌│ ● chore/clean                            9d  ││ ┃ Nothing to salvage — safe to remove                              │
 │ │ ● (3head000)                            40d  ││                                                                    │
-│ │ ● feat/dirty                       ~2   90d  ││ branch    chore/clean  no upstream · 0 commits off main            │
-│ │ ✗ docs/gone                         !    1y  ││ head      2c000000  init: the first commit                         │
-│ │ ● fix/locked                        L    1y  ││           Fixture · 9d ago                                         │
+│ │ ● feat/dirty                       ~2   90d  ││ branch    (3head000)  no upstream · 0 commits off main             │
+│ │ ✗ docs/gone                         !    1y  ││ head      3c000000  init: the first commit                         │
+│ │ ● fix/locked                        L    1y  ││           Fixture · 40d ago                                        │
 │                                                ││ repo      fixture  /fixture/repo                                   │
 │                                                ││                                                                    │
 │                                                ││ Recent commits                                                     │
-│                                                ││   2r000000   9d  init: the first commit                            │
+│                                                ││   3r000000  40d  init: the first commit                            │
 │                                                ││                                                                    │
 │                                                ││                                                                    │
 │                                                ││                                                                    │
 │                                                ││                                                                    │
 ╰────────────────────────────────────────────────╯╰────────────────────────────────────────────────────────────────────╯
- j/k move  space mark  ←/→ fold  d remove  D +branch  p prune  c shell  f lens  s sort  / find  ? help
+ 1 marked  nothing to salvage in any of them   esc clears · d still removes the row under the cursor
