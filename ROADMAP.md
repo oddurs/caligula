@@ -19,13 +19,12 @@ Every git worktree on the machine, each one saying what it would cost to delete 
 
 ## v0.2 — Clear a repo in one pass
 
-`··········` 0% · 0 of 10 done · due 2026-10-03
+`··········` 0% · 0 of 9 done · due 2026-10-03
 
 Mark many worktrees at once and clear a repository's dead ones in a single pass.
 
 ### backlog
 
-- [ ] [`0014`](https://github.com/oddurs/caligula/blob/main/cairn/items/0014-restore-the-terminal-when-the-program-panics.md) Restore the terminal when the program panics <sup>bug · p0 · runtime</sup>
 - [ ] [`0015`](https://github.com/oddurs/caligula/blob/main/cairn/items/0015-mark-several-worktrees-at-once.md) Mark several worktrees at once <sup>feature · p0 · chrome</sup>
 - [ ] [`0016`](https://github.com/oddurs/caligula/blob/main/cairn/items/0016-remove-every-marked-worktree-behind-one-confirmation.md) Remove every marked worktree behind one confirmation <sup>feature · p0 · actions</sup>
 - [ ] [`0017`](https://github.com/oddurs/caligula/blob/main/cairn/items/0017-sweep-a-repository-mark-everything-safe-to-remove-in-it.md) Sweep a repository: mark everything safe to remove in it <sup>feature · p0 · actions</sup>
