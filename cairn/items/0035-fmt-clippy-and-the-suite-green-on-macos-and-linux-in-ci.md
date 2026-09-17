@@ -23,3 +23,7 @@ Everything has been checked on one machine, by hand, on macOS.
 - [ ] The toolchain is the one pinned in `rust-toolchain.toml`
 - [ ] Caches make a warm run take under two minutes
 - [ ] A red build blocks the merge
+
+## 2026-09-17
+
+CI landed with the repository bootstrap: .github/workflows/ci.yml runs scripts/task check on ubuntu-latest and macos-latest, with a 'required' aggregate job that branch protection requires. What is left of this item is confirming it stays green and that the matrix is the minimum meaningful set.
