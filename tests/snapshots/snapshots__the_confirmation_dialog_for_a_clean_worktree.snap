@@ -1,0 +1,24 @@
+---
+source: tests/snapshots.rs
+expression: "render(&mut app, 120, 20)"
+---
+ caligula  1 repo · 7 worktrees (6 linked) · 1 dirty · 4 stale · 4 safe to remove
+╭ sort activity · lens all ──────────────────────╮╭────────────────────────────────────────────────────────────────────╮
+│ ▾ fixture                             6wt 1●   ││ chore/clean  recent · last touched 9d                              │
+│ │ ◆ main                                   2h  ││ /fixture/clean                                                     │
+│ │ ● feat/ahead                       ↑1    1d  ││                                                                    │
+│ │ ● chore/clean                            9d  ││ ┃ Nothing to salvage — safe to remove                              │
+│ │ ● (3head000)        ╭ Remove worktree? ────────────────────────────────────────────────────╮                       │
+│ │ ● feat/dirty        │ /fixture/clean                                                       │ts off main            │
+│ │ ✗ docs/gone         │ branch chore/clean                                                   │                       │
+│ │ ● fix/locked        │ Clean. Nothing would be lost.                                        │                       │
+│                       │                                                                      │                       │
+│                       │  y  do it     n  cancel                                              │                       │
+│                       │                                                                      │                       │
+│                       ╰──────────────────────────────────────────────────────────────────────╯                       │
+│                                                ││                                                                    │
+│                                                ││                                                                    │
+│                                                ││                                                                    │
+│                                                ││                                                                    │
+╰────────────────────────────────────────────────╯╰────────────────────────────────────────────────────────────────────╯
+ j/k move  ←/→ fold  d remove  D +branch  p prune  c shell  f lens  s sort  / find  ? help

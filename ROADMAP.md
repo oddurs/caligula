@@ -19,7 +19,7 @@ Every git worktree on the machine, each one saying what it would cost to delete 
 
 ## v0.2 — Clear a repo in one pass
 
-`··········` 0% · 0 of 10 done · due 2026-10-03
+`#·········` 8% · 1 of 12 done · due 2026-10-03
 
 Mark many worktrees at once and clear a repository's dead ones in a single pass.
 
@@ -34,10 +34,12 @@ Mark many worktrees at once and clear a repository's dead ones in a single pass.
 - [ ] [`0021`](https://github.com/oddurs/caligula/blob/main/cairn/items/0021-work-in-a-terminal-narrower-than-100-columns.md) Work in a terminal narrower than 100 columns <sup>bug · p1 · chrome</sup>
 - [ ] [`0022`](https://github.com/oddurs/caligula/blob/main/cairn/items/0022-show-the-whole-error-when-an-action-fails.md) Show the whole error when an action fails <sup>bug · p1 · actions</sup>
 - [ ] [`0023`](https://github.com/oddurs/caligula/blob/main/cairn/items/0023-say-what-the-scan-is-doing-while-it-runs.md) Say what the scan is doing while it runs <sup>chore · p2 · runtime</sup>
+- [ ] [`0051`](https://github.com/oddurs/caligula/blob/main/cairn/items/0051-the-repository-detail-s-worktree-rows-do-not-fit-their-pane.md) The repository detail's worktree rows do not fit their pane <sup>bug · p1 · chrome</sup>
+- [ ] [`0052`](https://github.com/oddurs/caligula/blob/main/cairn/items/0052-the-safe-lens-offers-worktrees-that-cannot-be-removed-or-cannot-be-judged.md) The safe lens offers worktrees that cannot be removed or cannot be judged <sup>bug · p0 · verdict</sup>
 
-### in progress
+### done
 
-- [ ] [`0053`](https://github.com/oddurs/caligula/blob/main/cairn/items/0053-inherited-git-environment-points-every-query-at-the-wrong-repository.md) Inherited git environment points every query at the wrong repository <sup>bug · p0 · git</sup>
+- [x] [`0053`](https://github.com/oddurs/caligula/blob/main/cairn/items/0053-inherited-git-environment-points-every-query-at-the-wrong-repository.md) Inherited git environment points every query at the wrong repository <sup>bug · p0 · git</sup>
 
 ## v0.3 — Your machine, your rules
 

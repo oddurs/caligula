@@ -35,3 +35,9 @@ visible, and add a lens that treats untracked-only as safe.
 - [ ] Ignored files are still excluded entirely
 - [ ] Unit tests over parsed status output covering: tracked-only,
       untracked-only, both, conflicts
+- [ ] The removal dialog pluralises properly: `App::ask_remove` says
+      "2 uncommitted files", not "2 uncommitted file(s)"
+
+## 2026-09-17
+
+The removal dialog says '2 uncommitted file(s) will be destroyed' — the lazy '(s)' rather than the real pluralisation used everywhere else. Fix it here, where the verdict wording is already being worked on. It is in App::ask_remove.

@@ -118,6 +118,12 @@ pub struct App {
     pub shell_request: Option<PathBuf>,
 }
 
+impl Default for App {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl App {
     pub fn new() -> Self {
         App {
