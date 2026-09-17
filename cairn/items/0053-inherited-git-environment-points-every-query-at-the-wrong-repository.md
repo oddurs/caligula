@@ -2,7 +2,7 @@
 id: 53
 title: Inherited git environment points every query at the wrong repository
 type: bug
-status: doing
+status: done
 milestone: v0.2
 assignee: Oddur Sigurdsson
 claimed: 2026-09-17
@@ -47,8 +47,8 @@ GIT_INDEX_FILE=/tmp/x.idx     cargo test --test probe   # 8 of 9 fail
       GIT_COMMON_DIR, GIT_OBJECT_DIRECTORY, GIT_NAMESPACE
 - [x] A test asserts the removals are registered on the command, without
       mutating the environment of the test process
-- [ ] `GIT_DIR=<another repo> scripts/task test` is green
-- [ ] The test fixture is hermetic for the same reason, so it cannot pass only
+- [x] `GIT_DIR=<another repo> scripts/task test` is green
+- [x] The test fixture is hermetic for the same reason, so it cannot pass only
       because the ambient environment happened to be empty
 
 ## 2026-09-17
@@ -58,3 +58,7 @@ Criteria 1 and 2 land in this branch. Criteria 3 and 4 need the integration suit
 ## 2026-09-17
 
 Criterion 4 is a safety requirement, not tidiness. Proving this fix by running 'GIT_DIR=<the real repo>/.git cargo test' let the fixture's own 'git init' and 'git worktree add' execute against the caligula repository: it set core.bare=true, created five fixture branches, and left six worktree records pointing into a temp directory. Nothing was pushed and it was fully reversible — unset core.bare, unlock, prune, delete the branches — but a contributor who runs the suite from inside a git hook would do the same to their own repository without knowing why. git_in must remove the same variables git() now does.
+
+## 2026-09-17
+
+Proven end to end in a throwaway clone: with GIT_DIR pointed at it, the full suite is green and the clone is untouched afterwards — core.bare false, one branch, one worktree, clean tree. The same run before the fix marked the repository bare and left five fixture branches in it.
