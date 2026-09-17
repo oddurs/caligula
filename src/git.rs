@@ -219,12 +219,34 @@ pub fn short_sha(sha: &str) -> String {
 
 // ---------------------------------------------------------------- git plumbing
 
+/// Variables that choose a repository, all of which outrank `-C`.
+///
+/// caligula names the repository it means and reads no other, so inheriting any
+/// of these can only ever answer the wrong question. It is not hypothetical:
+/// anything launched from a git hook has them set, and every worktree on the
+/// machine would then be probed against that one repository.
+const REPO_ENV: [&str; 6] = [
+    "GIT_DIR",
+    "GIT_WORK_TREE",
+    "GIT_INDEX_FILE",
+    "GIT_COMMON_DIR",
+    "GIT_OBJECT_DIRECTORY",
+    "GIT_NAMESPACE",
+];
+
+/// A git invocation against `dir`, and nothing else.
+fn command(dir: &Path, args: &[&str]) -> Command {
+    let mut cmd = Command::new("git");
+    cmd.arg("-C").arg(dir).args(args);
+    for key in REPO_ENV {
+        cmd.env_remove(key);
+    }
+    cmd
+}
+
 /// Run git in `dir`, returning stdout on success.
 pub fn git(dir: &Path, args: &[&str]) -> Option<String> {
-    let out = Command::new("git")
-        .arg("-C")
-        .arg(dir)
-        .args(args)
+    let out = command(dir, args)
         // Never take the index lock: browsing must not disturb a running build.
         .env("GIT_OPTIONAL_LOCKS", "0")
         .output()
@@ -237,10 +259,7 @@ pub fn git(dir: &Path, args: &[&str]) -> Option<String> {
 
 /// Run git for effect, returning combined output so failures can be shown.
 pub fn git_run(dir: &Path, args: &[&str]) -> Result<String, String> {
-    let out = Command::new("git")
-        .arg("-C")
-        .arg(dir)
-        .args(args)
+    let out = command(dir, args)
         .output()
         .map_err(|e| format!("git: {e}"))?;
     let stdout = String::from_utf8_lossy(&out.stdout).trim().to_string();
@@ -770,6 +789,24 @@ mod tests {
         wt.upstream = Some("origin/main".into());
         wt.ahead = 1;
         assert_eq!(wt.unpushed(), 1);
+    }
+
+    #[test]
+    fn repository_selecting_environment_is_never_inherited() {
+        // Asserted on the command rather than by setting the variables, which
+        // would change them for every other test in this process.
+        let cmd = command(Path::new("/tmp"), &["status"]);
+        let removed: Vec<String> = cmd
+            .get_envs()
+            .filter(|(_, value)| value.is_none())
+            .map(|(key, _)| key.to_string_lossy().into_owned())
+            .collect();
+        for key in REPO_ENV {
+            assert!(
+                removed.contains(&key.to_string()),
+                "{key} is still inherited"
+            );
+        }
     }
 
     #[test]
