@@ -24,10 +24,24 @@ pub const NOW: u64 = 1_767_225_600;
 const DAY: u64 = 86_400;
 
 fn git_in(dir: &Path, args: &[&str]) {
-    let out = Command::new("git")
-        .arg("-C")
-        .arg(dir)
-        .args(args)
+    let mut cmd = Command::new("git");
+    cmd.arg("-C").arg(dir).args(args);
+    // Hermetic for the same reason caligula's own git calls are: these outrank
+    // -C, so inheriting even one of them points `git init` and `worktree add`
+    // at whatever repository the environment names. Running this suite from a
+    // git hook without this marks the real repository bare and fills it with
+    // fixture branches.
+    for key in [
+        "GIT_DIR",
+        "GIT_WORK_TREE",
+        "GIT_INDEX_FILE",
+        "GIT_COMMON_DIR",
+        "GIT_OBJECT_DIRECTORY",
+        "GIT_NAMESPACE",
+    ] {
+        cmd.env_remove(key);
+    }
+    let out = cmd
         .env("GIT_AUTHOR_NAME", "Fixture")
         .env("GIT_AUTHOR_EMAIL", "fixture@example.invalid")
         .env("GIT_COMMITTER_NAME", "Fixture")
