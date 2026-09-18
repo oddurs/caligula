@@ -19,18 +19,16 @@ Every git worktree on the machine, each one saying what it would cost to delete 
 
 ## v0.2 — Clear a repo in one pass
 
-`#·········` 8% · 1 of 12 done · due 2026-10-03
+`###·······` 25% · 3 of 12 done · due 2026-10-03
 
 Mark many worktrees at once and clear a repository's dead ones in a single pass.
 
 ### backlog
 
-- [ ] [`0015`](https://github.com/oddurs/caligula/blob/main/cairn/items/0015-mark-several-worktrees-at-once.md) Mark several worktrees at once <sup>feature · p0 · chrome</sup>
 - [ ] [`0016`](https://github.com/oddurs/caligula/blob/main/cairn/items/0016-remove-every-marked-worktree-behind-one-confirmation.md) Remove every marked worktree behind one confirmation <sup>feature · p0 · actions</sup>
 - [ ] [`0017`](https://github.com/oddurs/caligula/blob/main/cairn/items/0017-sweep-a-repository-mark-everything-safe-to-remove-in-it.md) Sweep a repository: mark everything safe to remove in it <sup>feature · p0 · actions</sup>
 - [ ] [`0018`](https://github.com/oddurs/caligula/blob/main/cairn/items/0018-tell-untracked-scratch-from-modified-tracked-files-in-the-verdict.md) Tell untracked scratch from modified tracked files in the verdict <sup>feature · p0 · verdict</sup>
 - [ ] [`0019`](https://github.com/oddurs/caligula/blob/main/cairn/items/0019-attribute-stashes-to-the-worktree-that-made-them.md) Attribute stashes to the worktree that made them <sup>feature · p1 · verdict</sup>
-- [ ] [`0020`](https://github.com/oddurs/caligula/blob/main/cairn/items/0020-snapshot-test-the-rendered-frame-against-a-fixture-repository.md) Snapshot-test the rendered frame against a fixture repository <sup>chore · p0 · testing</sup>
 - [ ] [`0021`](https://github.com/oddurs/caligula/blob/main/cairn/items/0021-work-in-a-terminal-narrower-than-100-columns.md) Work in a terminal narrower than 100 columns <sup>bug · p1 · chrome</sup>
 - [ ] [`0022`](https://github.com/oddurs/caligula/blob/main/cairn/items/0022-show-the-whole-error-when-an-action-fails.md) Show the whole error when an action fails <sup>bug · p1 · actions</sup>
 - [ ] [`0023`](https://github.com/oddurs/caligula/blob/main/cairn/items/0023-say-what-the-scan-is-doing-while-it-runs.md) Say what the scan is doing while it runs <sup>chore · p2 · runtime</sup>
@@ -39,6 +37,8 @@ Mark many worktrees at once and clear a repository's dead ones in a single pass.
 
 ### done
 
+- [x] [`0015`](https://github.com/oddurs/caligula/blob/main/cairn/items/0015-mark-several-worktrees-at-once.md) Mark several worktrees at once <sup>feature · p0 · chrome</sup>
+- [x] [`0020`](https://github.com/oddurs/caligula/blob/main/cairn/items/0020-snapshot-test-the-rendered-frame-against-a-fixture-repository.md) Snapshot-test the rendered frame against a fixture repository <sup>chore · p0 · testing</sup>
 - [x] [`0053`](https://github.com/oddurs/caligula/blob/main/cairn/items/0053-inherited-git-environment-points-every-query-at-the-wrong-repository.md) Inherited git environment points every query at the wrong repository <sup>bug · p0 · git</sup>
 
 ## v0.3 — Your machine, your rules

@@ -18,7 +18,7 @@ you delete one: **is there anything in here worth saving?**
 │ ▾ deepwork                                     45wt 46●  ││ branch    refactor/site-tailwind  → origin…   │
 │ │ ● worktree-agent-a849ea46      ↓124 ~24         170d  ││ head      281245d0  refactor(site): replace…  │
 ╰──────────────────────────────────────────────────────────╯╰──────────────────────────────────────────────╯
- j/k move  ←/→ fold  d remove  D +branch  p prune  c shell  f lens  s sort  / find  ? help
+ j/k move  space mark  ←/→ fold  d remove  D +branch  p prune  c shell  f lens  s sort  / find  ? help
 ```
 
 ## Why
@@ -86,6 +86,7 @@ shows its last five commits instead, so you can still tell what it was for.
 | | |
 | --- | --- |
 | `j` `k` `↓` `↑` | move |
+| `space` | mark a worktree, and step down |
 | `J` `K` | jump to the next / previous repo |
 | `←` `→` `enter` | fold or unfold a repo |
 | `z` `Z` | fold all / unfold all |
@@ -99,6 +100,7 @@ shows its last five commits instead, so you can still tell what it was for.
 | `s` | sort: activity → name → risk |
 | `/` | filter by repo, branch or path |
 | `r` `R` | re-probe the selected repo / rescan the disk |
+| `esc` | clear the marking, then the filter |
 | `?` `q` | help / quit |
 
 Nothing destructive happens without a confirmation dialog that first spells out

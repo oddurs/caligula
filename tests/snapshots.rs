@@ -239,3 +239,41 @@ fn the_selected_row_is_the_only_one_highlighted() {
     select(&mut app, "feat/dirty");
     insta::assert_snapshot!(render_palette(&mut app, 120, 20));
 }
+
+#[test]
+fn a_marked_worktree() {
+    let mut app = fixture_app();
+    select(&mut app, "chore/clean");
+    app.toggle_mark();
+    insta::assert_snapshot!(render(&mut app, 120, 20));
+}
+
+#[test]
+fn the_footer_totals_what_the_marking_would_cost() {
+    let mut app = fixture_app();
+    for branch in ["feat/dirty", "feat/ahead", "chore/clean"] {
+        select(&mut app, branch);
+        app.toggle_mark();
+    }
+    insta::assert_snapshot!(render(&mut app, 120, 20));
+}
+
+#[test]
+fn the_colours_of_a_marking() {
+    let mut app = fixture_app();
+    select(&mut app, "feat/dirty");
+    app.toggle_mark();
+    insta::assert_snapshot!(render_palette(&mut app, 120, 20));
+}
+
+#[test]
+fn a_dialog_opened_while_a_marking_is_held_says_which_it_means() {
+    let mut app = fixture_app();
+    for branch in ["feat/dirty", "feat/ahead"] {
+        select(&mut app, branch);
+        app.toggle_mark();
+    }
+    select(&mut app, "chore/clean");
+    app.ask_remove(false);
+    insta::assert_snapshot!(render(&mut app, 120, 20));
+}

@@ -100,6 +100,9 @@ pub struct App {
     pub selected: usize,
     pub offset: usize,
     pub collapsed: HashSet<PathBuf>,
+    /// Worktrees the next action applies to, held by path: the row indices move
+    /// under sorting, filtering and a re-probe, and the marking must not.
+    pub marked: HashSet<PathBuf>,
     pub sort: Sort,
     pub lens: Lens,
     pub filter: String,
@@ -132,6 +135,7 @@ impl App {
             selected: 0,
             offset: 0,
             collapsed: HashSet::new(),
+            marked: HashSet::new(),
             sort: Sort::Activity,
             lens: Lens::All,
             filter: String::new(),
@@ -329,6 +333,68 @@ impl App {
         }
     }
 
+    /// Mark or unmark the row under the cursor, then step down.
+    ///
+    /// Stepping down is what makes marking a run of worktrees one key held
+    /// rather than an alternation of two.
+    pub fn toggle_mark(&mut self) {
+        // A repo header is stepped over rather than refused: holding space down
+        // a list has to carry from one repository into the next.
+        let Some(Row::Worktree { repo, wt }) = self.current() else {
+            self.move_by(1);
+            return;
+        };
+        let path = self.repos[repo].worktrees[wt].path.clone();
+        if !self.marked.remove(&path) {
+            self.marked.insert(path);
+        }
+        self.move_by(1);
+    }
+
+    pub fn clear_marks(&mut self) {
+        self.marked.clear();
+    }
+
+    /// Drop marks for worktrees that are no longer there: a re-probe after a
+    /// removal must not leave the marking pointing at something gone.
+    pub fn prune_marks(&mut self) {
+        let live: HashSet<PathBuf> = self
+            .repos
+            .iter()
+            .flat_map(|r| r.worktrees.iter().map(|w| w.path.clone()))
+            .collect();
+        self.marked.retain(|p| live.contains(p));
+    }
+
+    pub fn is_marked(&self, wt: &git::Worktree) -> bool {
+        self.marked.contains(&wt.path)
+    }
+
+    /// Every marked worktree, in the order they appear on screen.
+    pub fn marked_worktrees(&self) -> Vec<(usize, usize)> {
+        let mut out = Vec::new();
+        for (ri, repo) in self.repos.iter().enumerate() {
+            for (wi, wt) in repo.worktrees.iter().enumerate() {
+                if self.marked.contains(&wt.path) {
+                    out.push((ri, wi));
+                }
+            }
+        }
+        out
+    }
+
+    /// What the marking adds up to, for the footer: the reason to hesitate.
+    pub fn marked_stakes(&self) -> Stakes {
+        let mut stakes = Stakes::default();
+        for (ri, wi) in self.marked_worktrees() {
+            let wt = &self.repos[ri].worktrees[wi];
+            stakes.worktrees += 1;
+            stakes.files += wt.changed_files();
+            stakes.commits += wt.unpushed();
+        }
+        stakes
+    }
+
     pub fn toggle_collapse(&mut self) {
         let Some(row) = self.current() else { return };
         let repo = match row {
@@ -413,6 +479,18 @@ impl App {
             body.push((
                 format!("Branch {} will be deleted too (git branch -D).", w.label()),
                 Tone::Bad,
+            ));
+        }
+
+        // Until the marking itself can be removed, a dialog that appears while
+        // one is held has to say which it means, or it reads as the marking.
+        if self.marked.len() > 1 || (self.marked.len() == 1 && !self.marked.contains(&w.path)) {
+            body.push((
+                format!(
+                    "{} worktrees are marked. This removes only the one above.",
+                    self.marked.len()
+                ),
+                Tone::Warn,
             ));
         }
 
@@ -550,6 +628,7 @@ impl App {
             }
         }
         self.now = git::now();
+        self.prune_marks();
         self.sort_repos();
         self.rebuild(key);
     }
@@ -632,6 +711,14 @@ impl App {
         }
         t
     }
+}
+
+/// What removing the current marking would cost.
+#[derive(Default, PartialEq, Eq, Debug)]
+pub struct Stakes {
+    pub worktrees: usize,
+    pub files: u32,
+    pub commits: u32,
 }
 
 #[derive(Default)]
@@ -756,6 +843,103 @@ mod tests {
             panic!("expected a worktree row")
         };
         assert_eq!(app.repos[repo].worktrees[wt].label(), "feat/branch-1");
+    }
+
+    #[test]
+    fn marking_steps_down_so_a_run_can_be_marked_with_one_key() {
+        let mut app = app_with(vec![test_repo("alpha", 3)]);
+        app.go(1);
+        app.toggle_mark();
+        app.toggle_mark();
+        assert_eq!(app.marked.len(), 2);
+        assert_eq!(app.selected, 3, "the cursor should have stepped past both");
+    }
+
+    #[test]
+    fn marking_steps_over_a_repo_header_rather_than_stopping_on_it() {
+        let mut app = app_with(vec![test_repo("alpha", 1), test_repo("beta", 1)]);
+        // Rows: 0 alpha, 1 main, 2 branch, 3 beta, 4 main, 5 branch.
+        app.go(3);
+        app.toggle_mark();
+        assert!(app.marked.is_empty(), "a repo header is not markable");
+        assert_eq!(app.selected, 4, "but holding space must carry past it");
+    }
+
+    #[test]
+    fn marking_the_same_row_twice_unmarks_it() {
+        let mut app = app_with(vec![test_repo("alpha", 3)]);
+        app.go(1);
+        app.toggle_mark();
+        app.go(1);
+        app.toggle_mark();
+        assert!(app.marked.is_empty());
+    }
+
+    #[test]
+    fn a_repo_row_cannot_be_marked() {
+        let mut app = app_with(vec![test_repo("alpha", 2)]);
+        app.go(0);
+        app.toggle_mark();
+        assert!(app.marked.is_empty());
+    }
+
+    #[test]
+    fn the_marking_survives_sorting_filtering_and_folding() {
+        let mut app = app_with(vec![test_repo("alpha", 3), test_repo("beta", 2)]);
+        app.go(2);
+        app.toggle_mark();
+        let marked = app.marked.clone();
+
+        app.sort = Sort::Name;
+        app.resort();
+        app.rebuild(None);
+        assert_eq!(app.marked, marked, "sorting moved rows, not marks");
+
+        app.filter = "beta".into();
+        app.refilter();
+        assert_eq!(
+            app.marked, marked,
+            "a filter hides rows, it does not unmark them"
+        );
+
+        app.filter.clear();
+        app.refilter();
+        app.collapse_all(true);
+        assert_eq!(
+            app.marked, marked,
+            "folding hides rows, it does not unmark them"
+        );
+    }
+
+    #[test]
+    fn a_worktree_that_is_gone_is_dropped_from_the_marking() {
+        let mut app = app_with(vec![test_repo("alpha", 2)]);
+        app.go(2);
+        app.toggle_mark();
+        assert_eq!(app.marked.len(), 1);
+
+        app.repos[0].worktrees.remove(1);
+        app.prune_marks();
+        assert!(app.marked.is_empty(), "the marking outlived the worktree");
+    }
+
+    #[test]
+    fn the_stakes_add_up_what_the_marking_would_cost() {
+        let mut repo = test_repo("alpha", 2);
+        repo.worktrees[1].untracked = 3;
+        repo.worktrees[2].upstream = Some("origin/main".into());
+        repo.worktrees[2].ahead = 2;
+        let mut app = app_with(vec![repo]);
+        // Rows: 0 the repo, 1 main, 2 and 3 the two feature branches — which are
+        // the ones carrying the changes and the commits.
+        app.go(2);
+        app.toggle_mark();
+        app.toggle_mark();
+
+        let stakes = app.marked_stakes();
+        assert_eq!(stakes.worktrees, 2);
+        assert_eq!(stakes.files, 3);
+        assert_eq!(stakes.commits, 2);
     }
 
     #[test]
