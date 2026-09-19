@@ -15,7 +15,6 @@ use crate::git::{self, Repo};
 
 pub enum Event {
     Found(Box<Repo>),
-    Progress(usize),
     Done,
 }
 
@@ -32,9 +31,19 @@ pub struct Scan {
 #[derive(Clone, Default)]
 pub struct Progress {
     pub dirs: Arc<AtomicUsize>,
-    /// Repositories claimed by a worker: the denominator, once walking is done.
-    pub found: Arc<AtomicUsize>,
-    pub probed: Arc<AtomicUsize>,
+    /// Checkouts the walker has queued: the denominator.
+    ///
+    /// Counted where they are discovered, not where they are claimed. Counting
+    /// on claim made the fraction meaningless — a worker claims a candidate
+    /// immediately before reading it, so the gap could never exceed the number
+    /// of workers, and a queue of four hundred still displayed as "47 of 55".
+    pub checkouts: Arc<AtomicUsize>,
+    /// Checkouts a worker has finished with, whether or not they were a repo.
+    pub examined: Arc<AtomicUsize>,
+    /// Repositories actually produced. Not every checkout is one: a probe can
+    /// fail on a corrupt repository or an unreadable git dir, and reporting
+    /// those as found would claim repositories that were never listed.
+    pub repos: Arc<AtomicUsize>,
     pub walking: Arc<AtomicBool>,
 }
 
@@ -86,6 +95,7 @@ pub fn start(roots: Vec<PathBuf>, max_depth: usize) -> Scan {
                     }
                 };
                 let Some(common) = git::common_dir(&candidate) else {
+                    progress.examined.fetch_add(1, Ordering::Relaxed);
                     continue;
                 };
                 {
@@ -96,24 +106,25 @@ pub fn start(roots: Vec<PathBuf>, max_depth: usize) -> Scan {
                         Err(_) => break,
                     };
                     if !seen.insert(common.clone()) {
+                        progress.examined.fetch_add(1, Ordering::Relaxed);
                         continue;
                     }
                 }
-                progress.found.fetch_add(1, Ordering::Relaxed);
+
                 let repo = git::probe_repo(&candidate);
-                progress.probed.fetch_add(1, Ordering::Relaxed);
-                if let Some(repo) = repo
-                    && tx.send(Event::Found(Box::new(repo))).is_err()
-                {
-                    break;
+                progress.examined.fetch_add(1, Ordering::Relaxed);
+                if let Some(repo) = repo {
+                    progress.repos.fetch_add(1, Ordering::Relaxed);
+                    if tx.send(Event::Found(Box::new(repo))).is_err() {
+                        break;
+                    }
                 }
             }
         }));
     }
-    let walk_tx = tx.clone();
     let walk_progress = progress.clone();
     thread::spawn(move || {
-        walk(roots, max_depth, &cand_tx, &walk_progress.dirs, &walk_tx);
+        walk(roots, max_depth, &cand_tx, &walk_progress);
         walk_progress.walking.store(false, Ordering::Relaxed);
         // Dropping the candidate sender is what tells the workers to stop.
         drop(cand_tx);
@@ -130,13 +141,7 @@ pub fn start(roots: Vec<PathBuf>, max_depth: usize) -> Scan {
     Scan { rx, progress }
 }
 
-fn walk(
-    roots: Vec<PathBuf>,
-    max_depth: usize,
-    out: &Sender<PathBuf>,
-    seen: &AtomicUsize,
-    progress: &Sender<Event>,
-) {
+fn walk(roots: Vec<PathBuf>, max_depth: usize, out: &Sender<PathBuf>, progress: &Progress) {
     let mut stack: Vec<(PathBuf, usize)> = roots.into_iter().map(|r| (r, 0)).collect();
     let mut visited: HashSet<PathBuf> = HashSet::new();
     let mut count = 0usize;
@@ -150,10 +155,7 @@ fn walk(
             continue;
         }
         count += 1;
-        seen.store(count, Ordering::Relaxed);
-        if count.is_multiple_of(200) && progress.send(Event::Progress(count)).is_err() {
-            return;
-        }
+        progress.dirs.store(count, Ordering::Relaxed);
 
         let Ok(entries) = std::fs::read_dir(&dir) else {
             continue;
@@ -178,6 +180,8 @@ fn walk(
         }
 
         if is_repo {
+            // Counted here, where it is discovered: this is the denominator.
+            progress.checkouts.fetch_add(1, Ordering::Relaxed);
             // A checkout's contents are git's business, not ours; its linked
             // worktrees live elsewhere and are found on their own.
             if out.send(dir).is_err() {

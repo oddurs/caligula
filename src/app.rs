@@ -995,8 +995,9 @@ impl App {
 #[derive(Default, Clone, Copy)]
 pub struct ScanProgress {
     pub dirs: usize,
-    pub found: usize,
-    pub probed: usize,
+    pub checkouts: usize,
+    pub examined: usize,
+    pub repos: usize,
     pub walking: bool,
 }
 
@@ -1004,17 +1005,18 @@ impl ScanProgress {
     /// One line saying what is happening, rather than a number that stops
     /// moving while the slow part runs.
     pub fn describe(&self) -> String {
-        if self.walking && self.found == 0 {
-            format!("walking {} directories", self.dirs)
-        } else if self.probed < self.found {
-            format!("reading {} of {} repositories", self.probed, self.found)
-        } else if self.walking {
+        // Ordered on the stage, not on the numbers: branching on whether a
+        // probe happens to be in flight made the header alternate between two
+        // unrelated sentences several times a second.
+        if self.walking {
             format!(
-                "{} repositories · walking {} directories",
-                self.found, self.dirs
+                "walking {} directories · {} checkouts",
+                self.dirs, self.checkouts
             )
+        } else if self.examined < self.checkouts {
+            format!("reading {} of {} checkouts", self.examined, self.checkouts)
         } else {
-            format!("{} repositories", self.found)
+            format!("{} repositories", self.repos)
         }
     }
 }
@@ -1144,31 +1146,42 @@ mod tests {
 
     #[test]
     fn the_scan_says_what_it_is_doing_at_each_stage() {
-        let walking_only = ScanProgress {
+        let walking = ScanProgress {
             dirs: 1204,
-            found: 0,
-            probed: 0,
+            checkouts: 312,
+            examined: 8,
+            repos: 6,
             walking: true,
         };
-        assert_eq!(walking_only.describe(), "walking 1204 directories");
+        assert_eq!(
+            walking.describe(),
+            "walking 1204 directories · 312 checkouts",
+            "while walking, the walk is the stage — regardless of what the workers are doing"
+        );
 
         // The stage that used to look hung: the directory count has stopped
         // moving and every remaining second is spent reading repositories.
-        let probing = ScanProgress {
+        let reading = ScanProgress {
             dirs: 1204,
-            found: 92,
-            probed: 47,
+            checkouts: 312,
+            examined: 47,
+            repos: 40,
             walking: false,
         };
-        assert_eq!(probing.describe(), "reading 47 of 92 repositories");
+        assert_eq!(reading.describe(), "reading 47 of 312 checkouts");
 
         let done = ScanProgress {
             dirs: 1204,
-            found: 92,
-            probed: 92,
+            checkouts: 312,
+            examined: 312,
+            repos: 92,
             walking: false,
         };
-        assert_eq!(done.describe(), "92 repositories");
+        assert_eq!(
+            done.describe(),
+            "92 repositories",
+            "and the total is repositories actually produced, not checkouts examined"
+        );
     }
 
     #[test]

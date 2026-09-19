@@ -145,17 +145,21 @@ fn run(
 
 fn drain_scan(app: &mut App, scan: &mut Scan) {
     use std::sync::atomic::Ordering;
+    // Read the smaller counter first: these are four separate atomics, and
+    // reading the denominator last keeps the snapshot self-consistent rather
+    // than briefly showing more examined than there are to examine.
+    let examined = scan.progress.examined.load(Ordering::Relaxed);
     app.scan = app::ScanProgress {
         dirs: scan.progress.dirs.load(Ordering::Relaxed),
-        found: scan.progress.found.load(Ordering::Relaxed),
-        probed: scan.progress.probed.load(Ordering::Relaxed),
+        examined,
+        checkouts: scan.progress.checkouts.load(Ordering::Relaxed),
+        repos: scan.progress.repos.load(Ordering::Relaxed),
         walking: scan.progress.walking.load(Ordering::Relaxed),
     };
     // Bound the work per frame so a fast scan cannot starve the event loop.
     for _ in 0..64 {
         match scan.rx.try_recv() {
             Ok(scan::Event::Found(repo)) => app.add_repo(*repo),
-            Ok(scan::Event::Progress(n)) => app.scan.dirs = n,
             Ok(scan::Event::Done) => {
                 app.scanning = false;
                 app.now = git::now();
