@@ -90,8 +90,8 @@ shows its last five commits instead, so you can still tell what it was for.
 | `J` `K` | jump to the next / previous repo |
 | `←` `→` `enter` | fold or unfold a repo |
 | `z` `Z` | fold all / unfold all |
-| `d` | remove the worktree — asks first, always |
-| `D` | remove the worktree and delete its branch |
+| `d` | remove everything marked, or the row under the cursor — asks first, always |
+| `D` | the same, and delete the branches too |
 | `p` | prune the repo's stale worktree records |
 | `L` | lock or unlock the worktree |
 | `c` | drop into a shell inside it; exit to come back |
@@ -104,7 +104,10 @@ shows its last five commits instead, so you can still tell what it was for.
 | `?` `q` | help / quit |
 
 Nothing destructive happens without a confirmation dialog that first spells out
-what is at stake.
+what is at stake. Marking is how a repository gets cleared in one pass: `space`
+down the list, then `d` once. The dialog lists every worktree it is about to
+remove, worst first, totals the files and commits that exist nowhere else, and
+names the ones it is keeping and why.
 
 ## Development
 

@@ -7,6 +7,7 @@ use std::time::Instant;
 
 use crate::git::{self, Repo, Salvage, Staleness};
 use crate::scan;
+use crate::text::clip;
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub enum Sort {
@@ -77,15 +78,30 @@ pub enum Tone {
 }
 
 pub enum Action {
+    /// Remove exactly these, resolved before the dialog opened.
+    ///
+    /// Resolved rather than indexed on purpose: removing one worktree shifts
+    /// every index after it, so a list of indices would be wrong by the second
+    /// removal.
     Remove {
-        repo: usize,
-        wt: usize,
-        force: bool,
+        removals: Vec<Removal>,
         branch: bool,
     },
     Prune {
         repo: usize,
     },
+}
+
+/// One worktree, resolved to everything its removal needs.
+pub struct Removal {
+    pub root: PathBuf,
+    pub path: PathBuf,
+    pub label: String,
+    /// The branch to delete with `D`, when there is one. Carried rather than
+    /// recovered from the label: `label()` renders a detached head as `(sha)`,
+    /// and git permits a branch actually named `(wip)`.
+    pub branch: Option<String>,
+    pub force: bool,
 }
 
 pub struct Confirm {
@@ -431,50 +447,31 @@ impl App {
         self.status = Some((msg.into(), tone, Instant::now()));
     }
 
+    /// `d` acts on the marking when there is one, and on the cursor otherwise.
     pub fn ask_remove(&mut self, with_branch: bool) {
+        if self.marked.is_empty() {
+            self.ask_remove_one(with_branch);
+        } else {
+            self.ask_remove_marked(with_branch);
+        }
+    }
+
+    fn ask_remove_one(&mut self, with_branch: bool) {
         let Some(Row::Worktree { repo, wt }) = self.current() else {
             self.say("Select a worktree to remove", Tone::Warn);
             return;
         };
-        let r = &self.repos[repo];
-        let w = &r.worktrees[wt];
-        if w.is_main {
-            self.say(
-                "That is the main checkout — git will not remove it",
-                Tone::Warn,
-            );
-            return;
-        }
-        if let Some(reason) = &w.locked {
-            self.say(
-                format!("Locked: {reason} — press L to unlock first"),
-                Tone::Warn,
-            );
+        let w = &self.repos[repo].worktrees[wt];
+        if let Err(reason) = removable(w) {
+            self.say(reason, Tone::Warn);
             return;
         }
 
         let mut body = vec![
             (scan::shorten_home(&w.path), Tone::Info),
             (format!("branch {}", w.label()), Tone::Info),
+            cost_line(w),
         ];
-        match w.salvage() {
-            Salvage::Nothing => body.push(("Clean. Nothing would be lost.".into(), Tone::Good)),
-            Salvage::Commits => body.push((
-                format!(
-                    "{} commit{} live only here. The branch survives; the checkout does not.",
-                    w.unpushed(),
-                    if w.unpushed() == 1 { "" } else { "s" }
-                ),
-                Tone::Warn,
-            )),
-            Salvage::Uncommitted => body.push((
-                format!(
-                    "{} uncommitted file(s) will be destroyed.",
-                    w.changed_files()
-                ),
-                Tone::Bad,
-            )),
-        }
         if with_branch && w.branch.is_some() {
             body.push((
                 format!("Branch {} will be deleted too (git branch -D).", w.label()),
@@ -482,19 +479,7 @@ impl App {
             ));
         }
 
-        // Until the marking itself can be removed, a dialog that appears while
-        // one is held has to say which it means, or it reads as the marking.
-        if self.marked.len() > 1 || (self.marked.len() == 1 && !self.marked.contains(&w.path)) {
-            body.push((
-                format!(
-                    "{} worktrees are marked. This removes only the one above.",
-                    self.marked.len()
-                ),
-                Tone::Warn,
-            ));
-        }
-
-        let force = w.is_dirty();
+        let removals = vec![self.resolve(repo, wt)];
         self.confirm = Some(Confirm {
             title: if with_branch {
                 "Remove worktree and branch?".into()
@@ -503,12 +488,156 @@ impl App {
             },
             body,
             action: Action::Remove {
-                repo,
-                wt,
-                force,
+                removals,
                 branch: with_branch,
             },
         });
+    }
+
+    /// The dialog for a whole marking: what goes, worst first, and what does not.
+    fn ask_remove_marked(&mut self, with_branch: bool) {
+        const LISTED: usize = 8;
+
+        let mut going: Vec<(usize, usize)> = Vec::new();
+        let mut refused: Vec<(String, String)> = Vec::new();
+        for (ri, wi) in self.marked_worktrees() {
+            let w = &self.repos[ri].worktrees[wi];
+            match removable(w) {
+                Ok(()) => going.push((ri, wi)),
+                Err(reason) => refused.push((w.label(), reason)),
+            }
+        }
+
+        // Worst first: whoever is about to answer this reads the top of the list.
+        going.sort_by(|&(ar, aw), &(br, bw)| {
+            let a = &self.repos[ar].worktrees[aw];
+            let b = &self.repos[br].worktrees[bw];
+            b.salvage()
+                .cmp(&a.salvage())
+                .then_with(|| b.changed_files().cmp(&a.changed_files()))
+                .then_with(|| b.unpushed().cmp(&a.unpushed()))
+                .then_with(|| a.label().cmp(&b.label()))
+        });
+
+        if going.is_empty() {
+            let why = match refused.len() {
+                0 => "Nothing is marked".to_string(),
+                1 => format!(
+                    "The only marked worktree cannot be removed: {}",
+                    refused[0].1
+                ),
+                n => format!("None of the {n} marked worktrees can be removed"),
+            };
+            self.say(why, Tone::Warn);
+            return;
+        }
+
+        let mut body = Vec::new();
+        for &(ri, wi) in going.iter().take(LISTED) {
+            let w = &self.repos[ri].worktrees[wi];
+            let tone = match w.salvage() {
+                Salvage::Nothing => Tone::Good,
+                Salvage::Commits => Tone::Warn,
+                Salvage::Uncommitted => Tone::Bad,
+            };
+            body.push((
+                format!("{:<34}  {}", clip(&w.label(), 34), w.verdict()),
+                tone,
+            ));
+        }
+        if going.len() > LISTED {
+            body.push((format!("… and {} more", going.len() - LISTED), Tone::Info));
+        }
+
+        let forced: Vec<&(usize, usize)> = going
+            .iter()
+            .filter(|&&(ri, wi)| self.repos[ri].worktrees[wi].is_dirty())
+            .collect();
+        let files: u32 = going
+            .iter()
+            .map(|&(ri, wi)| self.repos[ri].worktrees[wi].changed_files())
+            .sum();
+        let commits: u32 = going
+            .iter()
+            .map(|&(ri, wi)| self.repos[ri].worktrees[wi].unpushed())
+            .sum();
+
+        body.push((String::new(), Tone::Info));
+        body.push((
+            format!(
+                "{} worktree{} across {} repositor{}",
+                going.len(),
+                if going.len() == 1 { "" } else { "s" },
+                repo_count(&going),
+                if repo_count(&going) == 1 { "y" } else { "ies" }
+            ),
+            Tone::Info,
+        ));
+        if !forced.is_empty() {
+            body.push((
+                format!(
+                    "{} hold{} uncommitted work — {} file{} destroyed, and git will only remove them with --force",
+                    forced.len(),
+                    if forced.len() == 1 { "s" } else { "" },
+                    files,
+                    if files == 1 { "" } else { "s" }
+                ),
+                Tone::Bad,
+            ));
+        }
+        if commits > 0 {
+            body.push((
+                format!(
+                    "{} commit{} exist{} nowhere else{}",
+                    commits,
+                    if commits == 1 { "" } else { "s" },
+                    if commits == 1 { "s" } else { "" },
+                    if with_branch {
+                        "; deleting the branches loses them"
+                    } else {
+                        "; the branches survive"
+                    }
+                ),
+                if with_branch { Tone::Bad } else { Tone::Warn },
+            ));
+        }
+        if files == 0 && commits == 0 {
+            body.push(("Nothing would be lost from any of them.".into(), Tone::Good));
+        }
+        for (label, reason) in refused.iter().take(4) {
+            body.push((format!("{label} is kept: {reason}"), Tone::Warn));
+        }
+        if refused.len() > 4 {
+            body.push((format!("… and {} more kept", refused.len() - 4), Tone::Warn));
+        }
+
+        let removals = going
+            .into_iter()
+            .map(|(ri, wi)| self.resolve(ri, wi))
+            .collect();
+        self.confirm = Some(Confirm {
+            title: if with_branch {
+                "Remove marked worktrees and their branches?".into()
+            } else {
+                "Remove marked worktrees?".into()
+            },
+            body,
+            action: Action::Remove {
+                removals,
+                branch: with_branch,
+            },
+        });
+    }
+
+    fn resolve(&self, repo: usize, wt: usize) -> Removal {
+        let w = &self.repos[repo].worktrees[wt];
+        Removal {
+            root: self.repos[repo].root.clone(),
+            path: w.path.clone(),
+            label: w.label(),
+            branch: w.branch.clone(),
+            force: w.is_dirty(),
+        }
     }
 
     pub fn ask_prune(&mut self) {
@@ -544,34 +673,86 @@ impl App {
             return;
         };
         match confirm.action {
-            Action::Remove {
-                repo,
-                wt,
-                force,
-                branch,
-            } => {
-                let root = self.repos[repo].root.clone();
-                let path = self.repos[repo].worktrees[wt].path.clone();
-                let label = self.repos[repo].worktrees[wt].label();
-                let path_arg = path.to_string_lossy().into_owned();
-                let mut args = vec!["worktree", "remove"];
-                if force {
-                    args.push("--force");
-                }
-                args.push(&path_arg);
-                match git::git_run(&root, &args) {
-                    Ok(_) => {
-                        let mut msg = format!("Removed {}", scan::shorten_home(&path));
-                        if branch {
-                            match git::git_run(&root, &["branch", "-D", &label]) {
-                                Ok(_) => msg.push_str(&format!(" and branch {label}")),
-                                Err(e) => msg.push_str(&format!(" — branch kept: {e}")),
+            Action::Remove { removals, branch } => {
+                let mut removed = 0usize;
+                let mut branches = 0usize;
+                let mut failures: Vec<String> = Vec::new();
+                let mut branch_failures: Vec<String> = Vec::new();
+                let mut roots: Vec<PathBuf> = Vec::new();
+
+                for r in &removals {
+                    roots.push(r.root.clone());
+                    let path_arg = r.path.to_string_lossy().into_owned();
+                    let mut args = vec!["worktree", "remove"];
+                    if r.force {
+                        args.push("--force");
+                    }
+                    args.push(&path_arg);
+                    // One failure must not strand the rest: a sweep that stops
+                    // half way leaves the marking and the disk disagreeing.
+                    match git::git_run(&r.root, &args) {
+                        Ok(_) => {
+                            removed += 1;
+                            self.marked.remove(&r.path);
+                            if let (true, Some(name)) = (branch, r.branch.as_ref()) {
+                                match git::git_run(&r.root, &["branch", "-D", name]) {
+                                    Ok(_) => branches += 1,
+                                    Err(e) => branch_failures.push(format!("{name}: {e}")),
+                                }
                             }
                         }
-                        self.say(msg, Tone::Good);
-                        self.refresh_repo(repo);
+                        Err(e) => failures.push(format!("{}: {e}", r.label)),
                     }
-                    Err(e) => self.say(format!("git worktree remove failed: {e}"), Tone::Bad),
+                }
+
+                // By root, not by index: refresh_repo re-sorts, so an index
+                // taken before the first refresh names a different repository
+                // by the second.
+                roots.sort_unstable();
+                roots.dedup();
+                for root in roots {
+                    if let Some(idx) = self.repos.iter().position(|r| r.root == root) {
+                        self.refresh_repo(idx);
+                    }
+                }
+                self.prune_marks();
+
+                let mut msg = match removed {
+                    0 => "Removed nothing".to_string(),
+                    1 => "Removed 1 worktree".to_string(),
+                    n => format!("Removed {n} worktrees"),
+                };
+                if branches > 0 {
+                    let plural = if branches == 1 { "" } else { "es" };
+                    msg.push_str(&format!(" and {branches} branch{plural}"));
+                }
+                // Kept apart on purpose: a branch that survived is not a
+                // worktree that survived, and reporting them as one number
+                // reads as though something was left on disk.
+                if !branch_failures.is_empty() {
+                    msg.push_str(&format!(
+                        " — {} branch{} kept: {}",
+                        branch_failures.len(),
+                        if branch_failures.len() == 1 { "" } else { "es" },
+                        branch_failures.join("; ")
+                    ));
+                }
+                if failures.is_empty() {
+                    let tone = if branch_failures.is_empty() {
+                        Tone::Good
+                    } else {
+                        Tone::Warn
+                    };
+                    self.say(msg, tone);
+                } else {
+                    self.say(
+                        format!(
+                            "{msg}; {} could not be removed — {}",
+                            failures.len(),
+                            failures.join("; ")
+                        ),
+                        Tone::Bad,
+                    );
                 }
             }
             Action::Prune { repo } => {
@@ -730,6 +911,47 @@ pub struct Totals {
     pub salvage: usize,
     pub stale: usize,
     pub safe: usize,
+}
+
+/// Why this worktree cannot be removed, if it cannot.
+fn removable(w: &git::Worktree) -> Result<(), String> {
+    if w.is_main {
+        return Err("it is the main checkout, which git will not remove".into());
+    }
+    if let Some(reason) = &w.locked {
+        return Err(format!("locked — {reason}"));
+    }
+    Ok(())
+}
+
+/// The one line that says what this removal costs.
+fn cost_line(w: &git::Worktree) -> (String, Tone) {
+    match w.salvage() {
+        Salvage::Nothing => ("Clean. Nothing would be lost.".into(), Tone::Good),
+        Salvage::Commits => (
+            format!(
+                "{} commit{} live only here. The branch survives; the checkout does not.",
+                w.unpushed(),
+                if w.unpushed() == 1 { "" } else { "s" }
+            ),
+            Tone::Warn,
+        ),
+        Salvage::Uncommitted => (
+            format!(
+                "{} uncommitted file{} will be destroyed.",
+                w.changed_files(),
+                if w.changed_files() == 1 { "" } else { "s" }
+            ),
+            Tone::Bad,
+        ),
+    }
+}
+
+fn repo_count(going: &[(usize, usize)]) -> usize {
+    let mut repos: Vec<usize> = going.iter().map(|&(r, _)| r).collect();
+    repos.sort_unstable();
+    repos.dedup();
+    repos.len()
 }
 
 fn clipboard(path: &Path) -> Result<(), String> {

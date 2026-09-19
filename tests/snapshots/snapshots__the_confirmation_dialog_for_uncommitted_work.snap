@@ -10,11 +10,11 @@ expression: "render(&mut app, 120, 20)"
 │ │ ● chore/clean       ╭ Remove worktree and branch? ─────────────────────────────────────────╮                       │
 │ │ ● (3head000)        │ /fixture/dirty                                                       │                       │
 │ │ ● feat/dirty        │ branch feat/dirty                                                    │s off main             │
-│ │ ✗ docs/gone         │ 2 uncommitted file(s) will be destroyed.                             │                       │
+│ │ ✗ docs/gone         │ 2 uncommitted files will be destroyed.                               │                       │
 │ │ ● fix/locked        │ Branch feat/dirty will be deleted too (git branch -D).               │                       │
 │                       │                                                                      │                       │
-│                       │  y  do it     n  cancel                                              │                       │
-│                       │                                                                      │acked)                 │
+│                       │                                                                      │                       │
+│                       │  y  do it     n  cancel                                              │acked)                 │
 │                       ╰──────────────────────────────────────────────────────────────────────╯                       │
 │                                                ││   ?? scratch.txt                                                   │
 │                                                ││                                                                    │

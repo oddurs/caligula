@@ -10,6 +10,7 @@ use ratatui::widgets::{Block, BorderType, Borders, Clear, Paragraph, Wrap};
 use crate::app::{App, Lens, Row, Tone};
 use crate::git::{self, Repo, Salvage, Staleness, Worktree};
 use crate::scan::shorten_home;
+use crate::text::{clip, truncate};
 
 const ACCENT: Color = Color::Cyan;
 const DIM: Color = Color::DarkGray;
@@ -805,6 +806,33 @@ fn footer(f: &mut Frame, area: Rect, app: &App) {
 
 // ------------------------------------------------------------------ overlays
 
+/// How many rows this line takes once wrapped, breaking on whitespace the way
+/// `Paragraph` does. Counting characters instead undercounts, because a word
+/// too long for the remaining space moves down whole.
+fn wrapped_rows(text: &str, width: usize) -> usize {
+    if width == 0 {
+        return 1;
+    }
+    let mut rows = 1;
+    let mut used = 0;
+    for word in text.split_whitespace() {
+        let w = word.chars().count();
+        let needed = if used == 0 { w } else { w + 1 };
+        if used + needed > width && used > 0 {
+            rows += 1;
+            used = w.min(width);
+        } else {
+            used += needed;
+        }
+        // A word longer than the line wraps within itself.
+        if w > width {
+            rows += (w - 1) / width;
+            used = w % width;
+        }
+    }
+    rows
+}
+
 fn popup(area: Rect, width: u16, height: u16) -> Rect {
     let w = width.min(area.width.saturating_sub(4));
     let h = height.min(area.height.saturating_sub(4));
@@ -827,8 +855,8 @@ fn help(f: &mut Frame, area: Rect) {
         ("esc", "clear the marking, then the filter"),
         ("PgUp / PgDn", "scroll the detail pane"),
         ("", ""),
-        ("d", "remove the worktree (asks first)"),
-        ("D", "remove the worktree and delete its branch"),
+        ("d", "remove the marking, or the row under the cursor"),
+        ("D", "the same, and delete the branches too"),
         ("p", "prune the repo's stale worktree records"),
         ("L", "lock or unlock the worktree"),
         ("", ""),
@@ -874,8 +902,20 @@ fn help(f: &mut Frame, area: Rect) {
 
 fn confirm(f: &mut Frame, area: Rect, app: &App) {
     let Some(c) = &app.confirm else { return };
-    let height = c.body.len() as u16 + 5;
-    let area = popup(area, 72, height);
+
+    // Body lines wrap, so counting them is not counting rows — and the popup is
+    // narrowed on a small terminal, so the width has to be settled before the
+    // height can be. Getting this wrong clips the body.
+    let width = 72.min(area.width.saturating_sub(4)).max(8);
+    let text_width = width.saturating_sub(4).max(1) as usize;
+    let rows: usize = c
+        .body
+        .iter()
+        .map(|(text, _)| wrapped_rows(text, text_width))
+        .sum();
+    let height = (rows as u16).saturating_add(5);
+
+    let area = popup(area, width, height);
     f.render_widget(Clear, area);
 
     let danger = c.body.iter().any(|(_, t)| *t == Tone::Bad);
@@ -894,7 +934,14 @@ fn confirm(f: &mut Frame, area: Rect, app: &App) {
     });
     f.render_widget(block, area);
 
-    let mut lines: Vec<Line> = c
+    // The answer row is placed, not appended: however the body wraps or is
+    // clipped, "how do I say no" stays on screen.
+    let split = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints([Constraint::Min(1), Constraint::Length(1)])
+        .split(inner);
+
+    let lines: Vec<Line> = c
         .body
         .iter()
         .map(|(text, tone)| {
@@ -904,57 +951,22 @@ fn confirm(f: &mut Frame, area: Rect, app: &App) {
             ))
         })
         .collect();
-    lines.push(Line::raw(""));
-    lines.push(Line::from(vec![
-        Span::styled(
-            " y ",
-            Style::default()
-                .fg(Color::Black)
-                .bg(border)
-                .add_modifier(Modifier::BOLD),
-        ),
-        Span::styled(" do it    ", Style::default().fg(TEXT)),
-        Span::styled(" n ", Style::default().fg(Color::Black).bg(Color::Gray)),
-        Span::styled(" cancel", Style::default().fg(TEXT)),
-    ]));
-    f.render_widget(Paragraph::new(lines).wrap(Wrap { trim: false }), inner);
-}
-
-/// Head-keeping truncation, for prose like commit subjects.
-fn clip(s: &str, max: usize) -> String {
-    let count = s.chars().count();
-    if count <= max {
-        return s.to_string();
-    }
-    if max <= 1 {
-        return "…".into();
-    }
-    let mut out: String = s.chars().take(max - 1).collect();
-    out.push('…');
-    out
-}
-
-fn truncate(s: &str, max: usize) -> String {
-    if max == 0 {
-        return String::new();
-    }
-    let count = s.chars().count();
-    if count <= max {
-        return s.to_string();
-    }
-    if max <= 1 {
-        return "…".into();
-    }
-    // Branch names carry their meaning at the end ("feat/0041-attach"), so keep
-    // the tail when the head has to go.
-    let keep = max - 1;
-    let head = keep / 3;
-    let tail = keep - head;
-    let chars: Vec<char> = s.chars().collect();
-    let mut out: String = chars[..head].iter().collect();
-    out.push('…');
-    out.extend(&chars[count - tail..]);
-    out
+    f.render_widget(Paragraph::new(lines).wrap(Wrap { trim: false }), split[0]);
+    f.render_widget(
+        Paragraph::new(Line::from(vec![
+            Span::styled(
+                " y ",
+                Style::default()
+                    .fg(Color::Black)
+                    .bg(border)
+                    .add_modifier(Modifier::BOLD),
+            ),
+            Span::styled(" do it    ", Style::default().fg(TEXT)),
+            Span::styled(" n ", Style::default().fg(Color::Black).bg(Color::Gray)),
+            Span::styled(" cancel", Style::default().fg(TEXT)),
+        ])),
+        split[1],
+    );
 }
 
 #[cfg(test)]
@@ -962,22 +974,19 @@ mod tests {
     use super::*;
     use crate::git::{now, test_worktree};
 
-    #[test]
-    fn truncate_keeps_the_tail() {
-        assert_eq!(truncate("feat/0041-attach", 30), "feat/0041-attach");
-        assert_eq!(truncate("feat/0041-attach", 10).chars().count(), 10);
-        assert!(truncate("feat/0041-attach", 10).ends_with("attach"));
-        assert_eq!(truncate("abc", 0), "");
-    }
-
-    #[test]
-    fn clip_keeps_the_head() {
-        assert!(clip("fix: a long commit subject", 12).starts_with("fix: a long"));
-        assert_eq!(clip("fix: a long commit subject", 12).chars().count(), 12);
-    }
-
     /// The age column once fell off the right-hand edge: the row was built one
     /// column wider than the pane, and the overflow was silently truncated.
+    #[test]
+    fn wrapping_is_counted_by_words_not_characters() {
+        assert_eq!(wrapped_rows("", 10), 1);
+        assert_eq!(wrapped_rows("short", 10), 1);
+        // Breaking on whitespace: "a bb ccc" fits, one more word does not.
+        assert_eq!(wrapped_rows("aaaa bbbb", 9), 1);
+        assert_eq!(wrapped_rows("aaaa bbbb", 8), 2);
+        // A word longer than the line wraps inside itself.
+        assert_eq!(wrapped_rows("aaaaaaaaaaaa", 5), 3);
+    }
+
     #[test]
     fn worktree_rows_are_exactly_as_wide_as_the_pane() {
         for width in [20u16, 30, 42, 58, 80, 120] {

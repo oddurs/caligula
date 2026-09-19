@@ -62,9 +62,11 @@ fn write(path: &Path, contents: &str) {
     std::fs::write(path, contents).expect("the fixture directory is writable");
 }
 
-/// Build the repository. The returned directory deletes itself when dropped, so
-/// hold on to it for as long as the probed model is in use.
-pub fn build() -> (TempDir, Repo) {
+/// Build the repository as it really is on disk.
+///
+/// The returned directory deletes itself when dropped, so hold on to it for as
+/// long as the probed model is in use.
+pub fn build_live() -> (TempDir, Repo) {
     let tmp = TempDir::new().expect("a temporary directory");
     let root = tmp.path().join("repo");
     std::fs::create_dir_all(&root).expect("the fixture root");
@@ -178,9 +180,23 @@ pub fn build() -> (TempDir, Repo) {
     );
     std::fs::remove_dir_all(wt("gone")).expect("the fixture worktree is removable");
 
-    let mut repo = git::probe_repo(&root).expect("the fixture repository probes");
+    let repo = git::probe_repo(&root).expect("the fixture repository probes");
+    (tmp, repo)
+}
+
+/// The same repository, with paths, hashes and times replaced by fixed values.
+///
+/// Anything that renders wants this. Anything that *acts* — a removal, a prune —
+/// needs [`build_live`], because a normalised path names nothing on disk.
+pub fn build() -> (TempDir, Repo) {
+    let (tmp, mut repo) = build_live();
     normalize(&mut repo);
     (tmp, repo)
+}
+
+/// Re-probe after an action, so a test asserts on what git now says.
+pub fn reprobe(root: &Path) -> Repo {
+    git::probe_repo(root).expect("the fixture repository still probes")
 }
 
 /// Replace everything that changes between runs with a fixed stand-in.

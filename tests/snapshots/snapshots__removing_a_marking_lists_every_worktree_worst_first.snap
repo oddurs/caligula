@@ -1,18 +1,22 @@
 ---
 source: tests/snapshots.rs
-expression: "render(&mut app, 120, 20)"
+expression: "render(&mut app, 120, 24)"
 ---
  caligula  1 repo · 7 worktrees (6 linked) · 1 dirty · 4 stale · 4 safe to remove
 ╭ sort activity · lens all ──────────────────────╮╭────────────────────────────────────────────────────────────────────╮
-│ ▾ fixture                             6wt 1●   ││ chore/clean  recent · last touched 9d                              │
-│ │ ◆ main                                   2h  ││ /fixture/clean                                                     │
-│ │ ● feat/ahead                       ↑1    1d  ││                                                                    │
-│ │ ● chore/clean                            9d  ││ ┃ Nothing to salvage — safe to remove                              │
-│ │ ● (3head000)        ╭ Remove worktree? ────────────────────────────────────────────────────╮                       │
-│ │ ● feat/dirty        │ /fixture/clean                                                       │ts off main            │
-│ │ ✗ docs/gone         │ branch chore/clean                                                   │                       │
-│ │ ● fix/locked        │ Clean. Nothing would be lost.                                        │                       │
+│ ▾ fixture                             6wt 1●   ││ main  active · last touched 2h  main checkout                      │
+│ │ ◆ main                                   2h  ││ /fixture/repo                                                      │
+│▌│ ● feat/ahead                       ↑1    1d  ││                                                                    │
+│▌│ ● chore/clean       ╭ Remove marked worktrees? ────────────────────────────────────────────╮                       │
+│ │ ● (3head000)        │ feat/dirty                          2 uncommitted files              │                       │
+│▌│ ● feat/dirty        │ feat/ahead                          1 off-base commit                │main                   │
+│ │ ✗ docs/gone         │ chore/clean                         Nothing to salvage — safe to     │                       │
+│ │ ● fix/locked        │ remove                                                               │                       │
 │                       │                                                                      │                       │
+│                       │ 3 worktrees across 1 repository                                      │                       │
+│                       │ 1 holds uncommitted work — 2 files destroyed, and git will only      │                       │
+│                       │ remove them with --force                                             │                       │
+│                       │ 1 commit exists nowhere else; the branches survive                   │                       │
 │                       │                                                                      │                       │
 │                       │  y  do it     n  cancel                                              │                       │
 │                       ╰──────────────────────────────────────────────────────────────────────╯                       │
@@ -21,4 +25,4 @@ expression: "render(&mut app, 120, 20)"
 │                                                ││                                                                    │
 │                                                ││                                                                    │
 ╰────────────────────────────────────────────────╯╰────────────────────────────────────────────────────────────────────╯
- j/k move  space mark  ←/→ fold  d remove  D +branch  p prune  c shell  f lens  s sort  / find  ? help
+ 3 marked  2 uncommitted files · 1 commit only there   esc clears · d still removes the row under the cursor
