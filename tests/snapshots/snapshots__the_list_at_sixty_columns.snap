@@ -13,12 +13,12 @@ expression: "render(&mut app, 60, 20)"
 │ │ ● fe…/dirty       2     90d  ││ base      main         │
 │ │ ✗ docs/gone          !   1y  ││ worktrees 7 (6 linked) │
 │ │ ● fi…locked          L   1y  ││ dirty     1            │
+│                                ││ stashes   1 on no live │
+│                                ││ branch — nothing else  │
+│                                ││ will surface it        │
 │                                ││                        │
 │                                ││ Worktrees              │
 │                                ││   ◆ main            2h │
 │                                ││   ● feat/ahead      1d │
-│                                ││   ● chore/clean     9d │
-│                                ││   ● (3head000)     40d │
-│                                ││   ● feat/dirty     90d │
 ╰────────────────────────────────╯╰────────────────────────╯
  j/k move  space mark  a sweep  ←/→ fold  d remove  D +branc

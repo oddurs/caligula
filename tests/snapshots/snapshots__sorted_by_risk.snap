@@ -11,14 +11,14 @@ expression: "render(&mut app, 120, 20)"
 │ │ ✗ docs/gone                          !   1y  ││ base      main                                                     │
 │ │ ● feat/ahead              1              1d  ││ worktrees 7 (6 linked)                                             │
 │ │ ● chore/clean                            9d  ││ dirty     1                                                        │
-│ │ ● (3head000)                            40d  ││                                                                    │
-│ │ ● fix/locked                         L   1y  ││ Worktrees                                                          │
+│ │ ● (3head000)                            40d  ││ stashes   1 on no live branch — nothing else will surface it       │
+│ │ ● fix/locked                         L   1y  ││                                                                    │
+│                                                ││ Worktrees                                                          │
 │                                                ││   ◆ main                Main checkout — nothing to salvage      2h │
 │                                                ││   ● feat/dirty          1 modified file, 1 untracked file      90d │
 │                                                ││   ✗ docs/gone           Git cannot read this worktree — it m…   1y │
 │                                                ││   ● feat/ahead          1 off-base commit                       1d │
 │                                                ││   ● chore/clean         Nothing to salvage — safe to remove     9d │
 │                                                ││   ● (3head000)          Nothing to salvage — safe to remove    40d │
-│                                                ││   ● fix/locked          Locked: in use by a build — nothing …   1y │
 ╰────────────────────────────────────────────────╯╰────────────────────────────────────────────────────────────────────╯
  j/k move  space mark  a sweep  ←/→ fold  d remove  D +branch  p prune  c shell  f lens  s sort  / find  ? help

@@ -12,6 +12,10 @@ use crate::git::{self, Repo, Salvage, Staleness, Worktree};
 use crate::scan::shorten_home;
 use crate::text::{clip, truncate};
 
+/// As many stashes as are worth reading before the rest of the pane is pushed
+/// off the screen, matching the caps on the file and commit lists.
+const STASH_CAP: usize = 20;
+
 const ACCENT: Color = Color::Cyan;
 const DIM: Color = Color::DarkGray;
 const TEXT: Color = Color::Gray;
@@ -698,22 +702,35 @@ fn worktree_detail<'a>(repo: &'a Repo, wt: &'a Worktree, now: u64, width: u16) -
         format!("{}  {}", repo.name, shorten_home(&repo.root)),
         TEXT,
     ));
-    if repo.stashes > 0 {
-        out.push(kv(
-            "stash",
-            format!(
-                "{} entr{} (shared across this repo)",
-                repo.stashes,
-                if repo.stashes == 1 { "y" } else { "ies" }
-            ),
-            Color::Yellow,
-        ));
-    }
-    if let Some(reason) = &wt.locked {
-        out.push(kv("locked", reason.clone(), Color::Yellow));
-    }
-    if let Some(reason) = &wt.prunable {
-        out.push(kv("prunable", reason.clone(), Color::Yellow));
+    // Below the kv block, not inside it: a `locked` line rendered after the
+    // heading read as part of the stash list.
+    if !wt.stashes.is_empty() {
+        out.extend(section(format!(
+            "Stashes on this branch ({})",
+            wt.stashes.len()
+        )));
+        for stash in wt.stashes.iter().take(STASH_CAP) {
+            out.push(Line::from(vec![
+                Span::styled(
+                    format!("  {} ", git::short_sha(&stash.sha)),
+                    Style::default().fg(Color::Magenta),
+                ),
+                Span::styled(
+                    format!("{:>4}  ", git::ago(now.saturating_sub(stash.time))),
+                    Style::default().fg(DIM),
+                ),
+                Span::styled(
+                    clip(&stash.message, width.saturating_sub(20) as usize),
+                    Style::default().fg(TEXT),
+                ),
+            ]));
+        }
+        if wt.stashes.len() > STASH_CAP {
+            out.push(Line::from(Span::styled(
+                format!("  … {} more", wt.stashes.len() - STASH_CAP),
+                Style::default().fg(DIM),
+            )));
+        }
     }
 
     if wt.changed_files() > 0 {
@@ -837,10 +854,21 @@ fn repo_detail<'a>(repo: &'a Repo, now: u64, width: u16) -> Vec<Line<'a>> {
         dirty.to_string(),
         if dirty > 0 { Color::Red } else { Color::Green },
     ));
-    if repo.stashes > 0 {
-        out.push(kv("stash", repo.stashes.to_string(), Color::Yellow));
+    if !repo.stashes.is_empty() {
+        out.push(kv(
+            "stashes",
+            format!(
+                "{} on no live branch — nothing else will surface {}",
+                repo.stashes.len(),
+                if repo.stashes.len() == 1 {
+                    "it"
+                } else {
+                    "them"
+                }
+            ),
+            Color::Yellow,
+        ));
     }
-
     out.extend(section("Worktrees"));
 
     // Laid out from the width given, like the list rows, rather than from fixed

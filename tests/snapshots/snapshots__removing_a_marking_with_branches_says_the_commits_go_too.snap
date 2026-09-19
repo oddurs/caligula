@@ -11,7 +11,7 @@ expression: "render(&mut app, 120, 24)"
 │ │ ● chore/clean       │ feat/dirty                          1 modified file, 1 untracked     │                       │
 │ │ ● (3head000)        │ file                                                                 │ read it               │
 │▌│ ● feat/dirty        │ feat/ahead                          1 off-base commit                │                       │
-│ │ ✗ docs/gone         │                                                                      │ location              │
+│ │ ✗ docs/gone         │                                                                      │                       │
 │ │ ● fix/locked        │ 2 worktrees across 1 repository                                      │                       │
 │                       │ 1 holds uncommitted work — 2 files destroyed, and git will only      │                       │
 │                       │ remove them with --force                                             │                       │

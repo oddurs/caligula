@@ -154,6 +154,34 @@ pub fn build_live() -> (TempDir, Repo) {
         ],
     );
 
+    // A stash on a branch a worktree still holds, and one on a branch nothing
+    // holds any more: the two cases the detail panes report differently.
+    write(&wt("clean").join("README.md"), "fixture\nstashed\n");
+    git_in(
+        &wt("clean"),
+        &["stash", "push", "-qm", "a stash worth finding"],
+    );
+    git_in(&root, &["branch", "orphan/branch"]);
+    git_in(
+        &root,
+        &[
+            "worktree",
+            "add",
+            "-q",
+            wt("orphan").to_str().unwrap(),
+            "orphan/branch",
+        ],
+    );
+    write(&wt("orphan").join("README.md"), "fixture\norphaned\n");
+    git_in(
+        &wt("orphan"),
+        &["stash", "push", "-qm", "a stash nobody will find"],
+    );
+    git_in(
+        &root,
+        &["worktree", "remove", wt("orphan").to_str().unwrap()],
+    );
+
     // Detached: no branch at all, so the label falls back to the short sha.
     git_in(
         &root,
@@ -227,6 +255,11 @@ pub fn normalize(repo: &mut Repo) {
         700 * DAY,
     ];
 
+    for (i, stash) in repo.stashes.iter_mut().enumerate() {
+        stash.sha = format!("{:0<40}", format!("r{i}"));
+        stash.time = NOW - ((i as u64 + 1) * DAY);
+    }
+
     for (i, wt) in repo.worktrees.iter_mut().enumerate() {
         let tail = wt
             .path
@@ -248,6 +281,10 @@ pub fn normalize(repo: &mut Repo) {
         for (j, commit) in wt.recent.iter_mut().enumerate() {
             commit.sha = format!("{:0<40}", format!("{}r{}", i, j));
             commit.time = wt.last_touched - (j as u64 * DAY);
+        }
+        for (j, stash) in wt.stashes.iter_mut().enumerate() {
+            stash.sha = format!("{:0<40}", format!("{}s{}", i, j));
+            stash.time = wt.last_touched - (j as u64 * DAY);
         }
         for (j, commit) in wt.unmerged.iter_mut().enumerate() {
             commit.sha = format!("{:0<40}", format!("{}u{}", i, j));

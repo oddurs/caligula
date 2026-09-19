@@ -11,6 +11,7 @@ expression: "render(&mut app, 120, 20)"
 │                                                ││ base      main                                                     │
 │                                                ││ worktrees 7 (6 linked)                                             │
 │                                                ││ dirty     1                                                        │
+│                                                ││ stashes   1 on no live branch — nothing else will surface it       │
 │                                                ││                                                                    │
 │                                                ││ Worktrees                                                          │
 │                                                ││   ◆ main                Main checkout — nothing to salvage      2h │
@@ -19,6 +20,5 @@ expression: "render(&mut app, 120, 20)"
 │                                                ││   ● (3head000)          Nothing to salvage — safe to remove    40d │
 │                                                ││   ● feat/dirty          1 modified file, 1 untracked file      90d │
 │                                                ││   ✗ docs/gone           Git cannot read this worktree — it m…   1y │
-│                                                ││   ● fix/locked          Locked: in use by a build — nothing …   1y │
 ╰────────────────────────────────────────────────╯╰────────────────────────────────────────────────────────────────────╯
  1 marked  filter chore  nothing to salvage in any of them   d removes them · esc clears   Marked 1 safe to remove in fi

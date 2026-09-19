@@ -17,8 +17,8 @@ expression: "render(&mut app, 120, 20)"
 │                       │  y  do it     n  cancel                                              │                       │
 │                       ╰──────────────────────────────────────────────────────────────────────╯                       │
 │                                                ││                                                                    │
-│                                                ││                                                                    │
-│                                                ││                                                                    │
+│                                                ││ Recent commits                                                     │
+│                                                ││   2r000000   9d  init: the first commit                            │
 │                                                ││                                                                    │
 ╰────────────────────────────────────────────────╯╰────────────────────────────────────────────────────────────────────╯
  j/k move  space mark  a sweep  ←/→ fold  d remove  D +branch  p prune  c shell  f lens  s sort  / find  ? help

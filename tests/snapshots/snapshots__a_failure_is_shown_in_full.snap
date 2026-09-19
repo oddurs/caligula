@@ -11,14 +11,14 @@ expression: "render(&mut app, 120, 20)"
 │ │ ● chore/clean    ╭ Could not remove the worktree ─────────────────────────────────────────────╮                    │
 │ │ ● (3head000)     │ git -C ~/Code/quarry worktree remove ~/Code/.worktrees/quarry/feat/x       │                    │
 │ │ ● feat/dirty     │ fatal: '/Users/x/Code/.worktrees/quarry/feat/x' contains modified or       │                    │
-│ │ ✗ docs/gone      │ untracked files, use --force to delete it                                  │                    │
+│ │ ✗ docs/gone      │ untracked files, use --force to delete it                                  │ll surface it       │
 │ │ ● fix/locked     │                                                                            │                    │
-│                    │                                                                            │ to salvage      2h │
-│                    │ any key dismisses                                                          │                 1d │
-│                    ╰────────────────────────────────────────────────────────────────────────────╯fe to remove     9d │
+│                    │                                                                            │                    │
+│                    │ any key dismisses                                                          │ to salvage      2h │
+│                    ╰────────────────────────────────────────────────────────────────────────────╯                 1d │
+│                                                ││   ● chore/clean         Nothing to salvage — safe to remove     9d │
 │                                                ││   ● (3head000)          Nothing to salvage — safe to remove    40d │
 │                                                ││   ● feat/dirty          1 modified file, 1 untracked file      90d │
 │                                                ││   ✗ docs/gone           Git cannot read this worktree — it m…   1y │
-│                                                ││   ● fix/locked          Locked: in use by a build — nothing …   1y │
 ╰────────────────────────────────────────────────╯╰────────────────────────────────────────────────────────────────────╯
  j/k move  space mark  a sweep  ←/→ fold  d remove  D +branch  p prune  c shell  f lens  s sort  / find  ? help

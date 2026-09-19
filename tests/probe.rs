@@ -128,3 +128,34 @@ fn a_detached_worktree_is_labelled_by_its_commit() {
     // normalize() rewrites the head, so the label is the first eight of that.
     assert_eq!(wt.label(), format!("({})", &wt.head[..8]));
 }
+
+#[test]
+fn a_stash_is_attributed_to_the_worktree_holding_its_branch() {
+    let (_tmp, repo) = fixture::build();
+    let wt = find(&repo, "chore/clean");
+    assert_eq!(wt.stashes.len(), 1, "the stash was made on this branch");
+    assert_eq!(wt.stashes[0].message, "a stash worth finding");
+    assert_eq!(wt.stashes[0].branch.as_deref(), Some("chore/clean"));
+
+    for other in repo.worktrees.iter().filter(|w| w.label() != "chore/clean") {
+        assert!(
+            other.stashes.is_empty(),
+            "{} should not claim another branch's stash",
+            other.label()
+        );
+    }
+}
+
+#[test]
+fn a_stash_on_no_live_branch_stays_with_the_repository() {
+    let (_tmp, repo) = fixture::build();
+    let messages: Vec<&str> = repo.stashes.iter().map(|s| s.message.as_str()).collect();
+    assert!(
+        messages.contains(&"a stash nobody will find"),
+        "a stash whose worktree is gone is exactly the kind that needs surfacing: {messages:?}"
+    );
+    assert!(
+        !messages.contains(&"a stash worth finding"),
+        "one a worktree claims is not also the repository's: {messages:?}"
+    );
+}

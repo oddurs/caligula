@@ -13,10 +13,10 @@ expression: "render(&mut app, 120, 20)"
 │ │ ● feat/dirty                      2     90d  ││ head      6c000000  init: the first commit                         │
 │ │ ✗ docs/gone                          !   1y  ││           Fixture · 1y ago                                         │
 │▌│ ● fix/locked                         L   1y  ││ repo      fixture  /fixture/repo                                   │
-│                                                ││ locked    in use by a build                                        │
 │                                                ││                                                                    │
 │                                                ││ Recent commits                                                     │
 │                                                ││   6r000000   1y  init: the first commit                            │
+│                                                ││                                                                    │
 │                                                ││                                                                    │
 │                                                ││                                                                    │
 │                                                ││                                                                    │

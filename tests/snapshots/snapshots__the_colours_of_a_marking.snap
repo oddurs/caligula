@@ -11,7 +11,7 @@ expression: "render_palette(&mut app, 120, 20)"
  6   DarkGray Cyan Gray Cyan DarkGray
  7   DarkGray Yellow Gray Yellow DarkGray Gray DarkGray
  8   DarkGray Cyan DarkGray Red White Red DarkGray Gray DarkGray
- 9 * DarkGray Red Gray Yellow Red DarkGray Yellow DarkGray
+ 9 * DarkGray Red Gray Yellow Red DarkGray
 10   DarkGray Red Gray Yellow Red DarkGray
 11   DarkGray
 12   DarkGray

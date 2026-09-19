@@ -15,7 +15,7 @@ pub struct Repo {
     pub root: PathBuf,
     pub remote: Option<String>,
     pub default_base: Option<String>,
-    pub stashes: usize,
+    pub stashes: Vec<Stash>,
     pub worktrees: Vec<Worktree>,
 }
 
@@ -97,6 +97,13 @@ pub struct Worktree {
     pub tracked: u32,
     pub files: Vec<FileChange>,
 
+    /// Stashes made on this worktree's branch.
+    ///
+    /// Shared refs, not the worktree's own: `refs/stash` lives in the common
+    /// dir, so removing the worktree leaves these behind. They are attributed
+    /// here because standing in front of a worktree is when you need to know
+    /// one of them is yours.
+    pub stashes: Vec<Stash>,
     pub last_commit: Option<Commit>,
     /// The last few commits, for context when nothing is unmerged.
     pub recent: Vec<Commit>,
@@ -107,6 +114,24 @@ pub struct Worktree {
     pub last_touched: u64,
     /// Set when git could not read the worktree at all (deleted on disk, etc).
     pub broken: bool,
+}
+
+/// One stash entry, and the branch it was made on.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct Stash {
+    /// `stash@{0}`.
+    ///
+    /// Positional, and it shifts on every push and drop — so it is shown next
+    /// to the sha rather than on its own. Copying an index off a display that
+    /// has gone stale applies a different stash than the one that was read.
+    pub id: String,
+    /// The stash commit. Unlike the index, this does not move.
+    pub sha: String,
+    /// The branch HEAD was on. `None` for a stash made on a detached head,
+    /// which git records as `(no branch)`.
+    pub branch: Option<String>,
+    pub message: String,
+    pub time: u64,
 }
 
 #[derive(Clone)]
@@ -439,14 +464,40 @@ pub fn probe_repo(member: &Path) -> Option<Repo> {
     let name = repo_name(&root, &common);
     let remote = git(&root, &["remote", "get-url", "origin"]).map(|s| s.trim().to_string());
     let base = default_base(&root);
-    let stashes = git(&root, &["stash", "list"])
-        .map(|s| s.lines().filter(|l| !l.trim().is_empty()).count())
-        .unwrap_or(0);
+    let stashes = git(
+        &root,
+        &["stash", "list", "--format=%gd%x1f%gs%x1f%ct%x1f%H"],
+    )
+    .map(|out| parse_stashes(&out))
+    .unwrap_or_default();
 
-    let worktrees = entries
+    let mut worktrees: Vec<Worktree> = entries
         .into_iter()
         .enumerate()
         .map(|(i, e)| probe_worktree(e, i == 0, base.as_deref()))
+        .collect();
+    for wt in &mut worktrees {
+        if let Some(branch) = &wt.branch {
+            wt.stashes = stashes
+                .iter()
+                .filter(|s| s.branch.as_deref() == Some(branch.as_str()))
+                .cloned()
+                .collect();
+        }
+    }
+    // What is left belongs to the repository: a stash made on a branch that no
+    // worktree holds any more is exactly the kind nobody finds again.
+    let claimed: Vec<&str> = worktrees
+        .iter()
+        .filter_map(|w| w.branch.as_deref())
+        .collect();
+    let orphaned: Vec<Stash> = stashes
+        .iter()
+        .filter(|s| match &s.branch {
+            Some(b) => !claimed.contains(&b.as_str()),
+            None => true,
+        })
+        .cloned()
         .collect();
 
     Some(Repo {
@@ -455,7 +506,7 @@ pub fn probe_repo(member: &Path) -> Option<Repo> {
         root,
         remote,
         default_base: base,
-        stashes,
+        stashes: orphaned,
         worktrees,
     })
 }
@@ -590,6 +641,7 @@ fn probe_worktree(e: Entry, is_main: bool, base: Option<&str>) -> Worktree {
         conflicts: 0,
         tracked: 0,
         files: Vec::new(),
+        stashes: Vec::new(),
         last_commit: None,
         recent: Vec::new(),
         unmerged: Vec::new(),
@@ -769,6 +821,48 @@ fn push_file(wt: &mut Worktree, code: &str, path: &str, cap: usize) {
     }
 }
 
+/// `git stash list --format=%gd%x1f%gs%x1f%ct%x1f%H`.
+///
+/// The subject is `WIP on <branch>: …` for an automatic stash and
+/// `On <branch>: <message>` for `git stash push -m`. Splitting on the first
+/// colon is safe: git forbids a colon in a ref name, so the first one always
+/// ends the branch.
+fn parse_stashes(out: &str) -> Vec<Stash> {
+    out.lines()
+        .filter(|l| !l.trim().is_empty())
+        .filter_map(|line| {
+            let mut fields = line.split('\x1f');
+            let id = fields.next()?.to_string();
+            let subject = fields.next()?;
+            let time = fields.next().and_then(|t| t.parse().ok()).unwrap_or(0);
+
+            let sha = fields.next().unwrap_or_default().to_string();
+
+            // Only a subject git wrote carries a branch. `git stash store`
+            // takes an arbitrary message, and splitting that on its first colon
+            // invents a branch out of the first word — "wip: refactor the
+            // parser" became branch `wip`, message `refactor the parser`.
+            let prefixed = subject
+                .strip_prefix("WIP on ")
+                .or_else(|| subject.strip_prefix("On "));
+            let (branch, message) = match prefixed.and_then(|rest| rest.split_once(": ")) {
+                Some((branch, message)) => (
+                    (branch != "(no branch)").then(|| branch.to_string()),
+                    message.to_string(),
+                ),
+                None => (None, subject.to_string()),
+            };
+            Some(Stash {
+                id,
+                sha,
+                branch,
+                message,
+                time,
+            })
+        })
+        .collect()
+}
+
 fn parse_commits(out: &str) -> Vec<Commit> {
     out.lines()
         .filter(|l| !l.trim().is_empty())
@@ -834,6 +928,7 @@ pub(crate) fn test_worktree(label: &str) -> Worktree {
         conflicts: 0,
         tracked: 0,
         files: Vec::new(),
+        stashes: Vec::new(),
         last_commit: None,
         recent: Vec::new(),
         unmerged: Vec::new(),
@@ -864,7 +959,7 @@ pub(crate) fn test_repo(name: &str, linked: usize) -> Repo {
         root: PathBuf::from(format!("/tmp/{name}")),
         remote: None,
         default_base: Some("origin/main".into()),
-        stashes: 0,
+        stashes: Vec::new(),
         worktrees,
     }
 }
@@ -1076,6 +1171,68 @@ mod tests {
                 "{key} is still inherited"
             );
         }
+    }
+
+    /// Shapes taken from real `git stash list` output.
+    #[test]
+    fn parses_the_shapes_git_actually_writes() {
+        let out = concat!(
+            "stash@{0}\u{1f}WIP on worktree-agent-aba0f691: e08ba70 feat: a thing\u{1f}1775087388\u{1f}aaa\n",
+            "stash@{1}\u{1f}On feat/x: work in progress\u{1f}1775087386\u{1f}bbb\n",
+            "stash@{2}\u{1f}WIP on (no branch): 242b353 feat: on a detached head\u{1f}1774221743\u{1f}ccc\n",
+            "stash@{3}\u{1f}On research/verification: c8aa59f a slash in the branch\u{1f}1774141909\u{1f}ddd\n",
+            "stash@{4}\u{1f}wip: refactor the parser\u{1f}1774141900\u{1f}eee\n",
+        );
+        let stashes = parse_stashes(out);
+        assert_eq!(stashes.len(), 5);
+
+        assert_eq!(stashes[0].id, "stash@{0}");
+        assert_eq!(
+            stashes[0].branch.as_deref(),
+            Some("worktree-agent-aba0f691")
+        );
+        assert_eq!(stashes[0].message, "e08ba70 feat: a thing");
+        assert_eq!(stashes[0].time, 1_775_087_388);
+
+        assert_eq!(stashes[1].branch.as_deref(), Some("feat/x"));
+        assert_eq!(stashes[1].message, "work in progress");
+
+        assert_eq!(
+            stashes[2].branch, None,
+            "a stash made on a detached head belongs to no branch"
+        );
+
+        assert_eq!(
+            stashes[3].branch.as_deref(),
+            Some("research/verification"),
+            "a slash is ordinary in a ref name; only the colon ends it"
+        );
+
+        // `git stash store` takes any message. Splitting one on its first colon
+        // invents a branch out of its first word and eats it from the message.
+        assert_eq!(stashes[4].branch, None);
+        assert_eq!(stashes[4].message, "wip: refactor the parser");
+        assert_eq!(stashes[4].sha, "eee");
+    }
+
+    #[test]
+    fn a_stash_on_a_branch_is_that_worktree_s_stash() {
+        let mut wt = test_worktree("feat/x");
+        wt.branch = Some("feat/x".into());
+        assert!(wt.stashes.is_empty());
+        wt.stashes.push(Stash {
+            id: "stash@{0}".into(),
+            sha: "abc1234".into(),
+            branch: Some("feat/x".into()),
+            message: "work in progress".into(),
+            time: now(),
+        });
+        // Removing the worktree does not remove the stash — refs/stash lives in
+        // the common dir — so this does not change what would be lost.
+        assert!(
+            wt.is_safe_to_remove(),
+            "the stash survives removal; it is surfaced, not counted as loss"
+        );
     }
 
     #[test]

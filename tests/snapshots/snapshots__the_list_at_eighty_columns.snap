@@ -12,13 +12,13 @@ expression: "render(&mut app, 80, 20)"
 │ │ ● (3…ad000)             40d  ││ base      main                             │
 │ │ ● fe…/dirty       2     90d  ││ worktrees 7 (6 linked)                     │
 │ │ ✗ docs/gone          !   1y  ││ dirty     1                                │
-│ │ ● fi…locked          L   1y  ││                                            │
+│ │ ● fi…locked          L   1y  ││ stashes   1 on no live branch — nothing    │
+│                                ││ else will surface it                       │
+│                                ││                                            │
 │                                ││ Worktrees                                  │
 │                                ││   ◆ main        Main checkout — noth…   2h │
 │                                ││   ● feat/ahead  1 off-base commit       1d │
 │                                ││   ● cho…/clean  Nothing to salvage —…   9d │
 │                                ││   ● (3head000)  Nothing to salvage —…  40d │
-│                                ││   ● feat/dirty  1 modified file, 1 u…  90d │
-│                                ││   ✗ docs/gone   Git cannot read this…   1y │
 ╰────────────────────────────────╯╰────────────────────────────────────────────╯
  j/k move  space mark  a sweep  ←/→ fold  d remove  D +branch  p prune  c shell
