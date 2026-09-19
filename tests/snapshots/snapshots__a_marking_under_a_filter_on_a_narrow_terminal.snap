@@ -18,7 +18,7 @@ expression: "render(&mut app, 80, 20)"
 │                                ││   ● feat/ahead  1 off-base commit       1d │
 │                                ││   ● cho…/clean  Nothing to salvage —…   9d │
 │                                ││   ● (3head000)  Nothing to salvage —…  40d │
-│                                ││   ● feat/dirty  2 uncommitted files    90d │
+│                                ││   ● feat/dirty  1 modified file, 1 u…  90d │
 │                                ││   ✗ docs/gone   Git cannot read this…   1y │
 ╰────────────────────────────────╯╰────────────────────────────────────────────╯
  1 marked  filter chore  nothing to salvage in any of them   d removes them · es

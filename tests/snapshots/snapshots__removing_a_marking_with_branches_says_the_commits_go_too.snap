@@ -9,14 +9,14 @@ expression: "render(&mut app, 120, 24)"
 │ │ ◆ main                                   2h  ││                                                                    │
 │▌│ ● feat/ahead              1              1d  ││ ┃ Git cannot read this worktree — it may be gone from disk         │
 │ │ ● chore/clean       ╭ Remove marked worktrees and their branches? ─────────────────────────╮                       │
-│ │ ● (3head000)        │ feat/dirty                          2 uncommitted files              │ read it               │
-│▌│ ● feat/dirty        │ feat/ahead                          1 off-base commit                │                       │
-│ │ ✗ docs/gone         │                                                                      │ location              │
-│ │ ● fix/locked        │ 2 worktrees across 1 repository                                      │                       │
+│ │ ● (3head000)        │ feat/dirty                          1 modified file, 1 untracked     │ read it               │
+│▌│ ● feat/dirty        │ file                                                                 │                       │
+│ │ ✗ docs/gone         │ feat/ahead                          1 off-base commit                │ location              │
+│ │ ● fix/locked        │                                                                      │                       │
+│                       │ 2 worktrees across 1 repository                                      │                       │
 │                       │ 1 holds uncommitted work — 2 files destroyed, and git will only      │                       │
 │                       │ remove them with --force                                             │                       │
 │                       │ 1 commit exists nowhere else; deleting the branches loses them       │                       │
-│                       │                                                                      │                       │
 │                       │                                                                      │                       │
 │                       │  y  do it     n  cancel                                              │                       │
 │                       ╰──────────────────────────────────────────────────────────────────────╯                       │

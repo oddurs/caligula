@@ -215,7 +215,15 @@ impl Worktree {
     }
 
     pub fn changed_files(&self) -> u32 {
-        self.staged + self.unstaged + self.untracked + self.conflicts
+        self.tracked_changes() + self.untracked
+    }
+
+    /// Files git is already following. Losing one of these loses your edits;
+    /// losing an untracked file loses the whole file. Both are unrecoverable,
+    /// which is why neither is treated as the lesser — but they are different
+    /// enough that a single number for both tells you nothing useful.
+    pub fn tracked_changes(&self) -> u32 {
+        self.staged + self.unstaged + self.conflicts
     }
 
     /// Commits that exist nowhere else: ahead of upstream, or off the base branch.
@@ -298,11 +306,15 @@ impl Worktree {
             return "Git cannot read this worktree — it may be gone from disk".into();
         }
         let mut parts = Vec::new();
-        if self.changed_files() > 0 {
+        let tracked = self.tracked_changes();
+        if tracked > 0 {
+            parts.push(format!("{tracked} modified file{}", plural(tracked)));
+        }
+        if self.untracked > 0 {
             parts.push(format!(
-                "{} uncommitted file{}",
-                self.changed_files(),
-                plural(self.changed_files())
+                "{} untracked file{}",
+                self.untracked,
+                plural(self.untracked)
             ));
         }
         let unpushed = self.unpushed();
@@ -946,6 +958,54 @@ mod tests {
         let mut wt = test_worktree("main");
         wt.is_main = true;
         assert!(!wt.is_safe_to_remove());
+    }
+
+    /// One number for "uncommitted" answered the wrong question: three modified
+    /// tracked files and three untracked ones are different situations, and the
+    /// sentence has to say which.
+    #[test]
+    fn the_verdict_says_which_kind_of_uncommitted() {
+        let mut wt = test_worktree("x");
+
+        wt.unstaged = 3;
+        assert_eq!(wt.verdict(), "3 modified files");
+
+        wt.unstaged = 0;
+        wt.untracked = 4;
+        assert_eq!(wt.verdict(), "4 untracked files");
+
+        wt.unstaged = 2;
+        wt.untracked = 1;
+        assert_eq!(wt.verdict(), "2 modified files, 1 untracked file");
+
+        wt.unstaged = 0;
+        wt.untracked = 0;
+        wt.conflicts = 1;
+        assert_eq!(
+            wt.verdict(),
+            "1 modified file",
+            "a conflict is a tracked file"
+        );
+
+        wt.conflicts = 0;
+        wt.staged = 1;
+        wt.untracked = 0;
+        assert_eq!(wt.verdict(), "1 modified file", "staged counts as modified");
+    }
+
+    #[test]
+    fn tracked_and_untracked_are_counted_apart_but_both_count() {
+        let mut wt = test_worktree("x");
+        wt.staged = 1;
+        wt.unstaged = 2;
+        wt.conflicts = 1;
+        wt.untracked = 5;
+        assert_eq!(wt.tracked_changes(), 4);
+        assert_eq!(wt.changed_files(), 9);
+        assert!(
+            !wt.is_safe_to_remove(),
+            "untracked files are unrecoverable too; neither kind is the lesser"
+        );
     }
 
     #[test]
