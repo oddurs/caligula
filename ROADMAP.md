@@ -19,7 +19,7 @@ Every git worktree on the machine, each one saying what it would cost to delete 
 
 ## v0.2 — Clear a repo in one pass
 
-`######····` 54% · 7 of 13 done · due 2026-10-03
+`######····` 57% · 8 of 14 done · due 2026-10-03
 
 Mark many worktrees at once and clear a repository's dead ones in a single pass.
 
@@ -41,6 +41,7 @@ Mark many worktrees at once and clear a repository's dead ones in a single pass.
 - [x] [`0052`](https://github.com/oddurs/caligula/blob/main/cairn/items/0052-the-safe-lens-offers-worktrees-that-cannot-be-removed-or-cannot-be-judged.md) The safe lens offers worktrees that cannot be removed or cannot be judged <sup>bug · p0 · verdict</sup>
 - [x] [`0053`](https://github.com/oddurs/caligula/blob/main/cairn/items/0053-inherited-git-environment-points-every-query-at-the-wrong-repository.md) Inherited git environment points every query at the wrong repository <sup>bug · p0 · git</sup>
 - [x] [`0054`](https://github.com/oddurs/caligula/blob/main/cairn/items/0054-lay-the-list-out-as-a-real-table.md) Lay the list out as a real table <sup>feature · p0 · chrome</sup>
+- [x] [`0055`](https://github.com/oddurs/caligula/blob/main/cairn/items/0055-a-filter-hides-the-marking-from-the-footer.md) A filter hides the marking from the footer <sup>bug · p1 · chrome</sup>
 
 ## v0.3 — Your machine, your rules
 

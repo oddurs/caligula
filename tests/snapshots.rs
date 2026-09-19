@@ -374,3 +374,15 @@ fn a_swept_repository() {
     app.sweep_repo();
     insta::assert_snapshot!(render(&mut app, 120, 20));
 }
+
+#[test]
+fn a_marking_held_under_a_filter() {
+    let mut app = fixture_app();
+    app.filter = "feat".into();
+    app.refilter();
+    app.go(0);
+    app.sweep_repo();
+    select(&mut app, "feat/dirty");
+    app.toggle_mark();
+    insta::assert_snapshot!(render(&mut app, 120, 20));
+}

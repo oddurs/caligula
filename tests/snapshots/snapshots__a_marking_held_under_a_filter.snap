@@ -1,0 +1,24 @@
+---
+source: tests/snapshots.rs
+expression: "render(&mut app, 120, 20)"
+---
+ caligula  1 repo · 7 worktrees (6 linked) · 1 dirty · 4 stale · 2 safe to remove
+╭ sort activity · lens all ──────────────────────╮╭────────────────────────────────────────────────────────────────────╮
+│   BRANCH                    ↑   ↓   ±     AGE  ││ feat/dirty  ancient · last touched 90d                             │
+│ ▾ fixture (6)               1       2      2h  ││ /fixture/dirty                                                     │
+│ │ ● feat/ahead              1              1d  ││                                                                    │
+│▌│ ● feat/dirty                      2     90d  ││ ┃ 2 uncommitted files                                              │
+│                                                ││                                                                    │
+│                                                ││ branch    feat/dirty  no upstream · 0 commits off main             │
+│                                                ││ head      4c000000  init: the first commit                         │
+│                                                ││           Fixture · 90d ago                                        │
+│                                                ││ repo      fixture  /fixture/repo                                   │
+│                                                ││                                                                    │
+│                                                ││ Working tree (0 staged · 1 unstaged · 1 untracked)                 │
+│                                                ││   .M README.md                                                     │
+│                                                ││   ?? scratch.txt                                                   │
+│                                                ││                                                                    │
+│                                                ││ Recent commits                                                     │
+│                                                ││   4r000000  90d  init: the first commit                            │
+╰────────────────────────────────────────────────╯╰────────────────────────────────────────────────────────────────────╯
+ 1 marked  2 uncommitted files   d removes them · esc clears   filter feat   Nothing in fixture is safe to remove

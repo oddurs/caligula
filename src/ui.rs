@@ -843,7 +843,10 @@ fn repo_detail<'a>(repo: &'a Repo, now: u64) -> Vec<Line<'a>> {
 // ------------------------------------------------------------------- footer
 
 fn footer(f: &mut Frame, area: Rect, app: &App) {
-    if app.filtering || !app.filter.is_empty() {
+    // Ordered by what it would cost to miss. A filter being typed wins outright,
+    // because you have to see what you are typing; after that the marking, which
+    // decides what a removal applies to; then everything else.
+    if app.filtering || (!app.filter.is_empty() && app.marked.is_empty()) {
         let mut spans = vec![
             Span::styled(
                 " filter ",
@@ -918,6 +921,15 @@ fn footer(f: &mut Frame, area: Rect, app: &App) {
             "   d removes them · esc clears",
             Style::default().fg(DIM),
         ));
+        // Said alongside rather than instead: a marking made under a filter is
+        // a marking of what the filter is showing, and that is worth knowing
+        // before pressing d.
+        if !app.filter.is_empty() {
+            spans.push(Span::styled(
+                format!("   filter {}", app.filter),
+                Style::default().fg(Color::Yellow),
+            ));
+        }
         // A message is appended rather than allowed to replace this: what is
         // marked decides what a removal applies to, and must not vanish for six
         // seconds because a sort was cycled.
