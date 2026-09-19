@@ -469,3 +469,65 @@ fn a_long_failure_says_how_much_is_left() {
     app.fail("12 of 45 could not be removed", body);
     insta::assert_snapshot!(render(&mut app, 120, 20));
 }
+
+/// Below the threshold there is one pane, and it uses the whole width.
+#[test]
+fn a_narrow_terminal_shows_the_list_alone() {
+    let mut app = fixture_app();
+    insta::assert_snapshot!(render(&mut app, 80, 20));
+}
+
+#[test]
+fn a_narrow_terminal_shows_the_detail_alone() {
+    let mut app = fixture_app();
+    select(&mut app, "feat/dirty");
+    app.toggle_focus();
+    insta::assert_snapshot!(render(&mut app, 80, 20));
+}
+
+#[test]
+fn a_narrow_terminal_at_sixty_columns() {
+    let mut app = fixture_app();
+    insta::assert_snapshot!(render(&mut app, 60, 20));
+}
+
+/// Nothing may be drawn outside the pane: every line is the full width or less,
+/// and no line carries a second pane's border.
+#[test]
+fn one_pane_fills_the_width_and_nothing_spills() {
+    for width in [60u16, 80, 99] {
+        for focus in [false, true] {
+            let mut app = fixture_app();
+            if focus {
+                app.toggle_focus();
+            }
+            let screen = render(&mut app, width, 20);
+            for line in screen.lines() {
+                assert!(
+                    line.chars().count() <= width as usize,
+                    "at {width} a line ran past the pane: {line:?}"
+                );
+                assert!(
+                    line.matches('╭').count() <= 1 && line.matches('╰').count() <= 1,
+                    "at {width} two panes were drawn: {line:?}"
+                );
+            }
+        }
+    }
+}
+
+/// The selection is held by row, not by layout, so crossing the threshold in
+/// either direction returns to the same worktree.
+#[test]
+fn resizing_across_the_threshold_keeps_the_selection() {
+    let mut app = fixture_app();
+    select(&mut app, "feat/dirty");
+    let before = app.selection_key();
+
+    let _ = render(&mut app, 60, 20);
+    assert_eq!(app.selection_key(), before, "narrowing moved the selection");
+    let _ = render(&mut app, 200, 20);
+    assert_eq!(app.selection_key(), before, "widening moved the selection");
+    let _ = render(&mut app, 60, 20);
+    assert_eq!(app.selection_key(), before);
+}

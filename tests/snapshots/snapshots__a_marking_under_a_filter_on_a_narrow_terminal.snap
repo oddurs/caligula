@@ -2,23 +2,23 @@
 source: tests/snapshots.rs
 expression: "render(&mut app, 80, 20)"
 ---
- caligula  1 repo · 7 worktrees (6 linked) · 1 dirty · 4 stale · 2 safe to remov
-╭ sort activity · lens all ──────╮╭────────────────────────────────────────────╮
-│   BRANCH        ↑   ±     AGE  ││ fixture                                    │
-│ ▾ fixture (6)   1   2      2h  ││ /fixture/repo                              │
-│▌│ ● ch…/clean              9d  ││                                            │
-│                                ││ origin                                     │
-│                                ││ git@github.com:fixture/fixture.git         │
-│                                ││ base      main                             │
-│                                ││ worktrees 7 (6 linked)                     │
-│                                ││ dirty     1                                │
-│                                ││ stashes   1 on no live branch — nothing    │
-│                                ││ else will surface it                       │
-│                                ││                                            │
-│                                ││ Worktrees                                  │
-│                                ││   ◆ main        Main checkout — noth…   2h │
-│                                ││   ● feat/ahead  1 off-base commit       1d │
-│                                ││   ● cho…/clean  Nothing to salvage —…   9d │
-│                                ││   ● (3head000)  Nothing to salvage —…  40d │
-╰────────────────────────────────╯╰────────────────────────────────────────────╯
- 1 marked  filter chore  nothing to salvage in any of them   d removes them · es
+ caligula  1 repo · 7 worktrees (6 linked) · 1 dirty · 4 stale
+╭ sort activity · lens all ────────────────────────────────────────────────────╮
+│   BRANCH                                                  ↑   ↓   ±     AGE  │
+│ ▾ fixture (6)                                             1       2      2h  │
+│▌│ ● chore/clean                                                          9d  │
+│                                                                              │
+│                                                                              │
+│                                                                              │
+│                                                                              │
+│                                                                              │
+│                                                                              │
+│                                                                              │
+│                                                                              │
+│                                                                              │
+│                                                                              │
+│                                                                              │
+│                                                                              │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+ list   tab  the detail of this row   j/k move  d remove  ? help

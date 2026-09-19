@@ -2,10 +2,10 @@
 id: 21
 title: Work in a terminal narrower than 100 columns
 type: bug
-status: backlog
+status: done
 milestone: v0.2
 created: 2026-09-17
-updated: 2026-09-18
+updated: 2026-09-19
 priority: p1
 effort: m
 area: chrome
@@ -24,11 +24,11 @@ detail — and a key moves between them.
 
 ## Acceptance criteria
 
-- [ ] Below the threshold only one pane is drawn, and it uses the full width
-- [ ] A key toggles between list and detail, and the footer says so
-- [ ] Nothing is drawn outside its pane at 60, 80 and 100 columns
-- [ ] Resizing across the threshold in either direction keeps the selection
-- [ ] Snapshot tests at 60 and 80 columns
+- [x] Below the threshold only one pane is drawn, and it uses the full width
+- [x] A key toggles between list and detail, and the footer says so
+- [x] Nothing is drawn outside its pane at 60, 80 and 100 columns
+- [x] Resizing across the threshold in either direction keeps the selection
+- [x] Snapshot tests at 60 and 80 columns
 
 ## 2026-09-18
 

@@ -63,6 +63,13 @@ impl Lens {
     }
 }
 
+/// Which pane is shown when there is only room for one.
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub enum Focus {
+    List,
+    Detail,
+}
+
 #[derive(Clone, Copy)]
 pub enum Row {
     Repo { repo: usize },
@@ -138,6 +145,9 @@ pub struct App {
     pub filter: String,
     pub filtering: bool,
     pub detail_scroll: u16,
+    /// Which pane a narrow terminal shows. Kept across a resize, so widening
+    /// the window and narrowing it again returns to what was being read.
+    pub focus: Focus,
     pub status: Option<(String, Tone, Instant)>,
     pub confirm: Option<Confirm>,
     pub failure: Option<Failure>,
@@ -173,6 +183,7 @@ impl App {
             filter: String::new(),
             filtering: false,
             detail_scroll: 0,
+            focus: Focus::List,
             status: None,
             confirm: None,
             failure: None,
@@ -428,6 +439,13 @@ impl App {
             format!("Marked {n} safe to remove in {name} — d removes them"),
             Tone::Good,
         );
+    }
+
+    pub fn toggle_focus(&mut self) {
+        self.focus = match self.focus {
+            Focus::List => Focus::Detail,
+            Focus::Detail => Focus::List,
+        };
     }
 
     pub fn clear_marks(&mut self) {
