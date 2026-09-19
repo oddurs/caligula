@@ -13,19 +13,19 @@ expression: "render(&mut app, 120, 30)"
 │ │ ● feat/dirty     │ ← / → · enter  fold or unfold a repo                                       │                    │
 │ │ ✗ docs/gone      │ z / Z          fold all / unfold all                                       │                    │
 │ │ ● fix/locked     │ esc            clear the marking, then the filter                          │                    │
-│                    │ PgUp / PgDn    scroll the detail pane                                      │ge — safe to remove │
-│                    │                                                                            │                    │
-│                    │ d              remove the marking, or the row under the cursor             │it                  │
-│                    │ D              the same, and delete the branches too                       │                    │
-│                    │ p              prune the repo's stale worktree records                     │ge — safe to remove │
-│                    │ L              lock or unlock the worktree                                 │                    │
-│                    │                                                                            │ge — safe to remove │
+│                    │ PgUp / PgDn    scroll the detail pane                                      │ to remove     2h   │
+│                    │                                                                            │               1d   │
+│                    │ d              remove the marking, or the row under the cursor             │ to remove     9d   │
+│                    │ D              the same, and delete the branches too                       │ to remove    40d   │
+│                    │ p              prune the repo's stale worktree records                     │              90d   │
+│                    │ L              lock or unlock the worktree                                 │tree — it m…   1y   │
+│                    │                                                                            │ to remove     1y   │
 │                    │ c              drop into a shell in the worktree                           │                    │
-│                    │ o              open it in the file manager                                 │iles                │
+│                    │ o              open it in the file manager                                 │                    │
 │                    │ y              copy its path to the clipboard                              │                    │
-│                    │                                                                            │y be gone from disk │
+│                    │                                                                            │                    │
 │                    │ f              cycle lens: all → dirty → salvageable → stale → safe        │                    │
-│                    │ s              cycle sort: activity → name → risk                          │ge — safe to remove │
+│                    │ s              cycle sort: activity → name → risk                          │                    │
 │                    │ /              filter by repo, branch or path                              │                    │
 │                    │ r              re-probe the selected repo                                  │                    │
 │                    │ R              rescan the disk from scratch                                │                    │

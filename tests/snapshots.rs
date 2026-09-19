@@ -403,3 +403,39 @@ fn a_marking_under_a_filter_on_a_narrow_terminal() {
     app.sweep_repo();
     insta::assert_snapshot!(render(&mut app, 80, 20));
 }
+
+/// A row wider than its pane wraps, which strands the age on the next line.
+/// Asserted rather than merely recorded, because a snapshot shows the wrapping
+/// without objecting to it.
+#[test]
+fn no_detail_row_wraps_at_any_width() {
+    for width in [80u16, 120, 200] {
+        let mut app = fixture_app();
+        app.go(0);
+        let screen = render(&mut app, width, 30);
+        let lines: Vec<&str> = screen.lines().collect();
+        // Every worktree row starts with its marker; the line after one must be
+        // another row or a blank, never the tail of the row above.
+        for (i, line) in lines.iter().enumerate() {
+            if !(line.contains("  ◆ ") || line.contains("  ● ") || line.contains("  ✗ ")) {
+                continue;
+            }
+            let next = lines.get(i + 1).copied().unwrap_or_default();
+            let detail = next.split('│').nth(2).unwrap_or_default().trim();
+            assert!(
+                detail.is_empty()
+                    || next.contains("  ◆ ")
+                    || next.contains("  ● ")
+                    || next.contains("  ✗ "),
+                "at width {width} a detail row wrapped:\n{line}\n{next}"
+            );
+        }
+    }
+}
+
+#[test]
+fn a_repository_detail_at_eighty_columns() {
+    let mut app = fixture_app();
+    app.go(0);
+    insta::assert_snapshot!(render(&mut app, 80, 24));
+}
