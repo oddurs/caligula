@@ -4,15 +4,15 @@ expression: "render_palette(&mut app, 120, 20)"
 ---
  0 * Black White DarkGray Gray DarkGray Red DarkGray Yellow DarkGray Green
  1   DarkGray Cyan DarkGray
- 2   DarkGray White Red DarkGray White Red DarkGray
- 3   DarkGray Green Gray Green DarkGray
- 4   DarkGray Green Gray Yellow Green DarkGray
- 5   DarkGray Cyan Gray Cyan DarkGray Green DarkGray
- 6   DarkGray Yellow Gray Yellow DarkGray Red DarkGray
- 7   DarkGray Cyan DarkGray Red White Red DarkGray
- 8 * DarkGray Red Gray Green Red DarkGray Gray DarkGray
- 9   DarkGray Red Gray Green Red DarkGray Gray DarkGray
-10   DarkGray Yellow DarkGray
+ 2   DarkGray White Red DarkGray
+ 3   DarkGray White DarkGray Yellow Red Green DarkGray
+ 4   DarkGray Green Gray Green DarkGray
+ 5   DarkGray Green Gray Yellow Green DarkGray Green DarkGray
+ 6   DarkGray Cyan Gray Cyan DarkGray Red DarkGray
+ 7   DarkGray Yellow Gray Yellow DarkGray
+ 8   DarkGray Cyan DarkGray Red White Red DarkGray Gray DarkGray
+ 9 * DarkGray Red Gray Yellow Red DarkGray Gray DarkGray
+10   DarkGray Red Gray Yellow Red DarkGray Yellow DarkGray
 11   DarkGray
 12   DarkGray
 13   DarkGray

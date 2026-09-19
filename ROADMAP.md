@@ -19,7 +19,7 @@ Every git worktree on the machine, each one saying what it would cost to delete 
 
 ## v0.2 — Clear a repo in one pass
 
-`####······` 33% · 4 of 12 done · due 2026-10-03
+`####······` 38% · 5 of 13 done · due 2026-10-03
 
 Mark many worktrees at once and clear a repository's dead ones in a single pass.
 
@@ -40,6 +40,7 @@ Mark many worktrees at once and clear a repository's dead ones in a single pass.
 - [x] [`0016`](https://github.com/oddurs/caligula/blob/main/cairn/items/0016-remove-every-marked-worktree-behind-one-confirmation.md) Remove every marked worktree behind one confirmation <sup>feature · p0 · actions</sup>
 - [x] [`0020`](https://github.com/oddurs/caligula/blob/main/cairn/items/0020-snapshot-test-the-rendered-frame-against-a-fixture-repository.md) Snapshot-test the rendered frame against a fixture repository <sup>chore · p0 · testing</sup>
 - [x] [`0053`](https://github.com/oddurs/caligula/blob/main/cairn/items/0053-inherited-git-environment-points-every-query-at-the-wrong-repository.md) Inherited git environment points every query at the wrong repository <sup>bug · p0 · git</sup>
+- [x] [`0054`](https://github.com/oddurs/caligula/blob/main/cairn/items/0054-lay-the-list-out-as-a-real-table.md) Lay the list out as a real table <sup>feature · p0 · chrome</sup>
 
 ## v0.3 — Your machine, your rules
 

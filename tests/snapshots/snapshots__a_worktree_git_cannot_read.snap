@@ -4,15 +4,15 @@ expression: "render(&mut app, 120, 20)"
 ---
  caligula  1 repo · 7 worktrees (6 linked) · 1 dirty · 4 stale · 4 safe to remove
 ╭ sort activity · lens all ──────────────────────╮╭────────────────────────────────────────────────────────────────────╮
-│ ▾ fixture                             6wt 1●   ││ docs/gone  ancient · last touched 1y                               │
-│ │ ◆ main                                   2h  ││ /fixture/gone                                                      │
-│ │ ● feat/ahead                       ↑1    1d  ││                                                                    │
-│ │ ● chore/clean                            9d  ││ ┃ Nothing to salvage — safe to remove                              │
-│ │ ● (3head000)                            40d  ││ ┃ git cannot read this worktree — it may be gone from disk         │
-│ │ ● feat/dirty                       ~2   90d  ││                                                                    │
-│ │ ✗ docs/gone                         !    1y  ││ branch    docs/gone  no upstream · 0 commits off main              │
-│ │ ● fix/locked                        L    1y  ││ repo      fixture  /fixture/repo                                   │
-│                                                ││ prunable  gitdir file points to non-existent location              │
+│   BRANCH                ↑    ↓    ±       AGE  ││ docs/gone  ancient · last touched 1y                               │
+│ ▾ fixture (6)           1         2        2h  ││ /fixture/gone                                                      │
+│ │ ◆ main                                   2h  ││                                                                    │
+│ │ ● feat/ahead          1                  1d  ││ ┃ Nothing to salvage — safe to remove                              │
+│ │ ● chore/clean                            9d  ││ ┃ git cannot read this worktree — it may be gone from disk         │
+│ │ ● (3head000)                            40d  ││                                                                    │
+│ │ ● feat/dirty                    2       90d  ││ branch    docs/gone  no upstream · 0 commits off main              │
+│ │ ✗ docs/gone                         !    1y  ││ repo      fixture  /fixture/repo                                   │
+│ │ ● fix/locked                        L    1y  ││ prunable  gitdir file points to non-existent location              │
 │                                                ││                                                                    │
 │                                                ││                                                                    │
 │                                                ││                                                                    │

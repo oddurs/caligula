@@ -4,15 +4,15 @@ expression: "render(&mut app, 120, 24)"
 ---
  caligula  1 repo · 7 worktrees (6 linked) · 1 dirty · 4 stale · 4 safe to remove
 ╭ sort activity · lens all ──────────────────────╮╭────────────────────────────────────────────────────────────────────╮
-│ ▾ fixture                             6wt 1●   ││ docs/gone  ancient · last touched 1y                               │
-│ │ ◆ main                                   2h  ││ /fixture/gone                                                      │
-│▌│ ● feat/ahead                       ↑1    1d  ││                                                                    │
-│ │ ● chore/clean                            9d  ││ ┃ Nothing to salvage — safe to remove                              │
-│ │ ● (3head000)        ╭ Remove marked worktrees and their branches? ─────────────────────────╮gone from disk         │
-│▌│ ● feat/dirty        │ feat/dirty                          2 uncommitted files              │                       │
-│ │ ✗ docs/gone         │ feat/ahead                          1 off-base commit                │ off main              │
-│ │ ● fix/locked        │                                                                      │                       │
-│                       │ 2 worktrees across 1 repository                                      │ location              │
+│   BRANCH                ↑    ↓    ±       AGE  ││ docs/gone  ancient · last touched 1y                               │
+│ ▾ fixture (6)           1         2        2h  ││ /fixture/gone                                                      │
+│ │ ◆ main                                   2h  ││                                                                    │
+│▌│ ● feat/ahead          1                  1d  ││ ┃ Nothing to salvage — safe to remove                              │
+│ │ ● chore/clean       ╭ Remove marked worktrees and their branches? ─────────────────────────╮gone from disk         │
+│ │ ● (3head000)        │ feat/dirty                          2 uncommitted files              │                       │
+│▌│ ● feat/dirty        │ feat/ahead                          1 off-base commit                │ off main              │
+│ │ ✗ docs/gone         │                                                                      │                       │
+│ │ ● fix/locked        │ 2 worktrees across 1 repository                                      │ location              │
 │                       │ 1 holds uncommitted work — 2 files destroyed, and git will only      │                       │
 │                       │ remove them with --force                                             │                       │
 │                       │ 1 commit exists nowhere else; deleting the branches loses them       │                       │

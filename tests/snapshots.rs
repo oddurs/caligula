@@ -106,6 +106,12 @@ fn the_list() {
 }
 
 #[test]
+fn the_list_at_sixty_columns() {
+    let mut app = fixture_app();
+    insta::assert_snapshot!(render(&mut app, 60, 20));
+}
+
+#[test]
 fn the_list_at_eighty_columns() {
     let mut app = fixture_app();
     insta::assert_snapshot!(render(&mut app, 80, 20));

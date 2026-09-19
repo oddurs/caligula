@@ -4,15 +4,15 @@ expression: "render(&mut app, 120, 20)"
 ---
  caligula  1 repo · 7 worktrees (6 linked) · 1 dirty · 4 stale · 4 safe to remove
 ╭ sort activity · lens all ──────────────────────╮╭────────────────────────────────────────────────────────────────────╮
-│ ▾ fixture                             6wt 1●   ││ feat/dirty  ancient · last touched 90d                             │
-│ │ ◆ main                                   2h  ││ /fixture/dirty                                                     │
-│ │ ● feat/ahead                       ↑1    1d  ││                                                                    │
-│ │ ● chore/clean                            9d  ││ ┃ 2 uncommitted files                                              │
-│ │ ● (3head000)                            40d  ││                                                                    │
-│ │ ● feat/dirty                       ~2   90d  ││ branch    feat/dirty  no upstream · 0 commits off main             │
-│ │ ✗ docs/gone                         !    1y  ││ head      4c000000  init: the first commit                         │
-│ │ ● fix/locked                        L    1y  ││           Fixture · 90d ago                                        │
-│                                                ││ repo      fixture  /fixture/repo                                   │
+│   BRANCH                ↑    ↓    ±       AGE  ││ feat/dirty  ancient · last touched 90d                             │
+│ ▾ fixture (6)           1         2        2h  ││ /fixture/dirty                                                     │
+│ │ ◆ main                                   2h  ││                                                                    │
+│ │ ● feat/ahead          1                  1d  ││ ┃ 2 uncommitted files                                              │
+│ │ ● chore/clean                            9d  ││                                                                    │
+│ │ ● (3head000)                            40d  ││ branch    feat/dirty  no upstream · 0 commits off main             │
+│ │ ● feat/dirty                    2       90d  ││ head      4c000000  init: the first commit                         │
+│ │ ✗ docs/gone                         !    1y  ││           Fixture · 90d ago                                        │
+│ │ ● fix/locked                        L    1y  ││ repo      fixture  /fixture/repo                                   │
 │                                                ││                                                                    │
 │                                                ││ Working tree (0 staged · 1 unstaged · 1 untracked)                 │
 │                                                ││   .M README.md                                                     │

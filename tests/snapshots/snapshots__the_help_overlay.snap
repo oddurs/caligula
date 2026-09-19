@@ -4,15 +4,15 @@ expression: "render(&mut app, 120, 30)"
 ---
  caligula  1 repo · 7 worktrees (6 linked) · 1 dirty · 4 stale · 4 safe to remove
 ╭ sort activity · lens all ──────────────────────╮╭────────────────────────────────────────────────────────────────────╮
-│ ▾ fixture          ╭ keys ──────────────────────────────────────────────────────────────────────╮                    │
-│ │ ◆ main           │ j / k · ↓ / ↑  move                                                        │                    │
-│ │ ● feat/ahead     │ space          mark a worktree, and step down                              │                    │
-│ │ ● chore/clean    │ J / K          jump to next / previous repo                                │                    │
-│ │ ● (3head000)     │ g / G          first / last row                                            │                    │
-│ │ ● feat/dirty     │ ← / → · enter  fold or unfold a repo                                       │                    │
-│ │ ✗ docs/gone      │ z / Z          fold all / unfold all                                       │                    │
-│ │ ● fix/locked     │ esc            clear the marking, then the filter                          │                    │
-│                    │ PgUp / PgDn    scroll the detail pane                                      │                    │
+│   BRANCH           ╭ keys ──────────────────────────────────────────────────────────────────────╮                    │
+│ ▾ fixture (6)      │ j / k · ↓ / ↑  move                                                        │                    │
+│ │ ◆ main           │ space          mark a worktree, and step down                              │                    │
+│ │ ● feat/ahead     │ J / K          jump to next / previous repo                                │                    │
+│ │ ● chore/clean    │ g / G          first / last row                                            │                    │
+│ │ ● (3head000)     │ ← / → · enter  fold or unfold a repo                                       │                    │
+│ │ ● feat/dirty     │ z / Z          fold all / unfold all                                       │                    │
+│ │ ✗ docs/gone      │ esc            clear the marking, then the filter                          │                    │
+│ │ ● fix/locked     │ PgUp / PgDn    scroll the detail pane                                      │                    │
 │                    │                                                                            │ge — safe to remove │
 │                    │ d              remove the marking, or the row under the cursor             │                    │
 │                    │ D              the same, and delete the branches too                       │it                  │

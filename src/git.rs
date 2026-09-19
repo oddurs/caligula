@@ -40,6 +40,32 @@ impl Repo {
             .unwrap_or(0)
     }
 
+    /// What a folded repository still says about itself, column by column.
+    ///
+    /// Added up where adding up means something, and not where it does not.
+    /// Uncommitted files are distinct files in distinct worktrees, and commits
+    /// that exist only here are distinct commits on distinct branches, so both
+    /// sum. Being behind does not: forty-five worktrees each 79 commits behind
+    /// the same upstream are behind by 79, not by 3545. The worst one is the
+    /// number that means anything.
+    pub fn totals(&self) -> RepoTotals {
+        let mut t = RepoTotals::default();
+        for w in &self.worktrees {
+            t.ahead += w.unpushed();
+            t.behind = t.behind.max(w.behind);
+            t.files += w.changed_files();
+        }
+        t
+    }
+
+    pub fn staleness(&self, now: u64) -> Staleness {
+        let newest = self.last_touched();
+        if newest == 0 {
+            return Staleness::Ancient;
+        }
+        Staleness::of(now.saturating_sub(newest))
+    }
+
     pub fn linked_count(&self) -> usize {
         self.worktrees.iter().filter(|w| !w.is_main).count()
     }
@@ -103,6 +129,14 @@ pub enum Salvage {
     Uncommitted,
 }
 
+/// The column-wise sum of a repository's worktrees.
+#[derive(Default, Debug, PartialEq, Eq)]
+pub struct RepoTotals {
+    pub ahead: u32,
+    pub behind: u32,
+    pub files: u32,
+}
+
 /// How long since anything happened here.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Staleness {
@@ -113,6 +147,16 @@ pub enum Staleness {
 }
 
 impl Staleness {
+    pub fn of(age: u64) -> Staleness {
+        const DAY: u64 = 86_400;
+        match age {
+            a if a < 3 * DAY => Staleness::Active,
+            a if a < 14 * DAY => Staleness::Recent,
+            a if a < 60 * DAY => Staleness::Stale,
+            _ => Staleness::Ancient,
+        }
+    }
+
     pub fn label(self) -> &'static str {
         match self {
             Staleness::Active => "active",
@@ -165,13 +209,7 @@ impl Worktree {
     }
 
     pub fn staleness(&self, now: u64) -> Staleness {
-        const DAY: u64 = 86_400;
-        match self.age_secs(now) {
-            a if a < 3 * DAY => Staleness::Active,
-            a if a < 14 * DAY => Staleness::Recent,
-            a if a < 60 * DAY => Staleness::Stale,
-            _ => Staleness::Ancient,
-        }
+        Staleness::of(self.age_secs(now))
     }
 
     pub fn label(&self) -> String {
@@ -822,5 +860,37 @@ mod tests {
         let mut wt = test_worktree("x");
         wt.last_touched = 0;
         assert_eq!(wt.age_label(now()), "—");
+    }
+}
+
+#[cfg(test)]
+mod repo_tests {
+    use super::*;
+
+    #[test]
+    fn a_repository_sums_what_sums_and_takes_the_worst_of_what_does_not() {
+        let mut repo = test_repo("alpha", 2);
+        repo.worktrees[0].untracked = 3;
+        repo.worktrees[1].untracked = 4;
+        repo.worktrees[1].upstream = Some("origin/main".into());
+        repo.worktrees[1].ahead = 2;
+        repo.worktrees[1].behind = 79;
+        repo.worktrees[2].upstream = Some("origin/main".into());
+        repo.worktrees[2].ahead = 1;
+        repo.worktrees[2].behind = 79;
+
+        let totals = repo.totals();
+        assert_eq!(
+            totals.files, 7,
+            "distinct files in distinct worktrees add up"
+        );
+        assert_eq!(
+            totals.ahead, 3,
+            "distinct commits on distinct branches add up"
+        );
+        assert_eq!(
+            totals.behind, 79,
+            "two worktrees behind the same upstream are behind by 79, not 158"
+        );
     }
 }

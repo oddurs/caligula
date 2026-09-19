@@ -4,15 +4,15 @@ expression: "render(&mut app, 120, 20)"
 ---
  caligula  1 repo · 7 worktrees (6 linked) · 1 dirty · 4 stale · 4 safe to remove
 ╭ sort risk · lens all ──────────────────────────╮╭────────────────────────────────────────────────────────────────────╮
-│ ▾ fixture                             6wt 1●   ││ fixture                                                            │
-│ │ ◆ main                                   2h  ││ /fixture/repo                                                      │
-│ │ ● feat/dirty                       ~2   90d  ││                                                                    │
-│ │ ● feat/ahead                       ↑1    1d  ││ origin    git@github.com:fixture/fixture.git                       │
-│ │ ● chore/clean                            9d  ││ base      main                                                     │
-│ │ ● (3head000)                            40d  ││ worktrees 7 (6 linked)                                             │
-│ │ ✗ docs/gone                         !    1y  ││ dirty     1                                                        │
-│ │ ● fix/locked                        L    1y  ││                                                                    │
-│                                                ││ Worktrees                                                          │
+│   BRANCH                ↑    ↓    ±       AGE  ││ fixture                                                            │
+│ ▾ fixture (6)           1         2        2h  ││ /fixture/repo                                                      │
+│ │ ◆ main                                   2h  ││                                                                    │
+│ │ ● feat/dirty                    2       90d  ││ origin    git@github.com:fixture/fixture.git                       │
+│ │ ● feat/ahead          1                  1d  ││ base      main                                                     │
+│ │ ● chore/clean                            9d  ││ worktrees 7 (6 linked)                                             │
+│ │ ● (3head000)                            40d  ││ dirty     1                                                        │
+│ │ ✗ docs/gone                         !    1y  ││                                                                    │
+│ │ ● fix/locked                        L    1y  ││ Worktrees                                                          │
 │                                                ││   ◆ main                        Nothing to …lvage — safe to remove │
 │                                                ││  2h                                                                │
 │                                                ││   ● feat/dirty                  2 uncommitted files                │

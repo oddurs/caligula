@@ -8,15 +8,16 @@ groups them by repository, and answers the question that actually matters before
 you delete one: **is there anything in here worth saving?**
 
 ```
- caligula  92 repos · 189 worktrees (97 linked) · 82 dirty · 100 stale · 48 safe to remove
-╭ sort activity · lens all ────────────────────────────────╮╭──────────────────────────────────────────────╮
-│ ▾ quarry                                          21wt   ││ refactor/site-tailwind  recent · 4d           │
-│ │ ◆ main                                             1h  ││ ~/Code/.worktrees/quarry/refactor/site       │
-│ │ ● feat/responsive-layout                          47m  ││                                              │
-│ │ ● fix/0049-classify-containers                     1h  ││ ┃ 3 uncommitted files, 2 unpushed commits     │
-│ │ ● refactor/site-tailwind           ↑2 ~3           4d  ││                                              │
-│ ▾ deepwork                                     45wt 46●  ││ branch    refactor/site-tailwind  → origin…   │
-│ │ ● worktree-agent-a849ea46      ↓124 ~24         170d  ││ head      281245d0  refactor(site): replace…  │
+ caligula  94 repos · 171 worktrees (77 linked) · 83 dirty · 101 stale · 28 safe to remove
+╭ sort risk · lens all ────────────────────────────────────╮╭──────────────────────────────────────────────╮
+│   BRANCH                          ↑    ↓    ±       AGE  ││ worktree-agent-a849ea46  ancient · 173d      │
+│ ▾ deepwork (45)                      171  105      155d  ││ ~/Code/deepwork/.claude/worktrees/agent-a84  │
+│ │ ◆ main                                   28      155d  ││                                              │
+│ │ ● worktree-agent-a849ea46          124   24      173d  ││ ┃ 24 uncommitted files                        │
+│ │ ● worktree-agent-ad672f29          124    6      173d  ││                                              │
+│ │ ● worktree-agent-ab0d5799           99    3      171d  ││ branch    worktree-agent-a849ea46             │
+│ ▾ quarry (21)                     4         3        1h  ││ head      281245d0  wip                      │
+│ │ ◆ main                                              1h  ││ repo      deepwork  ~/Code/deepwork          │
 ╰──────────────────────────────────────────────────────────╯╰──────────────────────────────────────────────╯
  j/k move  space mark  ←/→ fold  d remove  D +branch  p prune  c shell  f lens  s sort  / find  ? help
 ```
@@ -48,24 +49,36 @@ are skipped — except `.worktrees` — as are `node_modules`, `target` and frie
 
 ## Reading a row
 
+The marker says what kind of checkout it is:
+
 ```
- │ ● feat/0049-classify        ↑2 ↓1 ~7    3d
-   │ │                         │  │  │      └ time since the last git activity
-   │ │                         │  │  └ files changed, staged or untracked
-   │ │                         │  └ commits behind the upstream
-   │ │                         └ commits that exist only here
-   │ └ branch, or the commit when detached
-   └ ● linked worktree   ◆ main checkout   ✗ git cannot read it
+ ● a linked worktree     ◆ the main checkout     ✗ git cannot read it
 ```
 
-Colour is staleness: green under three days, cyan under two weeks, yellow under
-two months, red beyond that. **Staleness is measured from git activity** — the
-reflog, the index, the last commit — never from the directory's mtime, which
-editors and backup tools touch constantly and which would report every checkout
-on the disk as fresh.
+Its colour is staleness, measured from git activity — the reflog, the index, the
+last commit — never from the directory's mtime, which editors and backup tools
+touch constantly and which would report every checkout on the disk as fresh:
+green under three days, cyan under two weeks, yellow under two months, red
+beyond that.
 
-Badges also carry `L` for a locked worktree and `!` for one git has marked
-prunable.
+Everything else has its own column, so you can run your eye down one:
+
+| Column | Means |
+| --- | --- |
+| `↑` | commits that exist only here — the branch survives a removal, the checkout does not |
+| `↓` | commits behind the upstream. Context, not risk: being behind costs nothing |
+| `±` | files changed, staged or untracked. **This is the column that says work would be destroyed** |
+| | `L` locked, `!` git has marked it prunable or cannot read it |
+| `AGE` | time since the last git activity |
+
+Blank means zero, so there is no glyph to decode. On a repository row the
+columns carry the whole group: `±` and `↑` are its totals, `↓` is its worst,
+and `(45)` is how many linked worktrees it has.
+
+Columns are given up as the pane narrows, least useful first — the behind-count
+goes before the commits, and both go before the flags, which say a worktree
+cannot be removed at all.
+
 
 ## What you would lose
 

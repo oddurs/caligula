@@ -4,15 +4,15 @@ expression: "render(&mut app, 120, 20)"
 ---
  caligula  1 repo · 7 worktrees (6 linked) · 1 dirty · 4 stale · 4 safe to remove
 ╭ sort activity · lens all ──────────────────────╮╭────────────────────────────────────────────────────────────────────╮
-│ ▾ fixture                             6wt 1●   ││ feat/ahead  active · last touched 1d                               │
-│ │ ◆ main                                   2h  ││ /fixture/ahead                                                     │
-│ │ ● feat/ahead                       ↑1    1d  ││                                                                    │
-│ │ ● chore/clean                            9d  ││ ┃ 1 off-base commit                                                │
-│ │ ● (3head000)                            40d  ││                                                                    │
-│ │ ● feat/dirty                       ~2   90d  ││ branch    feat/ahead  no upstream · 1 commits off main             │
-│ │ ✗ docs/gone                         !    1y  ││ head      1c000000  feat: a commit that exists only here           │
-│ │ ● fix/locked                        L    1y  ││           Fixture · 1d ago                                         │
-│                                                ││ repo      fixture  /fixture/repo                                   │
+│   BRANCH                ↑    ↓    ±       AGE  ││ feat/ahead  active · last touched 1d                               │
+│ ▾ fixture (6)           1         2        2h  ││ /fixture/ahead                                                     │
+│ │ ◆ main                                   2h  ││                                                                    │
+│ │ ● feat/ahead          1                  1d  ││ ┃ 1 off-base commit                                                │
+│ │ ● chore/clean                            9d  ││                                                                    │
+│ │ ● (3head000)                            40d  ││ branch    feat/ahead  no upstream · 1 commits off main             │
+│ │ ● feat/dirty                    2       90d  ││ head      1c000000  feat: a commit that exists only here           │
+│ │ ✗ docs/gone                         !    1y  ││           Fixture · 1d ago                                         │
+│ │ ● fix/locked                        L    1y  ││ repo      fixture  /fixture/repo                                   │
 │                                                ││                                                                    │
 │                                                ││ Off-base commits (1)                                               │
 │                                                ││   1u000000   1d  feat: a commit that exists only here              │
