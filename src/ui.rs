@@ -1038,23 +1038,41 @@ fn wrapped_rows(text: &str, width: usize) -> usize {
         return 1;
     }
     let mut rows = 1;
-    let mut used = 0;
-    for word in text.split_whitespace() {
-        let w = word.chars().count();
-        let needed = if used == 0 { w } else { w + 1 };
-        if used + needed > width && used > 0 {
+    let mut col = 0usize;
+    // Runs of spaces are measured, not collapsed. An earlier version split on
+    // whitespace and rejoined with one space, so a line padded into columns —
+    // which is most of a removal dialog — measured far shorter than it renders,
+    // and the dialog clipped the worktrees it was asking about.
+    for token in tokens(text) {
+        let len = token.chars().count();
+        let is_space = token.starts_with(' ');
+        if !is_space && col > 0 && col + len > width && len <= width {
             rows += 1;
-            used = w.min(width);
-        } else {
-            used += needed;
+            col = 0;
         }
-        // A word longer than the line wraps within itself.
-        if w > width {
-            rows += (w - 1) / width;
-            used = w % width;
+        col += len;
+        while col > width {
+            rows += 1;
+            col -= width;
         }
     }
     rows
+}
+
+/// Alternating runs of spaces and non-spaces, each kept whole.
+fn tokens(text: &str) -> Vec<&str> {
+    let mut out = Vec::new();
+    let mut rest = text;
+    while !rest.is_empty() {
+        let space = rest.starts_with(' ');
+        let end = rest
+            .find(|c: char| (c == ' ') != space)
+            .unwrap_or(rest.len());
+        let (head, tail) = rest.split_at(end);
+        out.push(head);
+        rest = tail;
+    }
+    out
 }
 
 fn popup(area: Rect, width: u16, height: u16) -> Rect {

@@ -6,21 +6,21 @@ expression: "render(&mut app, 120, 24)"
 ╭ sort activity · lens all ──────────────────────╮╭────────────────────────────────────────────────────────────────────╮
 │   BRANCH                    ↑   ↓   ±     AGE  ││ main  active · last touched 2h  main checkout                      │
 │ ▾ fixture (6)               1       2      2h  ││ /fixture/repo                                                      │
-│ │ ◆ main                                   2h  ││                                                                    │
-│▌│ ● feat/ahead        ╭ Remove marked worktrees? ────────────────────────────────────────────╮                       │
-│▌│ ● chore/clean       │ feat/dirty                          1 modified file, 1 untracked     │                       │
-│ │ ● (3head000)        │ file                                                                 │main                   │
-│▌│ ● feat/dirty        │ feat/ahead                          1 off-base commit                │                       │
-│ │ ✗ docs/gone         │ chore/clean                         Nothing to salvage — safe to     │                       │
-│ │ ● fix/locked        │ remove                                                               │                       │
-│                       │                                                                      │                       │
+│ │ ◆ main              ╭ Remove marked worktrees? ────────────────────────────────────────────╮                       │
+│▌│ ● feat/ahead        │ feat/dirty                          1 modified file, 1 untracked     │                       │
+│▌│ ● chore/clean       │ file                                                                 │                       │
+│ │ ● (3head000)        │ feat/ahead                          1 off-base commit                │main                   │
+│▌│ ● feat/dirty        │ chore/clean                         Nothing to salvage — safe to     │                       │
+│ │ ✗ docs/gone         │ remove                                                               │                       │
+│ │ ● fix/locked        │                                                                      │                       │
 │                       │ 3 worktrees across 1 repository                                      │                       │
 │                       │ 1 holds uncommitted work — 2 files destroyed, and git will only      │                       │
 │                       │ remove them with --force                                             │                       │
 │                       │ 1 commit exists nowhere else; the branches survive                   │                       │
+│                       │                                                                      │                       │
+│                       │                                                                      │                       │
 │                       │  y  do it     n  cancel                                              │                       │
 │                       ╰──────────────────────────────────────────────────────────────────────╯                       │
-│                                                ││                                                                    │
 │                                                ││                                                                    │
 │                                                ││                                                                    │
 │                                                ││                                                                    │
