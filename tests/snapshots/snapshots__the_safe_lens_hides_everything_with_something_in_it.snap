@@ -4,12 +4,12 @@ expression: "render(&mut app, 120, 20)"
 ---
  caligula  1 repo · 7 worktrees (6 linked) · 1 dirty · 4 stale · 4 safe to remove
 ╭ sort activity · lens safe to remove ───────────╮╭────────────────────────────────────────────────────────────────────╮
-│ ▾ fixture                             6wt 1●   ││ fixture                                                            │
-│ │ ● chore/clean                            9d  ││ /fixture/repo                                                      │
-│ │ ● (3head000)                            40d  ││                                                                    │
-│ │ ✗ docs/gone                         !    1y  ││ origin    git@github.com:fixture/fixture.git                       │
-│ │ ● fix/locked                        L    1y  ││ base      main                                                     │
-│                                                ││ worktrees 7 (6 linked)                                             │
+│   BRANCH                    ↑   ↓   ±     AGE  ││ fixture                                                            │
+│ ▾ fixture (6)               1       2      2h  ││ /fixture/repo                                                      │
+│ │ ● chore/clean                            9d  ││                                                                    │
+│ │ ● (3head000)                            40d  ││ origin    git@github.com:fixture/fixture.git                       │
+│ │ ✗ docs/gone                          !   1y  ││ base      main                                                     │
+│ │ ● fix/locked                         L   1y  ││ worktrees 7 (6 linked)                                             │
 │                                                ││ dirty     1                                                        │
 │                                                ││                                                                    │
 │                                                ││ Worktrees                                                          │

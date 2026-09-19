@@ -4,15 +4,15 @@ expression: "render(&mut app, 120, 20)"
 ---
  caligula  1 repo · 7 worktrees (6 linked) · 1 dirty · 4 stale · 4 safe to remove
 ╭ sort activity · lens all ──────────────────────╮╭────────────────────────────────────────────────────────────────────╮
-│ ▾ fixture                             6wt 1●   ││ feat/dirty  ancient · last touched 90d                             │
-│ │ ◆ main                                   2h  ││ /fixture/dirty                                                     │
-│ │ ● feat/ahead                       ↑1    1d  ││                                                                    │
-│ │ ● chore/clean       ╭ Remove worktree and branch? ─────────────────────────────────────────╮                       │
-│ │ ● (3head000)        │ /fixture/dirty                                                       │                       │
-│ │ ● feat/dirty        │ branch feat/dirty                                                    │s off main             │
-│ │ ✗ docs/gone         │ 2 uncommitted files will be destroyed.                               │                       │
-│ │ ● fix/locked        │ Branch feat/dirty will be deleted too (git branch -D).               │                       │
-│                       │                                                                      │                       │
+│   BRANCH                    ↑   ↓   ±     AGE  ││ feat/dirty  ancient · last touched 90d                             │
+│ ▾ fixture (6)               1       2      2h  ││ /fixture/dirty                                                     │
+│ │ ◆ main                                   2h  ││                                                                    │
+│ │ ● feat/ahead        ╭ Remove worktree and branch? ─────────────────────────────────────────╮                       │
+│ │ ● chore/clean       │ /fixture/dirty                                                       │                       │
+│ │ ● (3head000)        │ branch feat/dirty                                                    │s off main             │
+│ │ ● feat/dirty        │ 2 uncommitted files will be destroyed.                               │                       │
+│ │ ✗ docs/gone         │ Branch feat/dirty will be deleted too (git branch -D).               │                       │
+│ │ ● fix/locked        │                                                                      │                       │
 │                       │                                                                      │                       │
 │                       │  y  do it     n  cancel                                              │acked)                 │
 │                       ╰──────────────────────────────────────────────────────────────────────╯                       │

@@ -4,15 +4,15 @@ expression: "render(&mut app, 120, 20)"
 ---
  caligula  1 repo · 7 worktrees (6 linked) · 1 dirty · 4 stale · 4 safe to remove
 ╭ sort activity · lens all ──────────────────────╮╭────────────────────────────────────────────────────────────────────╮
-│ ▾ fixture                             6wt 1●   ││ chore/clean  recent · last touched 9d                              │
-│ │ ◆ main                                   2h  ││ /fixture/clean                                                     │
-│ │ ● feat/ahead                       ↑1    1d  ││                                                                    │
-│ │ ● chore/clean                            9d  ││ ┃ Nothing to salvage — safe to remove                              │
-│ │ ● (3head000)        ╭ Remove worktree? ────────────────────────────────────────────────────╮                       │
-│ │ ● feat/dirty        │ /fixture/clean                                                       │ts off main            │
-│ │ ✗ docs/gone         │ branch chore/clean                                                   │                       │
-│ │ ● fix/locked        │ Clean. Nothing would be lost.                                        │                       │
-│                       │                                                                      │                       │
+│   BRANCH                    ↑   ↓   ±     AGE  ││ chore/clean  recent · last touched 9d                              │
+│ ▾ fixture (6)               1       2      2h  ││ /fixture/clean                                                     │
+│ │ ◆ main                                   2h  ││                                                                    │
+│ │ ● feat/ahead              1              1d  ││ ┃ Nothing to salvage — safe to remove                              │
+│ │ ● chore/clean       ╭ Remove worktree? ────────────────────────────────────────────────────╮                       │
+│ │ ● (3head000)        │ /fixture/clean                                                       │ts off main            │
+│ │ ● feat/dirty        │ branch chore/clean                                                   │                       │
+│ │ ✗ docs/gone         │ Clean. Nothing would be lost.                                        │                       │
+│ │ ● fix/locked        │                                                                      │                       │
 │                       │                                                                      │                       │
 │                       │  y  do it     n  cancel                                              │                       │
 │                       ╰──────────────────────────────────────────────────────────────────────╯                       │

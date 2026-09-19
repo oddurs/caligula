@@ -178,7 +178,33 @@ fn list(f: &mut Frame, area: Rect, app: &mut App) {
         return;
     }
 
-    let height = inner.height as usize;
+    // The last column belongs to the scrollbar, with a blank column before it so
+    // the age never sits against the thumb.
+    let pane = Rect {
+        width: inner.width.saturating_sub(2),
+        ..inner
+    };
+    let plan = Plan::for_width(pane.width as usize);
+
+    // The header names the columns and does not scroll with them, so every area
+    // and every count below is derived from what is left after it — a height
+    // taken before this point is one row too many, and clips the bottom row.
+    f.render_widget(
+        Paragraph::new(header_line(plan)),
+        Rect { height: 1, ..pane },
+    );
+    let text = Rect {
+        y: pane.y + 1,
+        height: pane.height.saturating_sub(1),
+        ..pane
+    };
+    let bar = Rect {
+        y: inner.y + 1,
+        height: inner.height.saturating_sub(1),
+        ..inner
+    };
+    let height = text.height as usize;
+
     // Keep one row of slack above the cursor: the top line is spoken for by the
     // sticky repo header whenever a group is scrolled into.
     if app.selected <= app.offset {
@@ -190,42 +216,30 @@ fn list(f: &mut Frame, area: Rect, app: &mut App) {
         app.offset = app.rows.len().saturating_sub(height);
     }
 
-    // The last column belongs to the scrollbar, with a blank column before it so
-    // the age never sits against the thumb.
-    let text = Rect {
-        width: inner.width.saturating_sub(2),
-        ..inner
-    };
     let mut lines = Vec::with_capacity(height);
     for (i, row) in app.rows.iter().enumerate().skip(app.offset).take(height) {
         let selected = i == app.selected;
         lines.push(match *row {
-            Row::Repo { repo } => repo_line(&app.repos[repo], app, selected, text.width),
+            Row::Repo { repo } => repo_line(&app.repos[repo], app, selected, plan),
             Row::Worktree { repo, wt } => {
                 let worktree = &app.repos[repo].worktrees[wt];
-                worktree_line(
-                    worktree,
-                    app.now,
-                    selected,
-                    app.is_marked(worktree),
-                    text.width,
-                )
+                worktree_line(worktree, app.now, selected, app.is_marked(worktree), plan)
             }
         });
     }
     f.render_widget(Paragraph::new(lines), text);
 
     if let (true, Some(Row::Worktree { repo, .. })) = (app.offset > 0, app.rows.get(app.offset)) {
-        let head = Rect { height: 1, ..text };
-        f.render_widget(Clear, head);
+        let sticky = Rect { height: 1, ..text };
+        f.render_widget(Clear, sticky);
         f.render_widget(
-            Paragraph::new(repo_line(&app.repos[*repo], app, false, text.width)),
-            head,
+            Paragraph::new(repo_line(&app.repos[*repo], app, false, plan)),
+            sticky,
         );
     }
 
     if app.rows.len() > height && height > 0 {
-        scrollbar(f, inner, app.offset, height, app.rows.len());
+        scrollbar(f, bar, app.offset, height, app.rows.len());
     }
 }
 
@@ -255,42 +269,212 @@ fn scrollbar(f: &mut Frame, area: Rect, offset: usize, height: usize, total: usi
     }
 }
 
-fn repo_line<'a>(repo: &'a Repo, app: &App, selected: bool, width: u16) -> Line<'a> {
-    // "▾" with a space either side.
-    const PREFIX: usize = 3;
+// ---------------------------------------------------------------- the table
+//
+// One column per fact, each a fixed width, so the eye has a column to run down.
+// A repository row carries the column-wise sum of its worktrees, which is what
+// makes a folded repository still worth reading: every column means the same
+// thing on every row.
 
+/// Right-hand columns, widest meaning first.
+const AHEAD_W: usize = 4;
+const BEHIND_W: usize = 4;
+const FILES_W: usize = 4;
+const FLAGS_W: usize = 3;
+const AGE_W: usize = 5;
+/// Below this a branch name is not worth showing at all.
+const NAME_MIN: usize = 8;
+
+/// Which columns fit, and what is left for the name.
+#[derive(Clone, Copy)]
+pub struct Plan {
+    files: bool,
+    ahead: bool,
+    behind: bool,
+    flags: bool,
+    /// Name width for a worktree row; a repo row gets two more, being less indented.
+    name: usize,
+}
+
+impl Plan {
+    /// Columns are added in the order they are worth keeping, not in the order
+    /// they are drawn. Uncommitted work first, the only column that says work
+    /// would be destroyed. Then the flags, which say a worktree is locked or
+    /// unreadable — dropping those makes something unremovable look removable.
+    /// Then commits that exist only here. Being behind goes first, because it
+    /// costs nothing and is the only column that is pure context.
+    fn for_width(width: usize) -> Plan {
+        let mut budget = width.saturating_sub(WORKTREE_PREFIX + AGE_W + NAME_MIN);
+        let take = |w: usize, budget: &mut usize| {
+            if *budget >= w {
+                *budget -= w;
+                true
+            } else {
+                false
+            }
+        };
+        let files = take(FILES_W, &mut budget);
+        let flags = take(FLAGS_W, &mut budget);
+        let ahead = take(AHEAD_W, &mut budget);
+        let behind = take(BEHIND_W, &mut budget);
+
+        let used = AGE_W
+            + if files { FILES_W } else { 0 }
+            + if ahead { AHEAD_W } else { 0 }
+            + if behind { BEHIND_W } else { 0 }
+            + if flags { FLAGS_W } else { 0 };
+        Plan {
+            files,
+            ahead,
+            behind,
+            flags,
+            name: width.saturating_sub(WORKTREE_PREFIX + used).max(1),
+        }
+    }
+}
+
+/// gutter + "│ " + marker + " "
+const WORKTREE_PREFIX: usize = 5;
+/// " ▾ " — a repository sits two columns further left than its worktrees.
+const REPO_PREFIX: usize = 3;
+
+/// A number, or nothing at all. A column of zeroes is a column of noise.
+///
+/// A value too wide for its column is capped rather than allowed to widen the
+/// row: a repository row carries the sum over every worktree, and one row wider
+/// than the pane pushes the age off the right-hand edge for good.
+fn count(n: u32, width: usize) -> String {
+    if n == 0 {
+        return " ".repeat(width);
+    }
+    let text = n.to_string();
+    if text.len() <= width {
+        return format!("{text:>width$}");
+    }
+    if width < 2 {
+        return "+".repeat(width);
+    }
+    let cap = 10u32.pow(width as u32 - 1) - 1;
+    format!("{cap}+")
+}
+
+fn header_line(plan: Plan) -> Line<'static> {
+    let dim = Style::default().fg(DIM).add_modifier(Modifier::BOLD);
+    let w = REPO_PREFIX + plan.name + 2;
+    let mut spans = vec![Span::styled(format!("{:<w$}", clip("   BRANCH", w)), dim)];
+    if plan.ahead {
+        spans.push(Span::styled(format!("{:>w$}", "↑", w = AHEAD_W), dim));
+    }
+    if plan.behind {
+        spans.push(Span::styled(format!("{:>w$}", "↓", w = BEHIND_W), dim));
+    }
+    if plan.files {
+        spans.push(Span::styled(format!("{:>w$}", "±", w = FILES_W), dim));
+    }
+    if plan.flags {
+        spans.push(Span::styled(format!("{:>w$}", "", w = FLAGS_W), dim));
+    }
+    spans.push(Span::styled(format!("{:>w$}", "AGE", w = AGE_W), dim));
+    Line::from(spans)
+}
+
+/// What one row puts in the columns.
+struct Values {
+    ahead: u32,
+    behind: u32,
+    files: u32,
+    flags: String,
+    age: String,
+    age_color: Color,
+}
+
+/// The numeric columns, shared by both kinds of row so they cannot drift apart.
+fn value_columns(plan: Plan, base: Style, v: Values) -> Vec<Span<'static>> {
+    let Values {
+        ahead,
+        behind,
+        files,
+        flags,
+        age,
+        age_color,
+    } = v;
+    let mut spans = Vec::new();
+    if plan.ahead {
+        spans.push(Span::styled(count(ahead, AHEAD_W), base.fg(Color::Yellow)));
+    }
+    if plan.behind {
+        // Being behind costs nothing and destroys nothing; it is context, not risk.
+        spans.push(Span::styled(count(behind, BEHIND_W), base.fg(Color::Blue)));
+    }
+    if plan.files {
+        spans.push(Span::styled(count(files, FILES_W), base.fg(Color::Red)));
+    }
+    if plan.flags {
+        spans.push(Span::styled(
+            format!("{flags:>w$}", w = FLAGS_W),
+            base.fg(Color::Yellow),
+        ));
+    }
+    spans.push(Span::styled(
+        format!("{age:>w$}", w = AGE_W),
+        base.fg(age_color),
+    ));
+    spans
+}
+
+fn repo_line<'a>(repo: &'a Repo, app: &App, selected: bool, plan: Plan) -> Line<'a> {
     let collapsed = app.collapsed.contains(&repo.common_dir);
     let arrow = if collapsed { "▸" } else { "▾" };
 
+    // The count of worktrees belongs to the name, not to a column: it says how
+    // big the group is, not how much is wrong with it. It was previously
+    // coloured by the dirty count, which made a neutral number wear an alarm.
     let linked = repo.linked_count();
-    let dirty = repo.dirty_count();
-    let mut right = String::from(" ");
-    if linked > 0 {
-        right.push_str(&format!("{linked}wt "));
+    let name_w = plan.name + 2;
+    let mut suffix = if linked > 0 {
+        format!(" ({linked})")
+    } else {
+        String::new()
+    };
+    // The name comes first: a pane too narrow for both keeps the repository's
+    // name and gives up the count.
+    if suffix.chars().count() + 3 > name_w {
+        suffix.clear();
     }
-    if dirty > 0 {
-        right.push_str(&format!("{dirty}● "));
-    }
-
-    let width = width as usize;
-    let avail = width.saturating_sub(PREFIX);
-    if right.chars().count() + 4 > avail {
-        right = String::new();
-    }
-    let name_w = avail.saturating_sub(right.chars().count());
-    let name = truncate(&repo.name, name_w);
-    let pad = name_w.saturating_sub(name.chars().count());
+    let room = name_w.saturating_sub(suffix.chars().count());
+    let name = truncate(&repo.name, room);
+    let pad = room.saturating_sub(name.chars().count());
 
     let base = row_style(selected);
-    Line::from(vec![
+    let mut spans = vec![
         Span::styled(
             format!(" {arrow} "),
             base.fg(if selected { ACCENT } else { DIM }),
         ),
         Span::styled(name, base.fg(BRIGHT).add_modifier(Modifier::BOLD)),
+        Span::styled(suffix, base.fg(DIM)),
         Span::styled(" ".repeat(pad), base),
-        Span::styled(right, base.fg(if dirty > 0 { Color::Red } else { DIM })),
-    ])
+    ];
+
+    let totals = repo.totals();
+    let newest = repo.last_touched();
+    spans.extend(value_columns(
+        plan,
+        base,
+        Values {
+            ahead: totals.ahead,
+            behind: totals.behind,
+            files: totals.files,
+            flags: String::new(),
+            age: if newest == 0 {
+                "—".into()
+            } else {
+                git::ago(app.now.saturating_sub(newest))
+            },
+            age_color: stale_color(repo.staleness(app.now)),
+        },
+    ));
+    Line::from(spans)
 }
 
 fn worktree_line<'a>(
@@ -298,13 +482,8 @@ fn worktree_line<'a>(
     now: u64,
     selected: bool,
     marked: bool,
-    width: u16,
+    plan: Plan,
 ) -> Line<'a> {
-    // mark gutter + "│ " + marker + " "
-    const PREFIX: usize = 5;
-    const AGE: usize = 5;
-    const MIN_LABEL: usize = 6;
-
     let marker = if wt.broken {
         ("✗", Color::Red)
     } else if wt.is_main {
@@ -313,19 +492,17 @@ fn worktree_line<'a>(
         ("●", stale_color(wt.staleness(now)))
     };
 
-    // Lay the row out from the fixed columns inwards so it is exactly as wide as
-    // the pane: a row that overflows loses its age off the right-hand edge.
-    let width = width as usize;
-    let body = width.saturating_sub(PREFIX + AGE);
-    let mut badges = badge_text(wt);
-    if badges.chars().count() + MIN_LABEL > body {
-        badges = clip(&badges, body.saturating_sub(MIN_LABEL));
-    }
-    let label_w = body.saturating_sub(badges.chars().count());
-    let label = truncate(&wt.label(), label_w);
-    let pad = label_w.saturating_sub(label.chars().count());
-
     let base = row_style(selected);
+    // A solid block in the first column, not a shade: the marking decides what a
+    // removal applies to, so it has to be readable on a terminal with no colour.
+    let (gutter, gutter_style) = if marked {
+        ("▌", base.fg(ACCENT).add_modifier(Modifier::BOLD))
+    } else {
+        (" ", base.fg(DIM))
+    };
+
+    let label = truncate(&wt.label(), plan.name);
+    let pad = plan.name.saturating_sub(label.chars().count());
     let label_style = if wt.is_main {
         base.fg(TEXT).add_modifier(Modifier::ITALIC)
     } else if wt.salvage() == Salvage::Uncommitted {
@@ -334,28 +511,35 @@ fn worktree_line<'a>(
         base.fg(TEXT)
     };
 
-    // A solid block in the first column, not a shade: the marking decides what a
-    // removal applies to, so it has to be readable at a glance and on a terminal
-    // with no colour at all.
-    let (gutter, gutter_style) = if marked {
-        ("▌", base.fg(ACCENT).add_modifier(Modifier::BOLD))
-    } else {
-        (" ", base.fg(DIM))
-    };
+    let mut flags = String::new();
+    if wt.locked.is_some() {
+        flags.push('L');
+    }
+    if wt.prunable.is_some() || wt.broken {
+        flags.push('!');
+    }
 
-    Line::from(vec![
+    let mut spans = vec![
         Span::styled(gutter, gutter_style),
         Span::styled("│ ", base.fg(DIM)),
         Span::styled(marker.0, base.fg(marker.1)),
         Span::styled(" ", base),
         Span::styled(label, label_style),
         Span::styled(" ".repeat(pad), base),
-        Span::styled(badges, base.fg(salvage_color(wt.salvage()))),
-        Span::styled(
-            format!("{:>AGE$}", wt.age_label(now)),
-            base.fg(stale_color(wt.staleness(now))),
-        ),
-    ])
+    ];
+    spans.extend(value_columns(
+        plan,
+        base,
+        Values {
+            ahead: wt.unpushed(),
+            behind: wt.behind,
+            files: wt.changed_files(),
+            flags,
+            age: wt.age_label(now),
+            age_color: stale_color(wt.staleness(now)),
+        },
+    ));
+    Line::from(spans)
 }
 
 fn row_style(selected: bool) -> Style {
@@ -364,27 +548,6 @@ fn row_style(selected: bool) -> Style {
     } else {
         Style::default()
     }
-}
-
-/// Compact right-hand markers: what is here that is not anywhere else.
-fn badge_text(wt: &Worktree) -> String {
-    let mut s = String::new();
-    if wt.locked.is_some() {
-        s.push_str("L ");
-    }
-    if wt.prunable.is_some() || wt.broken {
-        s.push_str("! ");
-    }
-    if wt.unpushed() > 0 {
-        s.push_str(&format!("↑{} ", wt.unpushed()));
-    }
-    if wt.behind > 0 {
-        s.push_str(&format!("↓{} ", wt.behind));
-    }
-    if wt.changed_files() > 0 {
-        s.push_str(&format!("~{} ", wt.changed_files()));
-    }
-    s
 }
 
 // ------------------------------------------------------------------- detail
@@ -976,6 +1139,69 @@ mod tests {
 
     /// The age column once fell off the right-hand edge: the row was built one
     /// column wider than the pane, and the overflow was silently truncated.
+    /// The order columns are given up in is a judgement about what the list is
+    /// for, so it is pinned rather than left to the arithmetic.
+    /// A repository row carries the sum over every worktree, which can outgrow
+    /// its column. It must cap rather than widen the row — widening is how the
+    /// age column fell off the right-hand edge before.
+    #[test]
+    fn a_count_too_wide_for_its_column_is_capped_not_widened() {
+        assert_eq!(count(0, 4), "    ");
+        assert_eq!(count(7, 4), "   7");
+        assert_eq!(count(1234, 4), "1234");
+        assert_eq!(count(12345, 4), "999+");
+        assert_eq!(count(99999, 3), "99+");
+        for width in 1..8 {
+            for n in [0, 1, 9, 10, 999, 1_000, 99_999, u32::MAX] {
+                assert_eq!(
+                    count(n, width).chars().count(),
+                    width,
+                    "count({n}, {width})"
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn a_row_stays_inside_its_pane_however_large_the_numbers() {
+        let mut wt = test_worktree("feat/whatever");
+        wt.upstream = Some("origin/main".into());
+        wt.ahead = u32::MAX;
+        wt.behind = u32::MAX;
+        wt.untracked = u32::MAX;
+        for width in [20u16, 34, 58, 120] {
+            let plan = Plan::for_width(width as usize);
+            let line = worktree_line(&wt, now(), false, false, plan);
+            assert_eq!(line.width(), width as usize, "width {width}");
+        }
+    }
+
+    #[test]
+    fn columns_are_given_up_least_useful_first() {
+        let wide = Plan::for_width(60);
+        assert!(wide.files && wide.flags && wide.ahead && wide.behind);
+
+        // Being behind is pure context: it goes first.
+        let plan = Plan::for_width(32);
+        assert!(plan.files && plan.flags && plan.ahead, "{:?}", plan.name);
+        assert!(!plan.behind);
+
+        // Then commits that exist only here.
+        let plan = Plan::for_width(28);
+        assert!(plan.files && plan.flags);
+        assert!(!plan.ahead && !plan.behind);
+
+        // The flags say a worktree cannot be removed, so they outlast everything
+        // but the count of work that would be destroyed.
+        let plan = Plan::for_width(24);
+        assert!(plan.files);
+        assert!(!plan.flags && !plan.ahead && !plan.behind);
+
+        // And the name always keeps something.
+        assert!(Plan::for_width(12).name >= 1);
+        assert!(Plan::for_width(0).name >= 1);
+    }
+
     #[test]
     fn wrapping_is_counted_by_words_not_characters() {
         assert_eq!(wrapped_rows("", 10), 1);
@@ -996,7 +1222,7 @@ mod tests {
                 wt.ahead = ahead;
                 wt.behind = behind;
                 wt.untracked = dirty;
-                let line = worktree_line(&wt, now(), false, false, width);
+                let line = worktree_line(&wt, now(), false, false, Plan::for_width(width as usize));
                 assert_eq!(
                     line.width(),
                     width as usize,
@@ -1016,7 +1242,7 @@ mod tests {
         let app = App::new();
         for width in [20u16, 34, 58, 120] {
             let repo = crate::git::test_repo("a-repository-with-a-long-name", 3);
-            let line = repo_line(&repo, &app, false, width);
+            let line = repo_line(&repo, &app, false, Plan::for_width(width as usize));
             assert_eq!(line.width(), width as usize, "width {width}");
         }
     }

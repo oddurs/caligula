@@ -4,15 +4,15 @@ expression: "render(&mut app, 120, 24)"
 ---
  caligula  1 repo · 7 worktrees (6 linked) · 1 dirty · 4 stale · 4 safe to remove
 ╭ sort activity · lens all ──────────────────────╮╭────────────────────────────────────────────────────────────────────╮
-│ ▾ fixture                             6wt 1●   ││ main  active · last touched 2h  main checkout                      │
-│ │ ◆ main                                   2h  ││ /fixture/repo                                                      │
-│▌│ ● feat/ahead                       ↑1    1d  ││                                                                    │
-│▌│ ● chore/clean       ╭ Remove marked worktrees? ────────────────────────────────────────────╮                       │
-│ │ ● (3head000)        │ feat/dirty                          2 uncommitted files              │                       │
-│▌│ ● feat/dirty        │ feat/ahead                          1 off-base commit                │main                   │
-│ │ ✗ docs/gone         │ chore/clean                         Nothing to salvage — safe to     │                       │
-│ │ ● fix/locked        │ remove                                                               │                       │
-│                       │                                                                      │                       │
+│   BRANCH                    ↑   ↓   ±     AGE  ││ main  active · last touched 2h  main checkout                      │
+│ ▾ fixture (6)               1       2      2h  ││ /fixture/repo                                                      │
+│ │ ◆ main                                   2h  ││                                                                    │
+│▌│ ● feat/ahead        ╭ Remove marked worktrees? ────────────────────────────────────────────╮                       │
+│▌│ ● chore/clean       │ feat/dirty                          2 uncommitted files              │                       │
+│ │ ● (3head000)        │ feat/ahead                          1 off-base commit                │main                   │
+│▌│ ● feat/dirty        │ chore/clean                         Nothing to salvage — safe to     │                       │
+│ │ ✗ docs/gone         │ remove                                                               │                       │
+│ │ ● fix/locked        │                                                                      │                       │
 │                       │ 3 worktrees across 1 repository                                      │                       │
 │                       │ 1 holds uncommitted work — 2 files destroyed, and git will only      │                       │
 │                       │ remove them with --force                                             │                       │
