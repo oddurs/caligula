@@ -1,6 +1,6 @@
 ---
 source: tests/snapshots.rs
-expression: "render(&mut app, 80, 20)"
+expression: "render(&mut app, 80, 24)"
 ---
  caligula  1 repo · 7 worktrees (6 linked) · 1 dirty · 4 stale · 2 safe to remov
 ╭ sort activity · lens all ──────╮╭────────────────────────────────────────────╮
@@ -20,5 +20,9 @@ expression: "render(&mut app, 80, 20)"
 │                                ││   ● (3head000)  Nothing to salvage —…  40d │
 │                                ││   ● feat/dirty  2 uncommitted files    90d │
 │                                ││   ✗ docs/gone   Git cannot read this…   1y │
+│                                ││   ● fix/locked  Nothing to salvage —…   1y │
+│                                ││                                            │
+│                                ││                                            │
+│                                ││                                            │
 ╰────────────────────────────────╯╰────────────────────────────────────────────╯
  j/k move  space mark  a sweep  ←/→ fold  d remove  D +branch  p prune  c shell

@@ -35,6 +35,18 @@ fn stale_color(s: Staleness) -> Color {
     }
 }
 
+/// The one place that decides how a checkout is drawn — glyph and colour both,
+/// so the list and the detail pane cannot disagree about it.
+fn marker(wt: &Worktree, now: u64) -> (&'static str, Color) {
+    if wt.broken {
+        ("✗", Color::Red)
+    } else if wt.is_main {
+        ("◆", stale_color(wt.staleness(now)))
+    } else {
+        ("●", stale_color(wt.staleness(now)))
+    }
+}
+
 fn salvage_color(s: Salvage) -> Color {
     match s {
         Salvage::Nothing => Color::Green,
@@ -484,13 +496,7 @@ fn worktree_line<'a>(
     marked: bool,
     plan: Plan,
 ) -> Line<'a> {
-    let marker = if wt.broken {
-        ("✗", Color::Red)
-    } else if wt.is_main {
-        ("◆", stale_color(wt.staleness(now)))
-    } else {
-        ("●", stale_color(wt.staleness(now)))
-    };
+    let marker = marker(wt, now);
 
     let base = row_style(selected);
     // A solid block in the first column, not a shade: the marking decides what a
@@ -570,7 +576,7 @@ fn detail(f: &mut Frame, area: Rect, app: &mut App) {
             app.now,
             inner.width,
         ),
-        Some(Row::Repo { repo }) => repo_detail(&app.repos[repo], app.now),
+        Some(Row::Repo { repo }) => repo_detail(&app.repos[repo], app.now, inner.width),
         None => vec![Line::from(Span::styled(
             "nothing selected",
             Style::default().fg(DIM),
@@ -785,7 +791,7 @@ fn worktree_detail<'a>(repo: &'a Repo, wt: &'a Worktree, now: u64, width: u16) -
     out
 }
 
-fn repo_detail<'a>(repo: &'a Repo, now: u64) -> Vec<Line<'a>> {
+fn repo_detail<'a>(repo: &'a Repo, now: u64, width: u16) -> Vec<Line<'a>> {
     let mut out = vec![
         Line::from(Span::styled(
             repo.name.clone(),
@@ -819,22 +825,49 @@ fn repo_detail<'a>(repo: &'a Repo, now: u64) -> Vec<Line<'a>> {
     }
 
     out.extend(section("Worktrees"));
+
+    // Laid out from the width given, like the list rows, rather than from fixed
+    // column widths that happened to suit one pane: a row wider than its pane
+    // wraps, and the age ends up alone on the following line.
+    const MARKER: usize = 4;
+    const GAP: usize = 2;
+    const AGE: usize = 5;
+    const NAME_MIN: usize = 8;
+    let avail = (width as usize).saturating_sub(MARKER + AGE);
+    // The branch is an identifier and the verdict is prose, so they are worth
+    // different amounts per column; a third to the name reads well from 60
+    // columns up. Below the width that fits both, the verdict goes — and its
+    // separator with it — rather than the row wrapping, which is the defect
+    // this was written to remove.
+    let (name_w, gap, verdict_w) = if avail >= NAME_MIN + GAP + 12 {
+        let name_w = ((avail - GAP) / 3).clamp(NAME_MIN, 32);
+        (name_w, GAP, avail - GAP - name_w)
+    } else {
+        (avail, 0, 0)
+    };
+
     for wt in &repo.worktrees {
         let stale = wt.staleness(now);
         out.push(Line::from(vec![
             Span::styled(
-                format!("  {} ", if wt.is_main { "◆" } else { "●" }),
-                Style::default().fg(stale_color(stale)),
+                format!("  {} ", marker(wt, now).0),
+                Style::default().fg(marker(wt, now).1),
             ),
             Span::styled(
-                format!("{:<26}  ", truncate(&wt.label(), 26)),
+                format!("{:<name_w$}", truncate(&wt.label(), name_w)),
                 Style::default().fg(TEXT),
             ),
+            // The gap is budgeted above, so it has to be drawn: without it a
+            // label that fills its column runs straight into the verdict.
+            Span::styled(" ".repeat(gap), Style::default()),
             Span::styled(
-                format!("{:<34}  ", truncate(&wt.verdict(), 34)),
+                format!("{:<verdict_w$}", clip(&wt.verdict(), verdict_w)),
                 Style::default().fg(salvage_color(wt.salvage())),
             ),
-            Span::styled(wt.age_label(now), Style::default().fg(stale_color(stale))),
+            Span::styled(
+                format!("{:>AGE$}", wt.age_label(now)),
+                Style::default().fg(stale_color(stale)),
+            ),
         ]));
     }
     out

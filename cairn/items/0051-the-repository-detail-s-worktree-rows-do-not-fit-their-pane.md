@@ -2,12 +2,12 @@
 id: 51
 title: The repository detail's worktree rows do not fit their pane
 type: bug
-status: backlog
+status: done
 milestone: v0.2
 depends_on:
 - 20
 created: 2026-09-17
-updated: 2026-09-17
+updated: 2026-09-18
 priority: p1
 effort: s
 area: chrome
@@ -43,7 +43,11 @@ shows the wrapping.
 
 ## Acceptance criteria
 
-- [ ] The repository detail's worktree rows are exactly as wide as their pane
-- [ ] The verdict is clipped from the end, keeping the beginning
-- [ ] No row in the detail pane wraps at 80, 120 or 200 columns
-- [ ] The snapshot diff for this change shows the wrapping disappearing
+- [x] The repository detail's worktree rows are exactly as wide as their pane
+- [x] The verdict is clipped from the end, keeping the beginning
+- [x] No row in the detail pane wraps at 80, 120 or 200 columns
+- [x] The snapshot diff for this change shows the wrapping disappearing
+
+## 2026-09-18
+
+Review found the fix incomplete in three ways and the test vacuous. The two-column gap was subtracted from the budget but never drawn, so a label that filled its column ran into the verdict and the rows came out two columns narrower than the pane. The name and verdict floors were not checked against the width, so below about 56 columns every row wrapped again — the original defect. And clip(s, 0) returned an ellipsis rather than nothing, which widened a row whose verdict column had been dropped. The test that was supposed to catch all of this split the screen on the pane borders, landed on the empty string between them, and passed unconditionally; it now looks for each worktree's age on the same line as its label, and caught two of the three failures the moment it was written.

@@ -15,10 +15,10 @@ expression: "render(&mut app, 60, 20)"
 │ │ ● fi…locked          L   1y  ││ dirty     1            │
 │                                ││                        │
 │                                ││ Worktrees              │
-│                                ││   ◆ main               │
-│                                ││          Nothing to    │
-│                                ││ …lvage — safe to       │
-│                                ││ remove  2h             │
-│                                ││   ● feat/ahead         │
+│                                ││   ◆ main            2h │
+│                                ││   ● feat/ahead      1d │
+│                                ││   ● chore/clean     9d │
+│                                ││   ● (3head000)     40d │
+│                                ││   ● feat/dirty     90d │
 ╰────────────────────────────────╯╰────────────────────────╯
  j/k move  space mark  a sweep  ←/→ fold  d remove  D +branc

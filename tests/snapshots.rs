@@ -403,3 +403,44 @@ fn a_marking_under_a_filter_on_a_narrow_terminal() {
     app.sweep_repo();
     insta::assert_snapshot!(render(&mut app, 80, 20));
 }
+
+/// A row wider than its pane wraps, which strands the age on the next line.
+///
+/// Asserted by looking for each worktree's age on the *same line* as its label:
+/// an earlier version of this test parsed the screen by splitting on the pane
+/// borders, landed on the empty string between them, and passed unconditionally
+/// at widths that demonstrably wrapped.
+#[test]
+fn no_detail_row_wraps_at_any_width() {
+    for width in [40u16, 50, 60, 80, 120, 200] {
+        let mut app = fixture_app();
+        app.go(0);
+        let rows: Vec<(String, String)> = app.repos[0]
+            .worktrees
+            .iter()
+            .map(|w| (w.label(), w.age_label(fixture::NOW)))
+            .collect();
+        let screen = render(&mut app, width, 30);
+
+        for (label, age) in rows {
+            // A label can be truncated in a narrow pane; its head cannot.
+            let head: String = label.chars().take(6).collect();
+            let Some(line) = screen.lines().find(|l| {
+                l.contains(&head) && (l.contains(" ◆ ") || l.contains(" ● ") || l.contains(" ✗ "))
+            }) else {
+                continue;
+            };
+            assert!(
+                line.contains(&age),
+                "at width {width} the row for {label} lost its age to a wrap:\n{line}"
+            );
+        }
+    }
+}
+
+#[test]
+fn a_repository_detail_at_eighty_columns() {
+    let mut app = fixture_app();
+    app.go(0);
+    insta::assert_snapshot!(render(&mut app, 80, 24));
+}
