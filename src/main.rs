@@ -248,6 +248,7 @@ fn handle_key(app: &mut App, key: KeyEvent, scan: &mut Scan, args: &Args) {
             app.clear_marks();
             app.say("Marking cleared", Tone::Info);
         }
+        KeyCode::Tab | KeyCode::BackTab => app.toggle_focus(),
         KeyCode::Char(' ') => app.toggle_mark(),
         KeyCode::Char('a') => app.sweep_repo(),
         KeyCode::Char('q') | KeyCode::Esc => {

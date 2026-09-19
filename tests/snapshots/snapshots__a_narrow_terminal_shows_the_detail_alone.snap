@@ -1,0 +1,24 @@
+---
+source: tests/snapshots.rs
+expression: "render(&mut app, 80, 20)"
+---
+ caligula  1 repo · 7 worktrees (6 linked) · 1 dirty · 4 stale
+╭──────────────────────────────────────────────────────────────────────────────╮
+│ feat/dirty  ancient · last touched 90d                                       │
+│ /fixture/dirty                                                               │
+│                                                                              │
+│ ┃ 1 modified file, 1 untracked file                                          │
+│                                                                              │
+│ branch    feat/dirty  no upstream · 0 commits off main                       │
+│ head      4c000000  init: the first commit                                   │
+│           Fixture · 90d ago                                                  │
+│ repo      fixture  /fixture/repo                                             │
+│                                                                              │
+│ Working tree (0 staged · 1 unstaged · 1 untracked)                           │
+│   .M README.md                                                               │
+│   ?? scratch.txt                                                             │
+│                                                                              │
+│ Recent commits                                                               │
+│   4r000000  90d  init: the first commit                                      │
+╰──────────────────────────────────────────────────────────────────────────────╯
+ detail  tab   j/k move  space mark  a sweep  d remove  ? help

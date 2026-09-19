@@ -442,6 +442,9 @@ fn no_detail_row_wraps_at_any_width() {
 fn a_repository_detail_at_eighty_columns() {
     let mut app = fixture_app();
     app.go(0);
+    // Below the threshold only one pane is drawn, so the detail has to be the
+    // one in focus or this stops testing the detail at all.
+    app.toggle_focus();
     insta::assert_snapshot!(render(&mut app, 80, 24));
 }
 
@@ -468,4 +471,63 @@ fn a_long_failure_says_how_much_is_left() {
         .collect();
     app.fail("12 of 45 could not be removed", body);
     insta::assert_snapshot!(render(&mut app, 120, 20));
+}
+
+/// Below the threshold there is one pane, and it uses the whole width.
+
+#[test]
+fn a_narrow_terminal_shows_the_detail_alone() {
+    let mut app = fixture_app();
+    select(&mut app, "feat/dirty");
+    app.toggle_focus();
+    insta::assert_snapshot!(render(&mut app, 80, 20));
+}
+
+/// Nothing may be drawn outside the pane: every line is the full width or less,
+/// and no line carries a second pane's border.
+#[test]
+fn one_pane_fills_the_width_and_nothing_spills() {
+    for width in [60u16, 80, 99] {
+        for focus in [false, true] {
+            let mut app = fixture_app();
+            if focus {
+                app.toggle_focus();
+            }
+            let screen = render(&mut app, width, 20);
+            for line in screen.lines() {
+                assert!(
+                    line.chars().count() <= width as usize,
+                    "at {width} a line ran past the pane: {line:?}"
+                );
+                assert!(
+                    line.matches('╭').count() <= 1 && line.matches('╰').count() <= 1,
+                    "at {width} two panes were drawn: {line:?}"
+                );
+            }
+        }
+    }
+}
+
+/// The selection is held by row, not by layout, so crossing the threshold in
+/// either direction returns to the same worktree.
+#[test]
+fn resizing_across_the_threshold_keeps_the_selection() {
+    let mut app = fixture_app();
+    select(&mut app, "feat/dirty");
+    let before = app.selection_key();
+
+    // Asserted on the screen, not just the field: the detail pane names what is
+    // selected, so it is the thing that would betray a selection that moved.
+    for width in [60u16, 200, 60] {
+        let screen = render(&mut app, width, 20);
+        assert_eq!(
+            app.selection_key(),
+            before,
+            "at {width} the selection moved"
+        );
+        assert!(
+            screen.contains("feat/dirty"),
+            "at {width} the selected worktree left the screen:\n{screen}"
+        );
+    }
 }

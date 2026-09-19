@@ -7,7 +7,7 @@ use ratatui::style::{Color, Modifier, Style};
 use ratatui::text::{Line, Span};
 use ratatui::widgets::{Block, BorderType, Borders, Clear, Paragraph, Wrap};
 
-use crate::app::{App, Lens, Row, Tone};
+use crate::app::{App, Focus, Lens, Row, Tone};
 use crate::git::{self, Repo, Salvage, Staleness, Worktree};
 use crate::scan::shorten_home;
 use crate::text::{clip, truncate};
@@ -15,6 +15,9 @@ use crate::text::{clip, truncate};
 /// As many stashes as are worth reading before the rest of the pane is pushed
 /// off the screen, matching the caps on the file and commit lists.
 const STASH_CAP: usize = 20;
+
+/// The width at which two panes stop being worth it.
+pub const TWO_PANE_MIN: u16 = 100;
 
 const ACCENT: Color = Color::Cyan;
 const DIM: Color = Color::DarkGray;
@@ -84,17 +87,26 @@ pub fn draw(f: &mut Frame, app: &mut App) {
 
     header(f, chunks[0], app);
 
-    let list_width = (chunks[1].width as f32 * 0.42).round().clamp(34.0, 60.0) as u16;
-    let body = Layout::default()
-        .direction(Direction::Horizontal)
-        .constraints([
-            Constraint::Length(list_width.min(chunks[1].width)),
-            Constraint::Min(20),
-        ])
-        .split(chunks[1]);
-
-    list(f, body[0], app);
-    detail(f, body[1], app);
+    // Below this there is not room for a list and a detail side by side without
+    // both being useless: the list loses its branch names to truncation and the
+    // detail wraps every line. One at a time, full width, is worth more.
+    if chunks[1].width < TWO_PANE_MIN {
+        match app.focus {
+            Focus::List => list(f, chunks[1], app),
+            Focus::Detail => detail(f, chunks[1], app),
+        }
+    } else {
+        let list_width = (chunks[1].width as f32 * 0.42).round().clamp(34.0, 60.0) as u16;
+        let body = Layout::default()
+            .direction(Direction::Horizontal)
+            .constraints([
+                Constraint::Length(list_width.min(chunks[1].width)),
+                Constraint::Min(20),
+            ])
+            .split(chunks[1]);
+        list(f, body[0], app);
+        detail(f, body[1], app);
+    }
     footer(f, chunks[2], app);
 
     if app.help {
@@ -113,6 +125,47 @@ pub fn draw(f: &mut Frame, app: &mut App) {
 
 fn header(f: &mut Frame, area: Rect, app: &App) {
     let t = app.totals();
+
+    // Built as parts and dropped from the least useful end, so a narrow
+    // terminal loses a whole fact rather than cutting one in half.
+    let mut parts: Vec<(String, Color)> = vec![(
+        format!("{} repo{}", t.repos, if t.repos == 1 { "" } else { "s" }),
+        BRIGHT,
+    )];
+    parts.push((
+        format!("{} worktrees ({} linked)", t.worktrees, t.linked),
+        TEXT,
+    ));
+    if t.dirty > 0 {
+        parts.push((format!("{} dirty", t.dirty), Color::Red));
+    }
+    if t.stale > 0 {
+        parts.push((format!("{} stale", t.stale), Color::Yellow));
+    }
+    if t.safe > 0 {
+        parts.push((format!("{} safe to remove", t.safe), Color::Green));
+    }
+
+    // The scanning note is on the right and takes precedence, so the counts
+    // have to fit in what is left of the line.
+    let spinner = if app.scanning {
+        app.scan.describe().chars().count() + 4
+    } else {
+        0
+    };
+    let budget = (area.width as usize).saturating_sub(11 + spinner);
+    while parts.len() > 1 {
+        let used: usize = parts
+            .iter()
+            .map(|(text, _)| text.chars().count())
+            .sum::<usize>()
+            + 3 * (parts.len() - 1);
+        if used <= budget {
+            break;
+        }
+        parts.pop();
+    }
+
     let mut spans = vec![
         Span::styled(
             " caligula ",
@@ -122,37 +175,12 @@ fn header(f: &mut Frame, area: Rect, app: &App) {
                 .add_modifier(Modifier::BOLD),
         ),
         Span::raw(" "),
-        Span::styled(
-            format!("{} repo{}", t.repos, if t.repos == 1 { "" } else { "s" }),
-            Style::default().fg(BRIGHT),
-        ),
-        Span::styled(" · ", Style::default().fg(DIM)),
-        Span::styled(
-            format!("{} worktrees", t.worktrees),
-            Style::default().fg(TEXT),
-        ),
-        Span::styled(format!(" ({} linked)", t.linked), Style::default().fg(DIM)),
     ];
-    if t.dirty > 0 {
-        spans.push(Span::styled(" · ", Style::default().fg(DIM)));
-        spans.push(Span::styled(
-            format!("{} dirty", t.dirty),
-            Style::default().fg(Color::Red),
-        ));
-    }
-    if t.stale > 0 {
-        spans.push(Span::styled(" · ", Style::default().fg(DIM)));
-        spans.push(Span::styled(
-            format!("{} stale", t.stale),
-            Style::default().fg(Color::Yellow),
-        ));
-    }
-    if t.safe > 0 {
-        spans.push(Span::styled(" · ", Style::default().fg(DIM)));
-        spans.push(Span::styled(
-            format!("{} safe to remove", t.safe),
-            Style::default().fg(Color::Green),
-        ));
+    for (i, (text, color)) in parts.into_iter().enumerate() {
+        if i > 0 {
+            spans.push(Span::styled(" · ", Style::default().fg(DIM)));
+        }
+        spans.push(Span::styled(text, Style::default().fg(color)));
     }
 
     f.render_widget(Paragraph::new(Line::from(spans)), area);
@@ -921,18 +949,34 @@ fn repo_detail<'a>(repo: &'a Repo, now: u64, width: u16) -> Vec<Line<'a>> {
 // ------------------------------------------------------------------- footer
 
 fn footer(f: &mut Frame, area: Rect, app: &App) {
-    // Ordered by what it would cost to miss. A filter being typed wins outright,
-    // because you have to see what you are typing; after that the marking, which
-    // decides what a removal applies to; then everything else.
+    // The pane label is a prefix, not a replacement. Returning here once hid the
+    // filter, the marking and every status message below a hundred columns —
+    // which is to say it hid the line that tells you what a removal is about to
+    // destroy, at exactly the width where the panes cannot tell you themselves.
+    let narrow = area.width < TWO_PANE_MIN;
+    let mut spans: Vec<Span> = Vec::new();
+    if narrow && app.confirm.is_none() && app.failure.is_none() {
+        let label = match app.focus {
+            Focus::List => "list",
+            Focus::Detail => "detail",
+        };
+        spans.push(Span::styled(
+            format!(" {label} "),
+            Style::default().fg(Color::Black).bg(ACCENT),
+        ));
+        spans.push(Span::styled(" tab  ", Style::default().fg(DIM)));
+    }
+
     if app.filtering || (!app.filter.is_empty() && app.marked.is_empty()) {
-        let mut spans = vec![
-            Span::styled(
-                " filter ",
-                Style::default().fg(Color::Black).bg(Color::Yellow),
-            ),
-            Span::raw(" "),
-            Span::styled(app.filter.clone(), Style::default().fg(BRIGHT)),
-        ];
+        spans.push(Span::styled(
+            " filter ",
+            Style::default().fg(Color::Black).bg(Color::Yellow),
+        ));
+        spans.push(Span::raw(" "));
+        spans.push(Span::styled(
+            app.filter.clone(),
+            Style::default().fg(BRIGHT),
+        ));
         if app.filtering {
             spans.push(Span::styled("▌", Style::default().fg(ACCENT)));
             spans.push(Span::styled(
@@ -948,13 +992,13 @@ fn footer(f: &mut Frame, area: Rect, app: &App) {
 
     let stakes = app.marked_stakes();
     if stakes.worktrees > 0 {
-        let mut spans = vec![Span::styled(
+        spans.push(Span::styled(
             format!(" {} marked ", stakes.worktrees),
             Style::default()
                 .fg(Color::Black)
                 .bg(ACCENT)
                 .add_modifier(Modifier::BOLD),
-        )];
+        ));
         // Beside the count, not after the hints: this line does not wrap, so
         // whatever sits last is the first thing a narrow terminal takes away. A
         // marking made under a filter is a marking of what the filter was
@@ -1025,32 +1069,42 @@ fn footer(f: &mut Frame, area: Rect, app: &App) {
     if let Some((msg, tone, at)) = &app.status
         && at.elapsed().as_secs() < 6
     {
-        f.render_widget(
-            Paragraph::new(Line::from(vec![
-                Span::raw(" "),
-                Span::styled(msg.clone(), Style::default().fg(tone_color(*tone))),
-            ])),
-            area,
-        );
+        spans.push(Span::raw(" "));
+        spans.push(Span::styled(
+            msg.clone(),
+            Style::default().fg(tone_color(*tone)),
+        ));
+        f.render_widget(Paragraph::new(Line::from(spans)), area);
         return;
     }
 
-    let keys = [
-        ("j/k", "move"),
-        ("space", "mark"),
-        ("a", "sweep"),
-        ("←/→", "fold"),
-        ("d", "remove"),
-        ("D", "+branch"),
-        ("p", "prune"),
-        ("c", "shell"),
-        ("f", "lens"),
-        ("s", "sort"),
-        ("/", "find"),
-        ("?", "help"),
-    ];
-    let mut spans = vec![Span::raw(" ")];
-    for (k, label) in keys {
+    // A narrow terminal has room for the keys that matter, not all of them.
+    let keys: &[(&str, &str)] = if narrow {
+        &[
+            ("j/k", "move"),
+            ("space", "mark"),
+            ("a", "sweep"),
+            ("d", "remove"),
+            ("?", "help"),
+        ]
+    } else {
+        &[
+            ("j/k", "move"),
+            ("space", "mark"),
+            ("a", "sweep"),
+            ("←/→", "fold"),
+            ("d", "remove"),
+            ("D", "+branch"),
+            ("p", "prune"),
+            ("c", "shell"),
+            ("f", "lens"),
+            ("s", "sort"),
+            ("/", "find"),
+            ("?", "help"),
+        ]
+    };
+    spans.push(Span::raw(" "));
+    for &(k, label) in keys {
         spans.push(Span::styled(k, Style::default().fg(ACCENT)));
         spans.push(Span::styled(
             format!(" {label}  "),
@@ -1127,6 +1181,7 @@ fn help(f: &mut Frame, area: Rect) {
         ("g / G", "first / last row"),
         ("← / → · enter", "fold or unfold a repo"),
         ("z / Z", "fold all / unfold all"),
+        ("tab", "swap list and detail (narrow terminals)"),
         ("esc", "clear the marking, then the filter"),
         ("PgUp / PgDn", "scroll the detail pane"),
         ("", ""),

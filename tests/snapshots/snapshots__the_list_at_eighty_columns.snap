@@ -2,23 +2,23 @@
 source: tests/snapshots.rs
 expression: "render(&mut app, 80, 20)"
 ---
- caligula  1 repo · 7 worktrees (6 linked) · 1 dirty · 4 stale · 2 safe to remov
-╭ sort activity · lens all ──────╮╭────────────────────────────────────────────╮
-│   BRANCH        ↑   ±     AGE  ││ fixture                                    │
-│ ▾ fixture (6)   1   2      2h  ││ /fixture/repo                              │
-│ │ ◆ main                   2h  ││                                            │
-│ │ ● fe…/ahead   1          1d  ││ origin                                     │
-│ │ ● ch…/clean              9d  ││ git@github.com:fixture/fixture.git         │
-│ │ ● (3…ad000)             40d  ││ base      main                             │
-│ │ ● fe…/dirty       2     90d  ││ worktrees 7 (6 linked)                     │
-│ │ ✗ docs/gone          !   1y  ││ dirty     1                                │
-│ │ ● fi…locked          L   1y  ││ stashes   1 on no live branch — nothing    │
-│                                ││ else will surface it                       │
-│                                ││                                            │
-│                                ││ Worktrees                                  │
-│                                ││   ◆ main        Main checkout — noth…   2h │
-│                                ││   ● feat/ahead  1 off-base commit       1d │
-│                                ││   ● cho…/clean  Nothing to salvage —…   9d │
-│                                ││   ● (3head000)  Nothing to salvage —…  40d │
-╰────────────────────────────────╯╰────────────────────────────────────────────╯
- j/k move  space mark  a sweep  ←/→ fold  d remove  D +branch  p prune  c shell
+ caligula  1 repo · 7 worktrees (6 linked) · 1 dirty · 4 stale
+╭ sort activity · lens all ────────────────────────────────────────────────────╮
+│   BRANCH                                                  ↑   ↓   ±     AGE  │
+│ ▾ fixture (6)                                             1       2      2h  │
+│ │ ◆ main                                                                 2h  │
+│ │ ● feat/ahead                                            1              1d  │
+│ │ ● chore/clean                                                          9d  │
+│ │ ● (3head000)                                                          40d  │
+│ │ ● feat/dirty                                                    2     90d  │
+│ │ ✗ docs/gone                                                        !   1y  │
+│ │ ● fix/locked                                                       L   1y  │
+│                                                                              │
+│                                                                              │
+│                                                                              │
+│                                                                              │
+│                                                                              │
+│                                                                              │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+ list  tab   j/k move  space mark  a sweep  d remove  ? help
