@@ -2,7 +2,7 @@
 source: tests/snapshots.rs
 expression: "render(&mut app, 120, 30)"
 ---
- caligula  1 repo · 7 worktrees (6 linked) · 1 dirty · 4 stale · 4 safe to remove
+ caligula  1 repo · 7 worktrees (6 linked) · 1 dirty · 4 stale · 2 safe to remove
 ╭ sort activity · lens all ──────────────────────╮╭────────────────────────────────────────────────────────────────────╮
 │   BRANCH           ╭ keys ──────────────────────────────────────────────────────────────────────╮                    │
 │ ▾ fixture (6)      │ j / k · ↓ / ↑  move                                                        │                    │
@@ -23,7 +23,7 @@ expression: "render(&mut app, 120, 30)"
 │                    │ o              open it in the file manager                                 │                    │
 │                    │ y              copy its path to the clipboard                              │iles                │
 │                    │                                                                            │                    │
-│                    │ f              cycle lens: all → dirty → salvageable → stale → safe        │ge — safe to remove │
+│                    │ f              cycle lens: all → dirty → salvageable → stale → safe        │y be gone from disk │
 │                    │ s              cycle sort: activity → name → risk                          │                    │
 │                    │ /              filter by repo, branch or path                              │ge — safe to remove │
 │                    │ r              re-probe the selected repo                                  │                    │

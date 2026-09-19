@@ -38,7 +38,7 @@ fn stale_color(s: Staleness) -> Color {
 fn salvage_color(s: Salvage) -> Color {
     match s {
         Salvage::Nothing => Color::Green,
-        Salvage::Commits => Color::Yellow,
+        Salvage::Unknown | Salvage::Commits => Color::Yellow,
         Salvage::Uncommitted => Color::Red,
     }
 }
@@ -639,24 +639,19 @@ fn worktree_detail<'a>(repo: &'a Repo, wt: &'a Worktree, now: u64, width: u16) -
             Style::default().fg(color).add_modifier(Modifier::BOLD),
         ),
     ]));
-    if wt.broken {
-        out.push(Line::from(vec![
-            Span::styled("┃ ", Style::default().fg(Color::Red)),
-            Span::styled(
-                "git cannot read this worktree — it may be gone from disk",
-                Style::default().fg(Color::Red),
-            ),
-        ]));
-    }
     out.push(Line::raw(""));
 
-    let tracking = match (&wt.upstream, wt.ahead, wt.behind) {
-        (Some(up), 0, 0) => format!("→ {up}  in sync"),
-        (Some(up), a, b) => format!("→ {up}  ↑{a} ↓{b}"),
-        (None, _, _) => match &repo.default_base {
-            Some(base) => format!("no upstream · {} commits off {base}", wt.unmerged_total),
-            None => "no upstream".to_string(),
-        },
+    let tracking = if wt.broken {
+        "unknown — git could not read it".to_string()
+    } else {
+        match (&wt.upstream, wt.ahead, wt.behind) {
+            (Some(up), 0, 0) => format!("→ {up}  in sync"),
+            (Some(up), a, b) => format!("→ {up}  ↑{a} ↓{b}"),
+            (None, _, _) => match &repo.default_base {
+                Some(base) => format!("no upstream · {} commits off {base}", wt.unmerged_total),
+                None => "no upstream".to_string(),
+            },
+        }
     };
     out.push(kv("branch", format!("{}  {tracking}", wt.label()), TEXT));
     if let Some(c) = &wt.last_commit {
@@ -905,7 +900,15 @@ fn footer(f: &mut Frame, area: Rect, app: &App) {
                 Style::default().fg(Color::Yellow),
             ));
         }
-        if stakes.files == 0 && stakes.commits == 0 {
+        if stakes.unknown > 0 {
+            if stakes.files > 0 || stakes.commits > 0 {
+                spans.push(Span::styled(" · ", Style::default().fg(DIM)));
+            }
+            spans.push(Span::styled(
+                format!("{} unreadable", stakes.unknown),
+                Style::default().fg(Color::Yellow),
+            ));
+        } else if stakes.files == 0 && stakes.commits == 0 {
             spans.push(Span::styled(
                 "nothing to salvage in any of them",
                 Style::default().fg(Color::Green),

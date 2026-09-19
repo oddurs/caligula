@@ -173,16 +173,38 @@ fn one_failure_does_not_strand_the_rest() {
     let root = repo.root.clone();
     let mut app = app_for(repo);
 
-    // The worktree whose directory is already gone: `git worktree remove`
-    // fails on it, and everything else in the marking must still go.
-    mark(&mut app, "docs/gone");
-    mark(&mut app, "chore/clean");
+    let clean = mark(&mut app, "chore/clean");
     mark(&mut app, "feat/ahead");
     app.ask_remove(false);
+
+    // Pulled out from under caligula after the dialog opened, so its own
+    // removal fails part way through the batch — which is the case a sweep of
+    // forty has to survive.
+    caligula::git::git_run(&root, &["worktree", "remove", clean.to_str().unwrap()])
+        .expect("the fixture worktree is removable");
+
     app.run_confirmed();
 
     let left = branches_on_disk(&root);
-    assert!(!left.contains(&"chore/clean".to_string()), "{left:?}");
-    assert!(!left.contains(&"feat/ahead".to_string()), "{left:?}");
+    assert!(
+        !left.contains(&"feat/ahead".to_string()),
+        "the rest of the marking must still go: {left:?}"
+    );
+    drop(tmp);
+}
+
+#[test]
+fn a_worktree_git_cannot_read_is_not_offered_for_removal() {
+    let (tmp, repo) = fixture::build_live();
+    let root = repo.root.clone();
+    let mut app = app_for(repo);
+
+    mark(&mut app, "docs/gone");
+    app.ask_remove(false);
+    assert!(
+        app.confirm.is_none(),
+        "git worktree remove cannot clear a record; prune can"
+    );
+    assert!(branches_on_disk(&root).contains(&"docs/gone".to_string()));
     drop(tmp);
 }

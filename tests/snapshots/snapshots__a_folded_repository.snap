@@ -2,7 +2,7 @@
 source: tests/snapshots.rs
 expression: "render(&mut app, 120, 20)"
 ---
- caligula  1 repo · 7 worktrees (6 linked) · 1 dirty · 4 stale · 4 safe to remove
+ caligula  1 repo · 7 worktrees (6 linked) · 1 dirty · 4 stale · 2 safe to remove
 ╭ sort activity · lens all ──────────────────────╮╭────────────────────────────────────────────────────────────────────╮
 │   BRANCH                    ↑   ↓   ±     AGE  ││ fixture                                                            │
 │ ▸ fixture (6)               1       2      2h  ││ /fixture/repo                                                      │

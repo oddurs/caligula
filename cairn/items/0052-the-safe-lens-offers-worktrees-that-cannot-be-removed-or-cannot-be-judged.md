@@ -2,10 +2,10 @@
 id: 52
 title: The safe lens offers worktrees that cannot be removed or cannot be judged
 type: bug
-status: backlog
+status: done
 milestone: v0.2
 created: 2026-09-17
-updated: 2026-09-17
+updated: 2026-09-18
 priority: p0
 effort: s
 area: verdict
@@ -46,10 +46,14 @@ records both, from the fixture built in item 0020.
 
 ## Acceptance criteria
 
-- [ ] A locked worktree never appears under the safe lens
-- [ ] A broken worktree never appears under the safe lens
-- [ ] `Worktree::verdict` for a broken worktree says git could not read it,
+- [x] A locked worktree never appears under the safe lens
+- [x] A broken worktree never appears under the safe lens
+- [x] `Worktree::verdict` for a broken worktree says git could not read it,
       rather than that there is nothing to salvage
-- [ ] `Salvage` distinguishes "nothing to salvage" from "unknown", so the
+- [x] `Salvage` distinguishes "nothing to salvage" from "unknown", so the
       difference cannot be lost again by a default
-- [ ] The snapshot diff shows both leaving the safe lens
+- [x] The snapshot diff shows both leaving the safe lens
+
+## 2026-09-18
+
+Review caught that the fix stopped at the lens. The two places that aggregate over a marking — the footer stakes and the bulk removal dialog — both summed changed_files() and unpushed(), which are zero for an unreadable worktree, so marking one still produced 'nothing to salvage in any of them' in green, and a dialog that contradicted its own list one line above. Both now carry the unreadable count separately. Also: Unknown was ordered below Commits, which contradicted its own doc comment — an unpushed commit is in the reflog, an unreadable worktree may hold anything — and removable() now refuses a broken worktree rather than opening a dialog for a git command that cannot succeed, since prune is the action that clears the record.
