@@ -33,7 +33,7 @@ visible, and add a lens that treats untracked-only as safe.
 - [ ] The `safe` lens is unchanged; a new lens or flag treats untracked-only as
       safe, and is not the default
 - [ ] Ignored files are still excluded entirely
-- [ ] Unit tests over parsed status output covering: tracked-only,
+- [x] Unit tests over parsed status output covering: tracked-only,
       untracked-only, both, conflicts
 - [ ] The removal dialog pluralises properly: `App::ask_remove` says
       "2 uncommitted files", not "2 uncommitted file(s)"
@@ -41,3 +41,7 @@ visible, and add a lens that treats untracked-only as safe.
 ## 2026-09-17
 
 The removal dialog says '2 uncommitted file(s) will be destroyed' — the lazy '(s)' rather than the real pluralisation used everywhere else. Fix it here, where the verdict wording is already being worked on. It is in App::ask_remove.
+
+## 2026-09-17
+
+The dialog's 'file(s)' fell out with this: extracting one cost_line shared by the single and bulk dialogs meant there was one place to pluralise properly. Criterion ticked in 0016's branch; the rest of this item is untouched.

@@ -266,14 +266,36 @@ fn the_colours_of_a_marking() {
     insta::assert_snapshot!(render_palette(&mut app, 120, 20));
 }
 
+/// `d` with a marking held acts on the marking, not on the cursor — the cursor
+/// here is deliberately on a worktree that is not marked.
 #[test]
-fn a_dialog_opened_while_a_marking_is_held_says_which_it_means() {
+fn removing_a_marking_lists_every_worktree_worst_first() {
     let mut app = fixture_app();
-    for branch in ["feat/dirty", "feat/ahead"] {
+    for branch in ["chore/clean", "feat/ahead", "feat/dirty"] {
         select(&mut app, branch);
         app.toggle_mark();
     }
-    select(&mut app, "chore/clean");
+    select(&mut app, "main");
+    app.ask_remove(false);
+    insta::assert_snapshot!(render(&mut app, 120, 24));
+}
+
+#[test]
+fn removing_a_marking_with_branches_says_the_commits_go_too() {
+    let mut app = fixture_app();
+    for branch in ["feat/ahead", "feat/dirty"] {
+        select(&mut app, branch);
+        app.toggle_mark();
+    }
+    app.ask_remove(true);
+    insta::assert_snapshot!(render(&mut app, 120, 24));
+}
+
+#[test]
+fn a_marking_of_only_unremovable_worktrees_explains_itself() {
+    let mut app = fixture_app();
+    select(&mut app, "fix/locked");
+    app.toggle_mark();
     app.ask_remove(false);
     insta::assert_snapshot!(render(&mut app, 120, 20));
 }

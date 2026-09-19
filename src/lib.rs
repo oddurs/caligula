@@ -8,4 +8,5 @@
 pub mod app;
 pub mod git;
 pub mod scan;
+pub mod text;
 pub mod ui;

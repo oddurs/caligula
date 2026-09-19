@@ -14,8 +14,8 @@ expression: "render(&mut app, 120, 30)"
 │ │ ● fix/locked     │ esc            clear the marking, then the filter                          │                    │
 │                    │ PgUp / PgDn    scroll the detail pane                                      │                    │
 │                    │                                                                            │ge — safe to remove │
-│                    │ d              remove the worktree (asks first)                            │                    │
-│                    │ D              remove the worktree and delete its branch                   │it                  │
+│                    │ d              remove the marking, or the row under the cursor             │                    │
+│                    │ D              the same, and delete the branches too                       │it                  │
 │                    │ p              prune the repo's stale worktree records                     │                    │
 │                    │ L              lock or unlock the worktree                                 │ge — safe to remove │
 │                    │                                                                            │                    │
