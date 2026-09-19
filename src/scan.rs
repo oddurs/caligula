@@ -6,7 +6,7 @@
 
 use std::collections::HashSet;
 use std::path::{Path, PathBuf};
-use std::sync::atomic::{AtomicUsize, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use std::sync::mpsc::{Receiver, Sender, channel};
 use std::sync::{Arc, Mutex};
 use std::thread;
@@ -15,13 +15,36 @@ use crate::git::{self, Repo};
 
 pub enum Event {
     Found(Box<Repo>),
-    Progress(usize),
     Done,
 }
 
 pub struct Scan {
     pub rx: Receiver<Event>,
-    pub dirs_seen: Arc<AtomicUsize>,
+    pub progress: Progress,
+}
+
+/// What the scan is doing, readable while it does it.
+///
+/// Walking the disk takes well under a second; probing the repositories it
+/// finds takes the rest. A counter of directories therefore stops moving almost
+/// immediately and the tool looks hung for as long as the real work takes.
+#[derive(Clone, Default)]
+pub struct Progress {
+    pub dirs: Arc<AtomicUsize>,
+    /// Checkouts the walker has queued: the denominator.
+    ///
+    /// Counted where they are discovered, not where they are claimed. Counting
+    /// on claim made the fraction meaningless — a worker claims a candidate
+    /// immediately before reading it, so the gap could never exceed the number
+    /// of workers, and a queue of four hundred still displayed as "47 of 55".
+    pub checkouts: Arc<AtomicUsize>,
+    /// Checkouts a worker has finished with, whether or not they were a repo.
+    pub examined: Arc<AtomicUsize>,
+    /// Repositories actually produced. Not every checkout is one: a probe can
+    /// fail on a corrupt repository or an unreadable git dir, and reporting
+    /// those as found would claim repositories that were never listed.
+    pub repos: Arc<AtomicUsize>,
+    pub walking: Arc<AtomicBool>,
 }
 
 /// Directories that never contain interesting checkouts but cost a lot to walk.
@@ -42,7 +65,8 @@ const DENY: &[&str] = &[
 
 pub fn start(roots: Vec<PathBuf>, max_depth: usize) -> Scan {
     let (tx, rx) = channel();
-    let dirs_seen = Arc::new(AtomicUsize::new(0));
+    let progress = Progress::default();
+    progress.walking.store(true, Ordering::Relaxed);
 
     let (cand_tx, cand_rx) = channel::<PathBuf>();
     let cand_rx = Arc::new(Mutex::new(cand_rx));
@@ -57,6 +81,7 @@ pub fn start(roots: Vec<PathBuf>, max_depth: usize) -> Scan {
         let cand_rx = Arc::clone(&cand_rx);
         let seen_repos = Arc::clone(&seen_repos);
         let tx = tx.clone();
+        let progress = progress.clone();
         handles.push(thread::spawn(move || {
             loop {
                 let candidate = {
@@ -70,6 +95,7 @@ pub fn start(roots: Vec<PathBuf>, max_depth: usize) -> Scan {
                     }
                 };
                 let Some(common) = git::common_dir(&candidate) else {
+                    progress.examined.fetch_add(1, Ordering::Relaxed);
                     continue;
                 };
                 {
@@ -80,21 +106,26 @@ pub fn start(roots: Vec<PathBuf>, max_depth: usize) -> Scan {
                         Err(_) => break,
                     };
                     if !seen.insert(common.clone()) {
+                        progress.examined.fetch_add(1, Ordering::Relaxed);
                         continue;
                     }
                 }
-                if let Some(repo) = git::probe_repo(&candidate)
-                    && tx.send(Event::Found(Box::new(repo))).is_err()
-                {
-                    break;
+
+                let repo = git::probe_repo(&candidate);
+                progress.examined.fetch_add(1, Ordering::Relaxed);
+                if let Some(repo) = repo {
+                    progress.repos.fetch_add(1, Ordering::Relaxed);
+                    if tx.send(Event::Found(Box::new(repo))).is_err() {
+                        break;
+                    }
                 }
             }
         }));
     }
-    let walk_tx = tx.clone();
-    let walk_seen = Arc::clone(&dirs_seen);
+    let walk_progress = progress.clone();
     thread::spawn(move || {
-        walk(roots, max_depth, &cand_tx, &walk_seen, &walk_tx);
+        walk(roots, max_depth, &cand_tx, &walk_progress);
+        walk_progress.walking.store(false, Ordering::Relaxed);
         // Dropping the candidate sender is what tells the workers to stop.
         drop(cand_tx);
     });
@@ -107,16 +138,10 @@ pub fn start(roots: Vec<PathBuf>, max_depth: usize) -> Scan {
         let _ = tx.send(Event::Done);
     });
 
-    Scan { rx, dirs_seen }
+    Scan { rx, progress }
 }
 
-fn walk(
-    roots: Vec<PathBuf>,
-    max_depth: usize,
-    out: &Sender<PathBuf>,
-    seen: &AtomicUsize,
-    progress: &Sender<Event>,
-) {
+fn walk(roots: Vec<PathBuf>, max_depth: usize, out: &Sender<PathBuf>, progress: &Progress) {
     let mut stack: Vec<(PathBuf, usize)> = roots.into_iter().map(|r| (r, 0)).collect();
     let mut visited: HashSet<PathBuf> = HashSet::new();
     let mut count = 0usize;
@@ -130,10 +155,7 @@ fn walk(
             continue;
         }
         count += 1;
-        seen.store(count, Ordering::Relaxed);
-        if count.is_multiple_of(200) && progress.send(Event::Progress(count)).is_err() {
-            return;
-        }
+        progress.dirs.store(count, Ordering::Relaxed);
 
         let Ok(entries) = std::fs::read_dir(&dir) else {
             continue;
@@ -158,6 +180,8 @@ fn walk(
         }
 
         if is_repo {
+            // Counted here, where it is discovered: this is the denominator.
+            progress.checkouts.fetch_add(1, Ordering::Relaxed);
             // A checkout's contents are git's business, not ours; its linked
             // worktrees live elsewhere and are found on their own.
             if out.send(dir).is_err() {

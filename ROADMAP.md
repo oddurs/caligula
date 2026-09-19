@@ -19,7 +19,7 @@ Every git worktree on the machine, each one saying what it would cost to delete 
 
 ## v0.2 — Clear a repo in one pass
 
-`########··` 80% · 12 of 15 done · due 2026-10-03
+`#########·` 87% · 13 of 15 done · due 2026-10-03
 
 Mark many worktrees at once and clear a repository's dead ones in a single pass.
 
@@ -27,7 +27,6 @@ Mark many worktrees at once and clear a repository's dead ones in a single pass.
 
 - [ ] [`0019`](https://github.com/oddurs/caligula/blob/main/cairn/items/0019-attribute-stashes-to-the-worktree-that-made-them.md) Attribute stashes to the worktree that made them <sup>feature · p1 · verdict</sup>
 - [ ] [`0021`](https://github.com/oddurs/caligula/blob/main/cairn/items/0021-work-in-a-terminal-narrower-than-100-columns.md) Work in a terminal narrower than 100 columns <sup>bug · p1 · chrome</sup>
-- [ ] [`0023`](https://github.com/oddurs/caligula/blob/main/cairn/items/0023-say-what-the-scan-is-doing-while-it-runs.md) Say what the scan is doing while it runs <sup>chore · p2 · runtime</sup>
 
 ### done
 
@@ -37,6 +36,7 @@ Mark many worktrees at once and clear a repository's dead ones in a single pass.
 - [x] [`0018`](https://github.com/oddurs/caligula/blob/main/cairn/items/0018-tell-untracked-scratch-from-modified-tracked-files-in-the-verdict.md) Tell untracked scratch from modified tracked files in the verdict <sup>feature · p0 · verdict</sup>
 - [x] [`0020`](https://github.com/oddurs/caligula/blob/main/cairn/items/0020-snapshot-test-the-rendered-frame-against-a-fixture-repository.md) Snapshot-test the rendered frame against a fixture repository <sup>chore · p0 · testing</sup>
 - [x] [`0022`](https://github.com/oddurs/caligula/blob/main/cairn/items/0022-show-the-whole-error-when-an-action-fails.md) Show the whole error when an action fails <sup>bug · p1 · actions</sup>
+- [x] [`0023`](https://github.com/oddurs/caligula/blob/main/cairn/items/0023-say-what-the-scan-is-doing-while-it-runs.md) Say what the scan is doing while it runs <sup>chore · p2 · runtime</sup>
 - [x] [`0051`](https://github.com/oddurs/caligula/blob/main/cairn/items/0051-the-repository-detail-s-worktree-rows-do-not-fit-their-pane.md) The repository detail's worktree rows do not fit their pane <sup>bug · p1 · chrome</sup>
 - [x] [`0052`](https://github.com/oddurs/caligula/blob/main/cairn/items/0052-the-safe-lens-offers-worktrees-that-cannot-be-removed-or-cannot-be-judged.md) The safe lens offers worktrees that cannot be removed or cannot be judged <sup>bug · p0 · verdict</sup>
 - [x] [`0053`](https://github.com/oddurs/caligula/blob/main/cairn/items/0053-inherited-git-environment-points-every-query-at-the-wrong-repository.md) Inherited git environment points every query at the wrong repository <sup>bug · p0 · git</sup>
