@@ -7,9 +7,9 @@ expression: "render(&mut app, 120, 20)"
 │   BRANCH                    ↑   ↓   ±     AGE  ││ fixture                                                            │
 │ ▾ fixture (6)               1       2      2h  ││ /fixture/repo                                                      │
 │ │ ◆ main                                   2h  ││                                                                    │
-│ │ ● feat/ahead     ╭ Could not remove the worktree ─────────────────────────────────────────────╮                    │
-│ │ ● chore/clean    │ git -C ~/Code/quarry worktree remove ~/Code/.worktrees/quarry/feat/x       │                    │
-│ │ ● (3head000)     │                                                                            │                    │
+│ │ ● feat/ahead              1              1d  ││ origin    git@github.com:fixture/fixture.git                       │
+│ │ ● chore/clean    ╭ Could not remove the worktree ─────────────────────────────────────────────╮                    │
+│ │ ● (3head000)     │ git -C ~/Code/quarry worktree remove ~/Code/.worktrees/quarry/feat/x       │                    │
 │ │ ● feat/dirty     │ fatal: '/Users/x/Code/.worktrees/quarry/feat/x' contains modified or       │                    │
 │ │ ✗ docs/gone      │ untracked files, use --force to delete it                                  │                    │
 │ │ ● fix/locked     │                                                                            │                    │

@@ -111,8 +111,11 @@ pub struct Removal {
 /// of it, and the command, so it can be repeated by hand.
 pub struct Failure {
     pub title: String,
-    pub command: String,
-    pub output: String,
+    /// The commands that failed and what git said about each, already in the
+    /// order they ran. One string rather than a command and an output, because
+    /// a sweep fails one worktree at a time and each failure has its own
+    /// command worth repeating.
+    pub body: String,
 }
 
 pub struct Confirm {
@@ -138,6 +141,7 @@ pub struct App {
     pub status: Option<(String, Tone, Instant)>,
     pub confirm: Option<Confirm>,
     pub failure: Option<Failure>,
+    pub failure_scroll: u16,
     pub help: bool,
     /// "Fold all" should hold for repos the scan has not reached yet.
     pub fold_new: bool,
@@ -172,6 +176,7 @@ impl App {
             status: None,
             confirm: None,
             failure: None,
+            failure_scroll: 0,
             help: false,
             fold_new: false,
             scanning: true,
@@ -510,11 +515,11 @@ impl App {
     }
 
     /// Report a failure in full, rather than as much of it as one line holds.
-    pub fn fail(&mut self, title: impl Into<String>, command: String, output: String) {
+    pub fn fail(&mut self, title: impl Into<String>, body: String) {
+        self.failure_scroll = 0;
         self.failure = Some(Failure {
             title: title.into(),
-            command,
-            output,
+            body,
         });
     }
 
@@ -768,11 +773,17 @@ impl App {
                             if let (true, Some(name)) = (branch, r.branch.as_ref()) {
                                 match git::git_run(&r.root, &["branch", "-D", name]) {
                                     Ok(_) => branches += 1,
-                                    Err(e) => branch_failures.push(format!("{name}: {e}")),
+                                    Err(e) => branch_failures.push(format!(
+                                        "git -C {} branch -D {name}\n{e}",
+                                        scan::shorten_home(&r.root)
+                                    )),
                                 }
                             }
                         }
-                        Err(e) => failures.push(format!("{}: {e}", r.label)),
+                        Err(e) => failures.push(format!(
+                            "{}\n{e}",
+                            remove_command(&r.root, &r.path, r.force)
+                        )),
                     }
                 }
 
@@ -808,20 +819,23 @@ impl App {
                         branch_failures.join("; ")
                     ));
                 }
-                if failures.is_empty() {
-                    let tone = if branch_failures.is_empty() {
-                        Tone::Good
-                    } else {
-                        Tone::Warn
-                    };
-                    self.say(msg, tone);
+                // Branch failures belong in the box too: appending them to a
+                // one-line footer is the truncation this exists to remove, and
+                // the box is drawn over that footer anyway.
+                let mut trouble = failures.clone();
+                trouble.extend(branch_failures.iter().cloned());
+                if trouble.is_empty() {
+                    self.say(msg, Tone::Good);
                 } else {
-                    let title = format!(
-                        "{} of {} could not be removed",
-                        failures.len(),
-                        removals.len()
-                    );
-                    self.fail(title, "git worktree remove".into(), failures.join("\n\n"));
+                    let title = match (failures.len(), branch_failures.len()) {
+                        (0, n) => format!("{n} branch{} could not be deleted", plural_es(n)),
+                        (n, 0) => format!("{n} of {} could not be removed", removals.len()),
+                        (n, b) => format!(
+                            "{n} could not be removed, and {b} branch{} kept",
+                            plural_es(b)
+                        ),
+                    };
+                    self.fail(title, trouble.join("\n\n"));
                     self.say(msg, Tone::Bad);
                 }
             }
@@ -842,8 +856,10 @@ impl App {
                     }
                     Err(e) => self.fail(
                         "Prune failed",
-                        format!("git -C {} worktree prune -v", scan::shorten_home(&root)),
-                        e,
+                        format!(
+                            "git -C {} worktree prune -v\n{e}",
+                            scan::shorten_home(&root)
+                        ),
                     ),
                 }
             }
@@ -872,11 +888,10 @@ impl App {
             Err(e) => self.fail(
                 format!("Could not {verb} the worktree"),
                 format!(
-                    "git -C {} worktree {verb} {}",
+                    "git -C {} worktree {verb} {}\n{e}",
                     scan::shorten_home(&root),
                     scan::shorten_home(std::path::Path::new(&path))
                 ),
-                e,
             ),
         }
     }
@@ -998,6 +1013,20 @@ pub struct Totals {
     pub salvage: usize,
     pub stale: usize,
     pub safe: usize,
+}
+
+/// The command a removal ran, as it could be typed again.
+fn remove_command(root: &Path, path: &Path, force: bool) -> String {
+    format!(
+        "git -C {} worktree remove {}{}",
+        scan::shorten_home(root),
+        if force { "--force " } else { "" },
+        scan::shorten_home(path)
+    )
+}
+
+fn plural_es(n: usize) -> &'static str {
+    if n == 1 { "" } else { "es" }
 }
 
 /// Why this worktree cannot be removed, if it cannot.

@@ -229,14 +229,22 @@ fn a_failed_removal_is_reported_in_full() {
         "{}",
         failure.title
     );
+    // The command has to be repeatable: the box is useless if it does not say
+    // which directory, in which repository.
     assert!(
-        failure.output.contains("chore/clean"),
-        "the failure must name what failed: {}",
-        failure.output
+        failure.body.contains("git -C ") && failure.body.contains("worktree remove"),
+        "the command must be there to repeat: {}",
+        failure.body
     );
     assert!(
-        !failure.output.is_empty() && failure.output.lines().count() >= 1,
-        "git's own words must survive"
+        failure.body.contains("clean"),
+        "the failing path must be named: {}",
+        failure.body
+    );
+    assert!(
+        failure.body.lines().count() >= 2,
+        "git's own words must survive alongside the command: {}",
+        failure.body
     );
     drop(tmp);
 }

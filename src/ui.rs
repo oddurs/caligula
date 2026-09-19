@@ -100,7 +100,8 @@ pub fn draw(f: &mut Frame, app: &mut App) {
         confirm(f, f.area(), app);
     }
     if app.failure.is_some() {
-        failure(f, f.area(), app);
+        let area = f.area();
+        failure(f, area, app);
     }
 }
 
@@ -1147,38 +1148,37 @@ fn help(f: &mut Frame, area: Rect) {
 }
 
 /// A failure, in full, over everything else.
-fn failure(f: &mut Frame, area: Rect, app: &App) {
+///
+/// Scrollable, because "in full" has to survive a screen that is not tall
+/// enough: git's useful sentence is usually the last of several, and a sweep
+/// puts one complaint per worktree in here.
+fn failure(f: &mut Frame, area: Rect, app: &mut App) {
     let Some(fail) = &app.failure else { return };
 
     let width = 78.min(area.width.saturating_sub(4)).max(8);
     let text_width = width.saturating_sub(4).max(1) as usize;
-    let mut body: Vec<Line> = vec![
-        Line::from(Span::styled(
-            fail.command.clone(),
-            Style::default().fg(ACCENT),
-        )),
-        Line::raw(""),
-    ];
-    body.extend(
-        fail.output
-            .lines()
-            .map(|line| Line::from(Span::styled(line.to_string(), Style::default().fg(TEXT)))),
-    );
-
-    let rows: usize = body
-        .iter()
+    let body: Vec<Line> = fail
+        .body
+        .lines()
         .map(|line| {
-            wrapped_rows(
-                &line
-                    .spans
-                    .iter()
-                    .map(|s| s.content.as_ref())
-                    .collect::<String>(),
-                text_width,
-            )
+            // A command line is the part worth copying, so it is the part that
+            // is coloured.
+            let style = if line.starts_with("git ") {
+                Style::default().fg(ACCENT)
+            } else {
+                Style::default().fg(TEXT)
+            };
+            Line::from(Span::styled(line.to_string(), style))
         })
+        .collect();
+
+    let rows: usize = fail
+        .body
+        .lines()
+        .map(|line| wrapped_rows(line, text_width))
         .sum();
-    let area = popup(area, width, (rows as u16).saturating_add(5));
+    let wanted = (rows as u16).saturating_add(5);
+    let area = popup(area, width, wanted);
     f.render_widget(Clear, area);
 
     let block = Block::default()
@@ -1199,12 +1199,32 @@ fn failure(f: &mut Frame, area: Rect, app: &App) {
         .direction(Direction::Vertical)
         .constraints([Constraint::Min(1), Constraint::Length(1)])
         .split(inner);
-    f.render_widget(Paragraph::new(body).wrap(Wrap { trim: false }), split[0]);
+
+    let shown = split[0].height as usize;
+    let max_scroll = (rows.saturating_sub(shown)) as u16;
+    app.failure_scroll = app.failure_scroll.min(max_scroll);
     f.render_widget(
-        Paragraph::new(Line::from(Span::styled(
-            "any key dismisses",
-            Style::default().fg(DIM),
-        ))),
+        Paragraph::new(body)
+            .wrap(Wrap { trim: false })
+            .scroll((app.failure_scroll, 0)),
+        split[0],
+    );
+
+    let hint = if max_scroll > 0 {
+        let left = max_scroll.saturating_sub(app.failure_scroll);
+        if left > 0 {
+            format!(
+                "↓ {left} more line{}  ·  any other key dismisses",
+                if left == 1 { "" } else { "s" }
+            )
+        } else {
+            "↑ scroll back  ·  any other key dismisses".to_string()
+        }
+    } else {
+        "any key dismisses".to_string()
+    };
+    f.render_widget(
+        Paragraph::new(Line::from(Span::styled(hint, Style::default().fg(DIM)))),
         split[1],
     );
 }

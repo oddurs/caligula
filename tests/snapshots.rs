@@ -450,10 +450,22 @@ fn a_failure_is_shown_in_full() {
     let mut app = fixture_app();
     app.fail(
         "Could not remove the worktree",
-        "git -C ~/Code/quarry worktree remove ~/Code/.worktrees/quarry/feat/x".into(),
-        "fatal: '/Users/x/Code/.worktrees/quarry/feat/x' contains modified or \
-untracked files, use --force to delete it"
+        "git -C ~/Code/quarry worktree remove ~/Code/.worktrees/quarry/feat/x\n\
+fatal: '/Users/x/Code/.worktrees/quarry/feat/x' contains modified or untracked \
+files, use --force to delete it"
             .into(),
     );
+    insta::assert_snapshot!(render(&mut app, 120, 20));
+}
+
+/// "In full" has to survive a screen that is not tall enough, or the box drops
+/// the tail — which is where git puts the sentence that matters.
+#[test]
+fn a_long_failure_says_how_much_is_left() {
+    let mut app = fixture_app();
+    let body: String = (1..=30)
+        .map(|n| format!("git -C ~/Code/r worktree remove ~/w/{n}\nfatal: line {n}\n\n"))
+        .collect();
+    app.fail("12 of 45 could not be removed", body);
     insta::assert_snapshot!(render(&mut app, 120, 20));
 }
