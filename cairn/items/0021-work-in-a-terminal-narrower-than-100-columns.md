@@ -5,7 +5,7 @@ type: bug
 status: backlog
 milestone: v0.2
 created: 2026-09-17
-updated: 2026-09-17
+updated: 2026-09-18
 priority: p1
 effort: m
 area: chrome
@@ -29,3 +29,7 @@ detail — and a key moves between them.
 - [ ] Nothing is drawn outside its pane at 60, 80 and 100 columns
 - [ ] Resizing across the threshold in either direction keeps the selection
 - [ ] Snapshot tests at 60 and 80 columns
+
+## 2026-09-18
+
+At 80 columns the list pane is clamped to 34, so branch names truncate hard (fe…/ahead) even though the numeric columns now fit. That is this item's problem to solve — one pane at a time below the threshold, rather than two cramped ones.

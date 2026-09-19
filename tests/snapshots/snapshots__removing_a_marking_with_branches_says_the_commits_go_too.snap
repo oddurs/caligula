@@ -4,10 +4,10 @@ expression: "render(&mut app, 120, 24)"
 ---
  caligula  1 repo · 7 worktrees (6 linked) · 1 dirty · 4 stale · 4 safe to remove
 ╭ sort activity · lens all ──────────────────────╮╭────────────────────────────────────────────────────────────────────╮
-│   BRANCH                ↑    ↓    ±       AGE  ││ docs/gone  ancient · last touched 1y                               │
-│ ▾ fixture (6)           1         2        2h  ││ /fixture/gone                                                      │
+│   BRANCH                    ↑   ↓   ±     AGE  ││ docs/gone  ancient · last touched 1y                               │
+│ ▾ fixture (6)               1       2      2h  ││ /fixture/gone                                                      │
 │ │ ◆ main                                   2h  ││                                                                    │
-│▌│ ● feat/ahead          1                  1d  ││ ┃ Nothing to salvage — safe to remove                              │
+│▌│ ● feat/ahead              1              1d  ││ ┃ Nothing to salvage — safe to remove                              │
 │ │ ● chore/clean       ╭ Remove marked worktrees and their branches? ─────────────────────────╮gone from disk         │
 │ │ ● (3head000)        │ feat/dirty                          2 uncommitted files              │                       │
 │▌│ ● feat/dirty        │ feat/ahead                          1 off-base commit                │ off main              │

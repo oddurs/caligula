@@ -305,3 +305,64 @@ fn a_marking_of_only_unremovable_worktrees_explains_itself() {
     app.ask_remove(false);
     insta::assert_snapshot!(render(&mut app, 120, 20));
 }
+
+/// The list pane only, so a match in the detail pane cannot stand in for a row
+/// that was never drawn.
+fn list_pane(screen: &str, width: usize) -> String {
+    screen
+        .lines()
+        .map(|line| {
+            let cut = line
+                .char_indices()
+                .nth(width)
+                .map(|(i, _)| i)
+                .unwrap_or(line.len());
+            line[..cut].to_string()
+        })
+        .collect::<Vec<_>>()
+        .join("\n")
+}
+
+/// The header row is carved out of the pane, so every row count has to be taken
+/// after it. Taken before, the list is one row too long: the bottom row is
+/// clipped, and a cursor sitting on it disappears.
+#[test]
+fn the_selected_row_is_visible_at_every_height() {
+    for height in 7..16u16 {
+        let mut app = fixture_app();
+        app.go(usize::MAX);
+        let Some(caligula::app::Row::Worktree { repo, wt }) = app.current() else {
+            panic!("the last row should be a worktree");
+        };
+        let label = app.repos[repo].worktrees[wt].label();
+        // Wide enough that a branch name is not truncated: this is a test about
+        // height, and a truncated label would fail it for the wrong reason.
+        let screen = render(&mut app, 100, height);
+        let list = list_pane(&screen, 41);
+        assert!(
+            list.contains(&label),
+            "at height {height} the selected row {label} was not in the list:\n{screen}"
+        );
+    }
+}
+
+/// The scrollbar is drawn into the rows area, not the whole pane. Given the
+/// pane it writes one cell past the bottom, and since an off-thumb cell is a
+/// blank, that shows up as a hole punched in the block's bottom border.
+#[test]
+fn the_scrollbar_stays_inside_the_frame() {
+    for height in 7..16u16 {
+        let mut app = fixture_app();
+        let screen = render(&mut app, 60, height);
+        let bottom = list_pane(&screen, 33)
+            .lines()
+            .find(|l| l.contains('\u{256f}') || l.contains('\u{2570}'))
+            .map(str::to_string)
+            .unwrap_or_default();
+        let run: String = bottom.chars().filter(|c| *c != '\u{2570}').collect();
+        assert!(
+            run.chars().all(|c| c == '\u{2500}'),
+            "at height {height} something broke the bottom border: {bottom:?}"
+        );
+    }
+}

@@ -4,15 +4,15 @@ expression: "render(&mut app, 80, 20)"
 ---
  caligula  1 repo · 7 worktrees (6 linked) · 1 dirty · 4 stale · 4 safe to remov
 ╭ sort activity · lens all ──────╮╭────────────────────────────────────────────╮
-│   BRANCH          ±       AGE  ││ fixture                                    │
-│ ▾ fixture (6)     2        2h  ││ /fixture/repo                              │
+│   BRANCH        ↑   ±     AGE  ││ fixture                                    │
+│ ▾ fixture (6)   1   2      2h  ││ /fixture/repo                              │
 │ │ ◆ main                   2h  ││                                            │
-│ │ ● feat/ahead             1d  ││ origin                                     │
-│ │ ● cho…/clean             9d  ││ git@github.com:fixture/fixture.git         │
-│ │ ● (3head000)            40d  ││ base      main                             │
-│ │ ● feat/dirty    2       90d  ││ worktrees 7 (6 linked)                     │
-│ │ ✗ docs/gone         !    1y  ││ dirty     1                                │
-│ │ ● fix/locked        L    1y  ││                                            │
+│ │ ● fe…/ahead   1          1d  ││ origin                                     │
+│ │ ● ch…/clean              9d  ││ git@github.com:fixture/fixture.git         │
+│ │ ● (3…ad000)             40d  ││ base      main                             │
+│ │ ● fe…/dirty       2     90d  ││ worktrees 7 (6 linked)                     │
+│ │ ✗ docs/gone          !   1y  ││ dirty     1                                │
+│ │ ● fi…locked          L   1y  ││                                            │
 │                                ││ Worktrees                                  │
 │                                ││   ◆ main                        Nothing to │
 │                                ││ …lvage — safe to remove  2h                │

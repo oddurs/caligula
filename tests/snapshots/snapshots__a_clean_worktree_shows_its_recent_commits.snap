@@ -4,15 +4,15 @@ expression: "render(&mut app, 120, 20)"
 ---
  caligula  1 repo · 7 worktrees (6 linked) · 1 dirty · 4 stale · 4 safe to remove
 ╭ sort activity · lens all ──────────────────────╮╭────────────────────────────────────────────────────────────────────╮
-│   BRANCH                ↑    ↓    ±       AGE  ││ chore/clean  recent · last touched 9d                              │
-│ ▾ fixture (6)           1         2        2h  ││ /fixture/clean                                                     │
+│   BRANCH                    ↑   ↓   ±     AGE  ││ chore/clean  recent · last touched 9d                              │
+│ ▾ fixture (6)               1       2      2h  ││ /fixture/clean                                                     │
 │ │ ◆ main                                   2h  ││                                                                    │
-│ │ ● feat/ahead          1                  1d  ││ ┃ Nothing to salvage — safe to remove                              │
+│ │ ● feat/ahead              1              1d  ││ ┃ Nothing to salvage — safe to remove                              │
 │ │ ● chore/clean                            9d  ││                                                                    │
 │ │ ● (3head000)                            40d  ││ branch    chore/clean  no upstream · 0 commits off main            │
-│ │ ● feat/dirty                    2       90d  ││ head      2c000000  init: the first commit                         │
-│ │ ✗ docs/gone                         !    1y  ││           Fixture · 9d ago                                         │
-│ │ ● fix/locked                        L    1y  ││ repo      fixture  /fixture/repo                                   │
+│ │ ● feat/dirty                      2     90d  ││ head      2c000000  init: the first commit                         │
+│ │ ✗ docs/gone                          !   1y  ││           Fixture · 9d ago                                         │
+│ │ ● fix/locked                         L   1y  ││ repo      fixture  /fixture/repo                                   │
 │                                                ││                                                                    │
 │                                                ││ Recent commits                                                     │
 │                                                ││   2r000000   9d  init: the first commit                            │

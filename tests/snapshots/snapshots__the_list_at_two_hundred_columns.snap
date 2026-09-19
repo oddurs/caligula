@@ -4,15 +4,15 @@ expression: "render(&mut app, 200, 20)"
 ---
  caligula  1 repo · 7 worktrees (6 linked) · 1 dirty · 4 stale · 4 safe to remove
 ╭ sort activity · lens all ────────────────────────────────╮╭──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│   BRANCH                          ↑    ↓    ±       AGE  ││ fixture                                                                                                                                  │
-│ ▾ fixture (6)                     1         2        2h  ││ /fixture/repo                                                                                                                            │
+│   BRANCH                              ↑   ↓   ±     AGE  ││ fixture                                                                                                                                  │
+│ ▾ fixture (6)                         1       2      2h  ││ /fixture/repo                                                                                                                            │
 │ │ ◆ main                                             2h  ││                                                                                                                                          │
-│ │ ● feat/ahead                    1                  1d  ││ origin    git@github.com:fixture/fixture.git                                                                                             │
+│ │ ● feat/ahead                        1              1d  ││ origin    git@github.com:fixture/fixture.git                                                                                             │
 │ │ ● chore/clean                                      9d  ││ base      main                                                                                                                           │
 │ │ ● (3head000)                                      40d  ││ worktrees 7 (6 linked)                                                                                                                   │
-│ │ ● feat/dirty                              2       90d  ││ dirty     1                                                                                                                              │
-│ │ ✗ docs/gone                                   !    1y  ││                                                                                                                                          │
-│ │ ● fix/locked                                  L    1y  ││ Worktrees                                                                                                                                │
+│ │ ● feat/dirty                                2     90d  ││ dirty     1                                                                                                                              │
+│ │ ✗ docs/gone                                    !   1y  ││                                                                                                                                          │
+│ │ ● fix/locked                                   L   1y  ││ Worktrees                                                                                                                                │
 │                                                          ││   ◆ main                        Nothing to …lvage — safe to remove  2h                                                                   │
 │                                                          ││   ● feat/ahead                  1 off-base commit                   1d                                                                   │
 │                                                          ││   ● chore/clean                 Nothing to …lvage — safe to remove  9d                                                                   │
