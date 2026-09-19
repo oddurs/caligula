@@ -698,16 +698,29 @@ fn worktree_detail<'a>(repo: &'a Repo, wt: &'a Worktree, now: u64, width: u16) -
         format!("{}  {}", repo.name, shorten_home(&repo.root)),
         TEXT,
     ));
-    if repo.stashes > 0 {
-        out.push(kv(
-            "stash",
-            format!(
-                "{} entr{} (shared across this repo)",
-                repo.stashes,
-                if repo.stashes == 1 { "y" } else { "ies" }
-            ),
-            Color::Yellow,
-        ));
+    // Stashes of this worktree's own, which is what a stash count at the
+    // repository level could never tell you.
+    if !wt.stashes.is_empty() {
+        out.extend(section(format!(
+            "Stashes on this branch ({})",
+            wt.stashes.len()
+        )));
+        for stash in &wt.stashes {
+            out.push(Line::from(vec![
+                Span::styled(
+                    format!("  {:<10} ", stash.id),
+                    Style::default().fg(Color::Magenta),
+                ),
+                Span::styled(
+                    format!("{:>4}  ", git::ago(now.saturating_sub(stash.time))),
+                    Style::default().fg(DIM),
+                ),
+                Span::styled(
+                    clip(&stash.message, width.saturating_sub(20) as usize),
+                    Style::default().fg(TEXT),
+                ),
+            ]));
+        }
     }
     if let Some(reason) = &wt.locked {
         out.push(kv("locked", reason.clone(), Color::Yellow));
@@ -837,10 +850,21 @@ fn repo_detail<'a>(repo: &'a Repo, now: u64, width: u16) -> Vec<Line<'a>> {
         dirty.to_string(),
         if dirty > 0 { Color::Red } else { Color::Green },
     ));
-    if repo.stashes > 0 {
-        out.push(kv("stash", repo.stashes.to_string(), Color::Yellow));
+    if !repo.stashes.is_empty() {
+        out.push(kv(
+            "stashes",
+            format!(
+                "{} on no live branch — nothing else will surface {}",
+                repo.stashes.len(),
+                if repo.stashes.len() == 1 {
+                    "it"
+                } else {
+                    "them"
+                }
+            ),
+            Color::Yellow,
+        ));
     }
-
     out.extend(section("Worktrees"));
 
     // Laid out from the width given, like the list rows, rather than from fixed

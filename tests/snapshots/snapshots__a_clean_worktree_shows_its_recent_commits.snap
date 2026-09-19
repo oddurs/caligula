@@ -14,11 +14,11 @@ expression: "render(&mut app, 120, 20)"
 │ │ ✗ docs/gone                          !   1y  ││           Fixture · 9d ago                                         │
 │ │ ● fix/locked                         L   1y  ││ repo      fixture  /fixture/repo                                   │
 │                                                ││                                                                    │
+│                                                ││ Stashes on this branch (1)                                         │
+│                                                ││   stash@{1}   now  a stash worth finding                           │
+│                                                ││                                                                    │
 │                                                ││ Recent commits                                                     │
 │                                                ││   2r000000   9d  init: the first commit                            │
-│                                                ││                                                                    │
-│                                                ││                                                                    │
-│                                                ││                                                                    │
 │                                                ││                                                                    │
 ╰────────────────────────────────────────────────╯╰────────────────────────────────────────────────────────────────────╯
  j/k move  space mark  a sweep  ←/→ fold  d remove  D +branch  p prune  c shell  f lens  s sort  / find  ? help

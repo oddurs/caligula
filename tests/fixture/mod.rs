@@ -154,6 +154,34 @@ pub fn build_live() -> (TempDir, Repo) {
         ],
     );
 
+    // A stash on a branch a worktree still holds, and one on a branch nothing
+    // holds any more: the two cases the detail panes report differently.
+    write(&wt("clean").join("README.md"), "fixture\nstashed\n");
+    git_in(
+        &wt("clean"),
+        &["stash", "push", "-qm", "a stash worth finding"],
+    );
+    git_in(&root, &["branch", "orphan/branch"]);
+    git_in(
+        &root,
+        &[
+            "worktree",
+            "add",
+            "-q",
+            wt("orphan").to_str().unwrap(),
+            "orphan/branch",
+        ],
+    );
+    write(&wt("orphan").join("README.md"), "fixture\norphaned\n");
+    git_in(
+        &wt("orphan"),
+        &["stash", "push", "-qm", "a stash nobody will find"],
+    );
+    git_in(
+        &root,
+        &["worktree", "remove", wt("orphan").to_str().unwrap()],
+    );
+
     // Detached: no branch at all, so the label falls back to the short sha.
     git_in(
         &root,

@@ -12,13 +12,13 @@ expression: "render(&mut app, 80, 20)"
 │                                ││ base      main                             │
 │                                ││ worktrees 7 (6 linked)                     │
 │                                ││ dirty     1                                │
+│                                ││ stashes   1 on no live branch — nothing    │
+│                                ││ else will surface it                       │
 │                                ││                                            │
 │                                ││ Worktrees                                  │
 │                                ││   ◆ main        Main checkout — noth…   2h │
 │                                ││   ● feat/ahead  1 off-base commit       1d │
 │                                ││   ● cho…/clean  Nothing to salvage —…   9d │
 │                                ││   ● (3head000)  Nothing to salvage —…  40d │
-│                                ││   ● feat/dirty  1 modified file, 1 u…  90d │
-│                                ││   ✗ docs/gone   Git cannot read this…   1y │
 ╰────────────────────────────────╯╰────────────────────────────────────────────╯
  1 marked  filter chore  nothing to salvage in any of them   d removes them · es
