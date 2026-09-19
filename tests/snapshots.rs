@@ -374,3 +374,32 @@ fn a_swept_repository() {
     app.sweep_repo();
     insta::assert_snapshot!(render(&mut app, 120, 20));
 }
+
+/// Filter, then sweep: the path that produced the bug. The filter must name
+/// something that *has* safe worktrees, or the sweep marks nothing and the test
+/// passes on a marking it did not make.
+#[test]
+fn a_marking_swept_under_a_filter() {
+    let mut app = fixture_app();
+    app.filter = "chore".into();
+    app.refilter();
+    app.go(0);
+    app.sweep_repo();
+    assert_eq!(
+        app.marked.len(),
+        1,
+        "the sweep itself must make the marking"
+    );
+    insta::assert_snapshot!(render(&mut app, 120, 20));
+}
+
+/// And it has to survive a terminal narrow enough to clip the line.
+#[test]
+fn a_marking_under_a_filter_on_a_narrow_terminal() {
+    let mut app = fixture_app();
+    app.filter = "chore".into();
+    app.refilter();
+    app.go(0);
+    app.sweep_repo();
+    insta::assert_snapshot!(render(&mut app, 80, 20));
+}
