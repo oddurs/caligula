@@ -405,29 +405,34 @@ fn a_marking_under_a_filter_on_a_narrow_terminal() {
 }
 
 /// A row wider than its pane wraps, which strands the age on the next line.
-/// Asserted rather than merely recorded, because a snapshot shows the wrapping
-/// without objecting to it.
+///
+/// Asserted by looking for each worktree's age on the *same line* as its label:
+/// an earlier version of this test parsed the screen by splitting on the pane
+/// borders, landed on the empty string between them, and passed unconditionally
+/// at widths that demonstrably wrapped.
 #[test]
 fn no_detail_row_wraps_at_any_width() {
-    for width in [80u16, 120, 200] {
+    for width in [40u16, 50, 60, 80, 120, 200] {
         let mut app = fixture_app();
         app.go(0);
+        let rows: Vec<(String, String)> = app.repos[0]
+            .worktrees
+            .iter()
+            .map(|w| (w.label(), w.age_label(fixture::NOW)))
+            .collect();
         let screen = render(&mut app, width, 30);
-        let lines: Vec<&str> = screen.lines().collect();
-        // Every worktree row starts with its marker; the line after one must be
-        // another row or a blank, never the tail of the row above.
-        for (i, line) in lines.iter().enumerate() {
-            if !(line.contains("  ◆ ") || line.contains("  ● ") || line.contains("  ✗ ")) {
+
+        for (label, age) in rows {
+            // A label can be truncated in a narrow pane; its head cannot.
+            let head: String = label.chars().take(6).collect();
+            let Some(line) = screen.lines().find(|l| {
+                l.contains(&head) && (l.contains(" ◆ ") || l.contains(" ● ") || l.contains(" ✗ "))
+            }) else {
                 continue;
-            }
-            let next = lines.get(i + 1).copied().unwrap_or_default();
-            let detail = next.split('│').nth(2).unwrap_or_default().trim();
+            };
             assert!(
-                detail.is_empty()
-                    || next.contains("  ◆ ")
-                    || next.contains("  ● ")
-                    || next.contains("  ✗ "),
-                "at width {width} a detail row wrapped:\n{line}\n{next}"
+                line.contains(&age),
+                "at width {width} the row for {label} lost its age to a wrap:\n{line}"
             );
         }
     }

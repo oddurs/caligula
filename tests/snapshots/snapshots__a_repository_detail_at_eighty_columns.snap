@@ -14,13 +14,13 @@ expression: "render(&mut app, 80, 24)"
 │ │ ✗ docs/gone          !   1y  ││ dirty     1                                │
 │ │ ● fi…locked          L   1y  ││                                            │
 │                                ││ Worktrees                                  │
-│                                ││   ◆ main      Nothing to salvage —…   2h   │
-│                                ││   ● feat/ahead1 off-base commit       1d   │
-│                                ││   ● cho…/cleanNothing to salvage —…   9d   │
-│                                ││   ● (3head000)Nothing to salvage —…  40d   │
-│                                ││   ● feat/dirty2 uncommitted files    90d   │
-│                                ││   ✗ docs/gone Git cannot read this…   1y   │
-│                                ││   ● fix/lockedNothing to salvage —…   1y   │
+│                                ││   ◆ main        Nothing to salvage —…   2h │
+│                                ││   ● feat/ahead  1 off-base commit       1d │
+│                                ││   ● cho…/clean  Nothing to salvage —…   9d │
+│                                ││   ● (3head000)  Nothing to salvage —…  40d │
+│                                ││   ● feat/dirty  2 uncommitted files    90d │
+│                                ││   ✗ docs/gone   Git cannot read this…   1y │
+│                                ││   ● fix/locked  Nothing to salvage —…   1y │
 │                                ││                                            │
 │                                ││                                            │
 │                                ││                                            │

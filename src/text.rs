@@ -29,6 +29,9 @@ pub fn truncate(s: &str, max: usize) -> String {
 
 /// Trailing ellipsis, keeping the beginning: for prose.
 pub fn clip(s: &str, max: usize) -> String {
+    if max == 0 {
+        return String::new();
+    }
     let count = s.chars().count();
     if count <= max {
         return s.to_string();
@@ -58,5 +61,8 @@ mod tests {
         assert!(clip("fix: a long commit subject", 12).starts_with("fix: a long"));
         assert_eq!(clip("fix: a long commit subject", 12).chars().count(), 12);
         assert_eq!(clip("short", 12), "short");
+        // No room is no text, not an ellipsis: a column of zero width that
+        // renders one character is a column that widens its row.
+        assert_eq!(clip("anything", 0), "");
     }
 }
