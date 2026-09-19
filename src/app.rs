@@ -230,7 +230,7 @@ impl App {
                 wt.staleness(self.now),
                 Staleness::Stale | Staleness::Ancient
             ),
-            Lens::Safe => wt.salvage() == Salvage::Nothing && !wt.is_main,
+            Lens::Safe => wt.is_safe_to_remove(),
         };
         if !lens_ok {
             return false;
@@ -537,7 +537,7 @@ impl App {
             let w = &self.repos[ri].worktrees[wi];
             let tone = match w.salvage() {
                 Salvage::Nothing => Tone::Good,
-                Salvage::Commits => Tone::Warn,
+                Salvage::Unknown | Salvage::Commits => Tone::Warn,
                 Salvage::Uncommitted => Tone::Bad,
             };
             body.push((
@@ -885,7 +885,7 @@ impl App {
                 ) {
                     t.stale += 1;
                 }
-                if wt.salvage() == Salvage::Nothing && !wt.is_main {
+                if wt.is_safe_to_remove() {
                     t.safe += 1;
                 }
             }
@@ -928,6 +928,10 @@ fn removable(w: &git::Worktree) -> Result<(), String> {
 fn cost_line(w: &git::Worktree) -> (String, Tone) {
     match w.salvage() {
         Salvage::Nothing => ("Clean. Nothing would be lost.".into(), Tone::Good),
+        Salvage::Unknown => (
+            "Git cannot read it, so there is no telling what is in it.".into(),
+            Tone::Warn,
+        ),
         Salvage::Commits => (
             format!(
                 "{} commit{} live only here. The branch survives; the checkout does not.",

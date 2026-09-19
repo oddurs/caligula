@@ -2,17 +2,17 @@
 source: tests/snapshots.rs
 expression: "render(&mut app, 120, 20)"
 ---
- caligula  1 repo · 7 worktrees (6 linked) · 1 dirty · 4 stale · 4 safe to remove
+ caligula  1 repo · 7 worktrees (6 linked) · 1 dirty · 4 stale · 2 safe to remove
 ╭ sort activity · lens all ──────────────────────╮╭────────────────────────────────────────────────────────────────────╮
 │   BRANCH                    ↑   ↓   ±     AGE  ││ docs/gone  ancient · last touched 1y                               │
 │ ▾ fixture (6)               1       2      2h  ││ /fixture/gone                                                      │
 │ │ ◆ main                                   2h  ││                                                                    │
-│ │ ● feat/ahead              1              1d  ││ ┃ Nothing to salvage — safe to remove                              │
-│ │ ● chore/clean                            9d  ││ ┃ git cannot read this worktree — it may be gone from disk         │
-│ │ ● (3head000)                            40d  ││                                                                    │
-│ │ ● feat/dirty                      2     90d  ││ branch    docs/gone  no upstream · 0 commits off main              │
-│ │ ✗ docs/gone                          !   1y  ││ repo      fixture  /fixture/repo                                   │
-│ │ ● fix/locked                         L   1y  ││ prunable  gitdir file points to non-existent location              │
+│ │ ● feat/ahead              1              1d  ││ ┃ Git cannot read this worktree — it may be gone from disk         │
+│ │ ● chore/clean                            9d  ││                                                                    │
+│ │ ● (3head000)                            40d  ││ branch    docs/gone  unknown — git could not read it               │
+│ │ ● feat/dirty                      2     90d  ││ repo      fixture  /fixture/repo                                   │
+│ │ ✗ docs/gone                          !   1y  ││ prunable  gitdir file points to non-existent location              │
+│ │ ● fix/locked                         L   1y  ││                                                                    │
 │                                                ││                                                                    │
 │                                                ││                                                                    │
 │                                                ││                                                                    │

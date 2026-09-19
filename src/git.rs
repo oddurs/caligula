@@ -119,10 +119,20 @@ pub struct FileChange {
 }
 
 /// What you would lose by deleting a worktree.
+///
+/// Ordered by how much it should give you pause, because that is the order a
+/// removal dialog lists things in.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Salvage {
     /// Clean, and everything it contains lives somewhere else too.
     Nothing,
+    /// Git could not read it, so nothing can be claimed about it either way.
+    ///
+    /// This is its own answer rather than a default, because the counters of an
+    /// unread worktree are all zero, and zero is indistinguishable from clean.
+    /// Saying "nothing to salvage" on the strength of a failed read is the one
+    /// mistake this tool must never make.
+    Unknown,
     /// Commits exist only here; removing the worktree keeps the branch.
     Commits,
     /// Uncommitted work. Deleting destroys it.
@@ -186,13 +196,24 @@ impl Worktree {
     }
 
     pub fn salvage(&self) -> Salvage {
-        if self.is_dirty() {
+        if self.broken {
+            Salvage::Unknown
+        } else if self.is_dirty() {
             Salvage::Uncommitted
         } else if self.unpushed() > 0 {
             Salvage::Commits
         } else {
             Salvage::Nothing
         }
+    }
+
+    /// Whether this can be offered as safe to remove.
+    ///
+    /// Three different reasons it cannot be, and the lens has to respect all of
+    /// them: git will not remove a main checkout, it refuses a locked one, and
+    /// nothing can be said about one it could not read.
+    pub fn is_safe_to_remove(&self) -> bool {
+        !self.is_main && self.locked.is_none() && self.salvage() == Salvage::Nothing
     }
 
     pub fn age_secs(&self, now: u64) -> u64 {
@@ -222,6 +243,9 @@ impl Worktree {
 
     /// One line saying what is at stake, shown in the detail pane.
     pub fn verdict(&self) -> String {
+        if self.broken {
+            return "Git cannot read this worktree — it may be gone from disk".into();
+        }
         let mut parts = Vec::new();
         if self.changed_files() > 0 {
             parts.push(format!(
@@ -805,6 +829,36 @@ mod tests {
         assert_eq!(wt.files.len(), 1);
         assert_eq!(wt.files[0].path, "new/name.rs");
         assert_eq!(wt.staged, 1);
+    }
+
+    #[test]
+    fn a_worktree_git_cannot_read_is_never_safe_to_remove() {
+        let mut wt = test_worktree("x");
+        assert!(wt.is_safe_to_remove(), "a clean worktree is safe");
+
+        // Every counter is zero because nothing was ever read, which is exactly
+        // how "clean" looks. The two must not be confused.
+        wt.broken = true;
+        assert_eq!(wt.changed_files(), 0);
+        assert_eq!(wt.unpushed(), 0);
+        assert_eq!(wt.salvage(), Salvage::Unknown);
+        assert!(!wt.is_safe_to_remove());
+        assert!(wt.verdict().contains("cannot read"), "{}", wt.verdict());
+    }
+
+    #[test]
+    fn a_locked_worktree_is_never_safe_to_remove() {
+        let mut wt = test_worktree("x");
+        wt.locked = Some("in use by a build".into());
+        assert_eq!(wt.salvage(), Salvage::Nothing, "it is still clean");
+        assert!(!wt.is_safe_to_remove(), "but git refuses to remove it");
+    }
+
+    #[test]
+    fn the_main_checkout_is_never_safe_to_remove() {
+        let mut wt = test_worktree("main");
+        wt.is_main = true;
+        assert!(!wt.is_safe_to_remove());
     }
 
     #[test]
