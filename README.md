@@ -100,6 +100,7 @@ shows its last five commits instead, so you can still tell what it was for.
 | --- | --- |
 | `j` `k` `↓` `↑` | move |
 | `space` | mark a worktree, and step down |
+| `a` | mark everything in this repo that is safe to remove |
 | `J` `K` | jump to the next / previous repo |
 | `←` `→` `enter` | fold or unfold a repo |
 | `z` `Z` | fold all / unfold all |
@@ -117,8 +118,10 @@ shows its last five commits instead, so you can still tell what it was for.
 | `?` `q` | help / quit |
 
 Nothing destructive happens without a confirmation dialog that first spells out
-what is at stake. Marking is how a repository gets cleared in one pass: `space`
-down the list, then `d` once. The dialog lists every worktree it is about to
+what is at stake. Marking is how a repository gets cleared in one pass: `a` marks everything in
+the repository under the cursor that is safe to remove — never the main
+checkout, never a locked one, never one git could not read — and `d` removes
+the lot. The dialog lists every worktree it is about to
 remove, worst first, totals the files and commits that exist nowhere else, and
 names the ones it is keeping and why.
 

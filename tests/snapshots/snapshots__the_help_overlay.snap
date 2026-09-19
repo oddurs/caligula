@@ -7,28 +7,28 @@ expression: "render(&mut app, 120, 30)"
 │   BRANCH           ╭ keys ──────────────────────────────────────────────────────────────────────╮                    │
 │ ▾ fixture (6)      │ j / k · ↓ / ↑  move                                                        │                    │
 │ │ ◆ main           │ space          mark a worktree, and step down                              │                    │
-│ │ ● feat/ahead     │ J / K          jump to next / previous repo                                │                    │
-│ │ ● chore/clean    │ g / G          first / last row                                            │                    │
-│ │ ● (3head000)     │ ← / → · enter  fold or unfold a repo                                       │                    │
-│ │ ● feat/dirty     │ z / Z          fold all / unfold all                                       │                    │
-│ │ ✗ docs/gone      │ esc            clear the marking, then the filter                          │                    │
-│ │ ● fix/locked     │ PgUp / PgDn    scroll the detail pane                                      │                    │
+│ │ ● feat/ahead     │ a              mark everything safe to remove in this repo                 │                    │
+│ │ ● chore/clean    │ J / K          jump to next / previous repo                                │                    │
+│ │ ● (3head000)     │ g / G          first / last row                                            │                    │
+│ │ ● feat/dirty     │ ← / → · enter  fold or unfold a repo                                       │                    │
+│ │ ✗ docs/gone      │ z / Z          fold all / unfold all                                       │                    │
+│ │ ● fix/locked     │ esc            clear the marking, then the filter                          │                    │
+│                    │ PgUp / PgDn    scroll the detail pane                                      │ge — safe to remove │
+│                    │                                                                            │                    │
+│                    │ d              remove the marking, or the row under the cursor             │it                  │
+│                    │ D              the same, and delete the branches too                       │                    │
+│                    │ p              prune the repo's stale worktree records                     │ge — safe to remove │
+│                    │ L              lock or unlock the worktree                                 │                    │
 │                    │                                                                            │ge — safe to remove │
-│                    │ d              remove the marking, or the row under the cursor             │                    │
-│                    │ D              the same, and delete the branches too                       │it                  │
-│                    │ p              prune the repo's stale worktree records                     │                    │
-│                    │ L              lock or unlock the worktree                                 │ge — safe to remove │
-│                    │                                                                            │                    │
-│                    │ c              drop into a shell in the worktree                           │ge — safe to remove │
-│                    │ o              open it in the file manager                                 │                    │
-│                    │ y              copy its path to the clipboard                              │iles                │
-│                    │                                                                            │                    │
-│                    │ f              cycle lens: all → dirty → salvageable → stale → safe        │y be gone from disk │
-│                    │ s              cycle sort: activity → name → risk                          │                    │
-│                    │ /              filter by repo, branch or path                              │ge — safe to remove │
+│                    │ c              drop into a shell in the worktree                           │                    │
+│                    │ o              open it in the file manager                                 │iles                │
+│                    │ y              copy its path to the clipboard                              │                    │
+│                    │                                                                            │y be gone from disk │
+│                    │ f              cycle lens: all → dirty → salvageable → stale → safe        │                    │
+│                    │ s              cycle sort: activity → name → risk                          │ge — safe to remove │
+│                    │ /              filter by repo, branch or path                              │                    │
 │                    │ r              re-probe the selected repo                                  │                    │
 │                    │ R              rescan the disk from scratch                                │                    │
-│                    │ q              quit                                                        │                    │
 │                    ╰────────────────────────────────────────────────────────────────────────────╯                    │
 ╰────────────────────────────────────────────────╯╰────────────────────────────────────────────────────────────────────╯
- j/k move  space mark  ←/→ fold  d remove  D +branch  p prune  c shell  f lens  s sort  / find  ? help
+ j/k move  space mark  a sweep  ←/→ fold  d remove  D +branch  p prune  c shell  f lens  s sort  / find  ? help

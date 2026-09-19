@@ -367,6 +367,51 @@ impl App {
         self.move_by(1);
     }
 
+    /// Mark everything in the current repository that is safe to remove.
+    ///
+    /// The lens and the filter are respected rather than bypassed: whatever is
+    /// being looked at is what gets swept, so the key cannot reach past what is
+    /// on screen. Folding is not, because a folded repository is still a
+    /// repository — its rows are hidden, not excluded.
+    pub fn sweep_repo(&mut self) {
+        let Some(row) = self.current() else {
+            self.say("Nothing to sweep", Tone::Warn);
+            return;
+        };
+        let repo = match row {
+            Row::Repo { repo } | Row::Worktree { repo, .. } => repo,
+        };
+        let name = self.repos[repo].name.clone();
+        let safe: Vec<PathBuf> = self.repos[repo]
+            .worktrees
+            .iter()
+            .filter(|wt| wt.is_safe_to_remove() && self.matches(&self.repos[repo], wt))
+            .map(|wt| wt.path.clone())
+            .collect();
+
+        if safe.is_empty() {
+            self.say(format!("Nothing in {name} is safe to remove"), Tone::Info);
+            return;
+        }
+
+        // Pressing it twice is a way to change your mind, not a way to mark
+        // everything twice.
+        if safe.iter().all(|p| self.marked.contains(p)) {
+            for path in &safe {
+                self.marked.remove(path);
+            }
+            self.say(format!("Unmarked {} in {name}", safe.len()), Tone::Info);
+            return;
+        }
+
+        let n = safe.len();
+        self.marked.extend(safe);
+        self.say(
+            format!("Marked {n} safe to remove in {name} — d removes them"),
+            Tone::Good,
+        );
+    }
+
     pub fn clear_marks(&mut self) {
         self.marked.clear();
     }
@@ -1083,6 +1128,78 @@ mod tests {
             panic!("expected a worktree row")
         };
         assert_eq!(app.repos[repo].worktrees[wt].label(), "feat/branch-1");
+    }
+
+    #[test]
+    fn a_sweep_marks_only_what_is_safe_to_remove() {
+        let mut repo = test_repo("alpha", 4);
+        repo.worktrees[1].untracked = 2; // dirty
+        repo.worktrees[2].locked = Some("in use".into());
+        repo.worktrees[3].broken = true;
+        // worktrees[4] is clean, and so is the main checkout.
+        let mut app = app_with(vec![repo]);
+
+        app.go(0);
+        app.sweep_repo();
+
+        let marked: Vec<String> = app.repos[0]
+            .worktrees
+            .iter()
+            .filter(|w| app.marked.contains(&w.path))
+            .map(|w| w.label())
+            .collect();
+        assert_eq!(
+            marked,
+            ["feat/branch-3"],
+            "the dirty, locked, unreadable and main rows must all be left alone"
+        );
+    }
+
+    #[test]
+    fn a_sweep_is_its_own_undo() {
+        let mut app = app_with(vec![test_repo("alpha", 2)]);
+        app.go(0);
+        app.sweep_repo();
+        assert_eq!(app.marked.len(), 2);
+        app.sweep_repo();
+        assert!(
+            app.marked.is_empty(),
+            "pressing it again clears its own marking"
+        );
+    }
+
+    #[test]
+    fn a_sweep_reaches_no_further_than_the_lens() {
+        let mut repo = test_repo("alpha", 2);
+        repo.worktrees[1].untracked = 1;
+        let mut app = app_with(vec![repo]);
+        app.lens = Lens::Dirty;
+        app.rebuild(None);
+        app.go(0);
+        app.sweep_repo();
+        assert!(
+            app.marked.is_empty(),
+            "nothing the dirty lens shows is safe to remove, so nothing is marked"
+        );
+    }
+
+    #[test]
+    fn a_sweep_touches_only_the_repository_under_the_cursor() {
+        let mut app = app_with(vec![test_repo("alpha", 2), test_repo("beta", 2)]);
+        let beta = app
+            .rows
+            .iter()
+            .position(|r| matches!(r, Row::Repo { repo } if app.repos[*repo].name == "beta"))
+            .expect("beta");
+        app.go(beta);
+        app.sweep_repo();
+        assert!(
+            app.marked
+                .iter()
+                .all(|p| p.to_string_lossy().contains("beta")),
+            "a sweep is per repository: {:?}",
+            app.marked
+        );
     }
 
     #[test]

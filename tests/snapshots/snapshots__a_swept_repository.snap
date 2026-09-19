@@ -5,14 +5,14 @@ expression: "render(&mut app, 120, 20)"
  caligula  1 repo · 7 worktrees (6 linked) · 1 dirty · 4 stale · 2 safe to remove
 ╭ sort activity · lens all ──────────────────────╮╭────────────────────────────────────────────────────────────────────╮
 │   BRANCH                    ↑   ↓   ±     AGE  ││ fixture                                                            │
-│ ▸ fixture (6)               1       2      2h  ││ /fixture/repo                                                      │
-│                                                ││                                                                    │
-│                                                ││ origin    git@github.com:fixture/fixture.git                       │
-│                                                ││ base      main                                                     │
-│                                                ││ worktrees 7 (6 linked)                                             │
-│                                                ││ dirty     1                                                        │
-│                                                ││                                                                    │
-│                                                ││ Worktrees                                                          │
+│ ▾ fixture (6)               1       2      2h  ││ /fixture/repo                                                      │
+│ │ ◆ main                                   2h  ││                                                                    │
+│ │ ● feat/ahead              1              1d  ││ origin    git@github.com:fixture/fixture.git                       │
+│▌│ ● chore/clean                            9d  ││ base      main                                                     │
+│▌│ ● (3head000)                            40d  ││ worktrees 7 (6 linked)                                             │
+│ │ ● feat/dirty                      2     90d  ││ dirty     1                                                        │
+│ │ ✗ docs/gone                          !   1y  ││                                                                    │
+│ │ ● fix/locked                         L   1y  ││ Worktrees                                                          │
 │                                                ││   ◆ main                        Nothing to …lvage — safe to remove │
 │                                                ││  2h                                                                │
 │                                                ││   ● feat/ahead                  1 off-base commit                  │
@@ -21,4 +21,4 @@ expression: "render(&mut app, 120, 20)"
 │                                                ││  9d                                                                │
 │                                                ││   ● (3head000)                  Nothing to …lvage — safe to remove │
 ╰────────────────────────────────────────────────╯╰────────────────────────────────────────────────────────────────────╯
- j/k move  space mark  a sweep  ←/→ fold  d remove  D +branch  p prune  c shell  f lens  s sort  / find  ? help
+ 2 marked  nothing to salvage in any of them   d removes them · esc clears   Marked 2 safe to remove in fixture — d remo

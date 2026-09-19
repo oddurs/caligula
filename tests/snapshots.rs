@@ -366,3 +366,11 @@ fn the_scrollbar_stays_inside_the_frame() {
         );
     }
 }
+
+#[test]
+fn a_swept_repository() {
+    let mut app = fixture_app();
+    app.go(0);
+    app.sweep_repo();
+    insta::assert_snapshot!(render(&mut app, 120, 20));
+}

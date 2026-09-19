@@ -768,12 +768,19 @@ pub(crate) fn test_worktree(label: &str) -> Worktree {
 }
 
 /// Build a repo with `linked` extra worktrees, for tests in this crate.
+///
+/// Worktree paths are namespaced under the repository, because two repositories
+/// on one machine do not share a directory — and a marking keyed by path cannot
+/// tell them apart if the fixture pretends they do.
 #[cfg(test)]
 pub(crate) fn test_repo(name: &str, linked: usize) -> Repo {
-    let mut worktrees = vec![test_worktree("main")];
+    let mut worktrees = vec![test_worktree(&format!("{name}/main"))];
     worktrees[0].is_main = true;
+    worktrees[0].branch = Some("main".into());
     for i in 0..linked {
-        worktrees.push(test_worktree(&format!("feat/branch-{i}")));
+        let mut wt = test_worktree(&format!("{name}/feat/branch-{i}"));
+        wt.branch = Some(format!("feat/branch-{i}"));
+        worktrees.push(wt);
     }
     Repo {
         name: name.to_string(),
