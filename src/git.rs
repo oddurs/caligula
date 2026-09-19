@@ -150,6 +150,35 @@ pub struct RepoTotals {
     pub files: u32,
 }
 
+/// Why a worktree cannot be removed.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum Unremovable {
+    Main,
+    Locked(String),
+    Unreadable,
+}
+
+impl Unremovable {
+    /// Front-loaded, for a column that will be clipped: the words that
+    /// distinguish this row from its neighbours have to survive the cut.
+    pub fn short(&self) -> String {
+        match self {
+            Unremovable::Main => "Main checkout".into(),
+            Unremovable::Locked(reason) => format!("Locked: {reason}"),
+            Unremovable::Unreadable => "Unreadable".into(),
+        }
+    }
+
+    /// The whole sentence, for a dialog explaining what it is not doing.
+    pub fn why(&self) -> String {
+        match self {
+            Unremovable::Main => "it is the main checkout, which git will not remove".into(),
+            Unremovable::Locked(reason) => format!("locked — {reason}"),
+            Unremovable::Unreadable => "git cannot read it — press p to prune the record".into(),
+        }
+    }
+}
+
 /// How long since anything happened here.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Staleness {
@@ -215,8 +244,27 @@ impl Worktree {
     /// Three different reasons it cannot be, and the lens has to respect all of
     /// them: git will not remove a main checkout, it refuses a locked one, and
     /// nothing can be said about one it could not read.
+    /// Why git will not remove this worktree, if it will not.
+    ///
+    /// One answer, used by the lens, the sweep, the removal guard and the
+    /// sentence alike. They drifted apart twice while each decided for itself;
+    /// adding a reason here now forces every one of them to account for it.
+    pub fn unremovable(&self) -> Option<Unremovable> {
+        if self.is_main {
+            Some(Unremovable::Main)
+        } else if let Some(reason) = &self.locked {
+            Some(Unremovable::Locked(reason.clone()))
+        } else if self.broken {
+            Some(Unremovable::Unreadable)
+        } else {
+            None
+        }
+    }
+
+    /// Whether this can be offered as safe to remove: git will do it, and there
+    /// is nothing in it worth keeping.
     pub fn is_safe_to_remove(&self) -> bool {
-        !self.is_main && self.locked.is_none() && self.salvage() == Salvage::Nothing
+        self.unremovable().is_none() && self.salvage() == Salvage::Nothing
     }
 
     pub fn age_secs(&self, now: u64) -> u64 {
@@ -266,10 +314,16 @@ impl Worktree {
             };
             parts.push(format!("{unpushed} {where_} commit{}", plural(unpushed)));
         }
-        if parts.is_empty() {
-            "Nothing to salvage — safe to remove".into()
-        } else {
-            parts.join(", ")
+        if !parts.is_empty() {
+            return parts.join(", ");
+        }
+        // Nothing to salvage is a statement about content; safe to remove is a
+        // statement about whether git will do it. They are not the same, so the
+        // reason it will not goes first — this column gets clipped, and the
+        // shared half is not the half worth reading.
+        match self.unremovable() {
+            Some(reason) => format!("{} — nothing to salvage", reason.short()),
+            None => "Nothing to salvage — safe to remove".into(),
         }
     }
 }
@@ -862,6 +916,29 @@ mod tests {
         wt.locked = Some("in use by a build".into());
         assert_eq!(wt.salvage(), Salvage::Nothing, "it is still clean");
         assert!(!wt.is_safe_to_remove(), "but git refuses to remove it");
+        assert_eq!(
+            wt.verdict(),
+            "Locked: in use by a build — nothing to salvage",
+            "and the sentence must not say otherwise"
+        );
+    }
+
+    #[test]
+    fn only_a_worktree_that_can_go_is_told_it_can_go() {
+        let clean = test_worktree("x");
+        assert!(clean.verdict().contains("safe to remove"));
+
+        let mut main = test_worktree("main");
+        main.is_main = true;
+        assert!(
+            !main.verdict().contains("safe to remove"),
+            "{}",
+            main.verdict()
+        );
+
+        let mut broken = test_worktree("x");
+        broken.broken = true;
+        assert!(!broken.verdict().contains("safe to remove"));
     }
 
     #[test]

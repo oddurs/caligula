@@ -14,7 +14,7 @@ expression: "render(&mut app, 80, 20)"
 │                                ││ dirty     1                                │
 │                                ││                                            │
 │                                ││ Worktrees                                  │
-│                                ││   ◆ main        Nothing to salvage —…   2h │
+│                                ││   ◆ main        Main checkout — noth…   2h │
 │                                ││   ● feat/ahead  1 off-base commit       1d │
 │                                ││   ● cho…/clean  Nothing to salvage —…   9d │
 │                                ││   ● (3head000)  Nothing to salvage —…  40d │
