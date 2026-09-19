@@ -99,6 +99,9 @@ pub fn draw(f: &mut Frame, app: &mut App) {
     if app.confirm.is_some() {
         confirm(f, f.area(), app);
     }
+    if app.failure.is_some() {
+        failure(f, f.area(), app);
+    }
 }
 
 // ------------------------------------------------------------------- header
@@ -1141,6 +1144,69 @@ fn help(f: &mut Frame, area: Rect) {
         })
         .collect();
     f.render_widget(Paragraph::new(lines), inner);
+}
+
+/// A failure, in full, over everything else.
+fn failure(f: &mut Frame, area: Rect, app: &App) {
+    let Some(fail) = &app.failure else { return };
+
+    let width = 78.min(area.width.saturating_sub(4)).max(8);
+    let text_width = width.saturating_sub(4).max(1) as usize;
+    let mut body: Vec<Line> = vec![
+        Line::from(Span::styled(
+            fail.command.clone(),
+            Style::default().fg(ACCENT),
+        )),
+        Line::raw(""),
+    ];
+    body.extend(
+        fail.output
+            .lines()
+            .map(|line| Line::from(Span::styled(line.to_string(), Style::default().fg(TEXT)))),
+    );
+
+    let rows: usize = body
+        .iter()
+        .map(|line| {
+            wrapped_rows(
+                &line
+                    .spans
+                    .iter()
+                    .map(|s| s.content.as_ref())
+                    .collect::<String>(),
+                text_width,
+            )
+        })
+        .sum();
+    let area = popup(area, width, (rows as u16).saturating_add(5));
+    f.render_widget(Clear, area);
+
+    let block = Block::default()
+        .borders(Borders::ALL)
+        .border_type(BorderType::Rounded)
+        .border_style(Style::default().fg(Color::Red))
+        .title(Span::styled(
+            format!(" {} ", fail.title),
+            Style::default().fg(Color::Red).add_modifier(Modifier::BOLD),
+        ));
+    let inner = block.inner(area).inner(Margin {
+        horizontal: 1,
+        vertical: 0,
+    });
+    f.render_widget(block, area);
+
+    let split = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints([Constraint::Min(1), Constraint::Length(1)])
+        .split(inner);
+    f.render_widget(Paragraph::new(body).wrap(Wrap { trim: false }), split[0]);
+    f.render_widget(
+        Paragraph::new(Line::from(Span::styled(
+            "any key dismisses",
+            Style::default().fg(DIM),
+        ))),
+        split[1],
+    );
 }
 
 fn confirm(f: &mut Frame, area: Rect, app: &App) {

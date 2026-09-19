@@ -1,0 +1,24 @@
+---
+source: tests/snapshots.rs
+expression: "render(&mut app, 120, 20)"
+---
+ caligula  1 repo · 7 worktrees (6 linked) · 1 dirty · 4 stale · 2 safe to remove
+╭ sort activity · lens all ──────────────────────╮╭────────────────────────────────────────────────────────────────────╮
+│   BRANCH                    ↑   ↓   ±     AGE  ││ fixture                                                            │
+│ ▾ fixture (6)               1       2      2h  ││ /fixture/repo                                                      │
+│ │ ◆ main                                   2h  ││                                                                    │
+│ │ ● feat/ahead     ╭ Could not remove the worktree ─────────────────────────────────────────────╮                    │
+│ │ ● chore/clean    │ git -C ~/Code/quarry worktree remove ~/Code/.worktrees/quarry/feat/x       │                    │
+│ │ ● (3head000)     │                                                                            │                    │
+│ │ ● feat/dirty     │ fatal: '/Users/x/Code/.worktrees/quarry/feat/x' contains modified or       │                    │
+│ │ ✗ docs/gone      │ untracked files, use --force to delete it                                  │                    │
+│ │ ● fix/locked     │                                                                            │                    │
+│                    │                                                                            │ to salvage      2h │
+│                    │ any key dismisses                                                          │                 1d │
+│                    ╰────────────────────────────────────────────────────────────────────────────╯fe to remove     9d │
+│                                                ││   ● (3head000)          Nothing to salvage — safe to remove    40d │
+│                                                ││   ● feat/dirty          1 modified file, 1 untracked file      90d │
+│                                                ││   ✗ docs/gone           Git cannot read this worktree — it m…   1y │
+│                                                ││   ● fix/locked          Locked: in use by a build — nothing …   1y │
+╰────────────────────────────────────────────────╯╰────────────────────────────────────────────────────────────────────╯
+ j/k move  space mark  a sweep  ←/→ fold  d remove  D +branch  p prune  c shell  f lens  s sort  / find  ? help

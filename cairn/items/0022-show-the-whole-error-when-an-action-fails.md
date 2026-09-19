@@ -2,10 +2,10 @@
 id: 22
 title: Show the whole error when an action fails
 type: bug
-status: backlog
+status: done
 milestone: v0.2
 created: 2026-09-17
-updated: 2026-09-17
+updated: 2026-09-19
 priority: p1
 effort: s
 area: actions
@@ -19,7 +19,7 @@ the last one.
 
 ## Acceptance criteria
 
-- [ ] A failure opens a dismissible box carrying git's full stderr
-- [ ] The command that was run is shown, so it can be repeated by hand
-- [ ] `esc` or any key dismisses it; the list underneath is untouched
-- [ ] Successes stay on the footer as they are now
+- [x] A failure opens a dismissible box carrying git's full stderr
+- [x] The command that was run is shown, so it can be repeated by hand
+- [x] `esc` or any key dismisses it; the list underneath is untouched
+- [x] Successes stay on the footer as they are now

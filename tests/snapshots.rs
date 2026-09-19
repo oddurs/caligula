@@ -444,3 +444,16 @@ fn a_repository_detail_at_eighty_columns() {
     app.go(0);
     insta::assert_snapshot!(render(&mut app, 80, 24));
 }
+
+#[test]
+fn a_failure_is_shown_in_full() {
+    let mut app = fixture_app();
+    app.fail(
+        "Could not remove the worktree",
+        "git -C ~/Code/quarry worktree remove ~/Code/.worktrees/quarry/feat/x".into(),
+        "fatal: '/Users/x/Code/.worktrees/quarry/feat/x' contains modified or \
+untracked files, use --force to delete it"
+            .into(),
+    );
+    insta::assert_snapshot!(render(&mut app, 120, 20));
+}

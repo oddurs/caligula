@@ -163,6 +163,13 @@ fn drain_scan(app: &mut App, scan: &mut Scan) {
 }
 
 fn handle_key(app: &mut App, key: KeyEvent, scan: &mut Scan, args: &Args) {
+    // A failure is read and dismissed before anything else is decided: the list
+    // underneath is untouched, so nothing is lost by stopping to read it.
+    if app.failure.is_some() {
+        app.failure = None;
+        return;
+    }
+
     if app.confirm.is_some() {
         match key.code {
             KeyCode::Char('y') | KeyCode::Char('Y') | KeyCode::Enter => app.run_confirmed(),

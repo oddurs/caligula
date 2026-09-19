@@ -104,6 +104,17 @@ pub struct Removal {
     pub force: bool,
 }
 
+/// A failure worth reading in full.
+///
+/// The footer is one line and truncates, and git's useful sentence is usually
+/// the last of several. A removal that fails is exactly the moment to show all
+/// of it, and the command, so it can be repeated by hand.
+pub struct Failure {
+    pub title: String,
+    pub command: String,
+    pub output: String,
+}
+
 pub struct Confirm {
     pub title: String,
     pub body: Vec<(String, Tone)>,
@@ -126,6 +137,7 @@ pub struct App {
     pub detail_scroll: u16,
     pub status: Option<(String, Tone, Instant)>,
     pub confirm: Option<Confirm>,
+    pub failure: Option<Failure>,
     pub help: bool,
     /// "Fold all" should hold for repos the scan has not reached yet.
     pub fold_new: bool,
@@ -159,6 +171,7 @@ impl App {
             detail_scroll: 0,
             status: None,
             confirm: None,
+            failure: None,
             help: false,
             fold_new: false,
             scanning: true,
@@ -496,6 +509,15 @@ impl App {
         self.status = Some((msg.into(), tone, Instant::now()));
     }
 
+    /// Report a failure in full, rather than as much of it as one line holds.
+    pub fn fail(&mut self, title: impl Into<String>, command: String, output: String) {
+        self.failure = Some(Failure {
+            title: title.into(),
+            command,
+            output,
+        });
+    }
+
     /// `d` acts on the marking when there is one, and on the cursor otherwise.
     pub fn ask_remove(&mut self, with_branch: bool) {
         if self.marked.is_empty() {
@@ -794,14 +816,13 @@ impl App {
                     };
                     self.say(msg, tone);
                 } else {
-                    self.say(
-                        format!(
-                            "{msg}; {} could not be removed — {}",
-                            failures.len(),
-                            failures.join("; ")
-                        ),
-                        Tone::Bad,
+                    let title = format!(
+                        "{} of {} could not be removed",
+                        failures.len(),
+                        removals.len()
                     );
+                    self.fail(title, "git worktree remove".into(), failures.join("\n\n"));
+                    self.say(msg, Tone::Bad);
                 }
             }
             Action::Prune { repo } => {
@@ -819,7 +840,11 @@ impl App {
                         );
                         self.refresh_repo(repo);
                     }
-                    Err(e) => self.say(format!("git worktree prune failed: {e}"), Tone::Bad),
+                    Err(e) => self.fail(
+                        "Prune failed",
+                        format!("git -C {} worktree prune -v", scan::shorten_home(&root)),
+                        e,
+                    ),
                 }
             }
         }
@@ -844,7 +869,15 @@ impl App {
                 self.say(if locked { "Unlocked" } else { "Locked" }, Tone::Good);
                 self.refresh_repo(repo);
             }
-            Err(e) => self.say(format!("git worktree {verb} failed: {e}"), Tone::Bad),
+            Err(e) => self.fail(
+                format!("Could not {verb} the worktree"),
+                format!(
+                    "git -C {} worktree {verb} {}",
+                    scan::shorten_home(&root),
+                    scan::shorten_home(std::path::Path::new(&path))
+                ),
+                e,
+            ),
         }
     }
 

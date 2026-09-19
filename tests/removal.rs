@@ -208,3 +208,35 @@ fn a_worktree_git_cannot_read_is_not_offered_for_removal() {
     assert!(branches_on_disk(&root).contains(&"docs/gone".to_string()));
     drop(tmp);
 }
+
+#[test]
+fn a_failed_removal_is_reported_in_full() {
+    let (tmp, repo) = fixture::build_live();
+    let root = repo.root.clone();
+    let mut app = app_for(repo);
+
+    let clean = mark(&mut app, "chore/clean");
+    app.ask_remove(false);
+    // Removed from under caligula after the dialog opened, so its own removal
+    // fails and the whole of git's complaint has somewhere to go.
+    caligula::git::git_run(&root, &["worktree", "remove", clean.to_str().unwrap()])
+        .expect("the fixture worktree is removable");
+    app.run_confirmed();
+
+    let failure = app.failure.as_ref().expect("a failure should be reported");
+    assert!(
+        failure.title.contains("could not be removed"),
+        "{}",
+        failure.title
+    );
+    assert!(
+        failure.output.contains("chore/clean"),
+        "the failure must name what failed: {}",
+        failure.output
+    );
+    assert!(
+        !failure.output.is_empty() && failure.output.lines().count() >= 1,
+        "git's own words must survive"
+    );
+    drop(tmp);
+}
