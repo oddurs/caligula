@@ -7,7 +7,7 @@ expression: "render(&mut app, 120, 20)"
 │   BRANCH                    ↑   ↓   ±     AGE  ││ fix/locked  ancient · last touched 1y                              │
 │ ▾ fixture (6)               1       2      2h  ││ /fixture/locked                                                    │
 │ │ ◆ main                                   2h  ││                                                                    │
-│ │ ● feat/ahead              1              1d  ││ ┃ Nothing to salvage — locked: in use by a build                   │
+│ │ ● feat/ahead              1              1d  ││ ┃ Locked: in use by a build — nothing to salvage                   │
 │ │ ● chore/clean                            9d  ││                                                                    │
 │ │ ● (3head000)                            40d  ││ branch    fix/locked  no upstream · 0 commits off main             │
 │ │ ● feat/dirty                      2     90d  ││ head      6c000000  init: the first commit                         │

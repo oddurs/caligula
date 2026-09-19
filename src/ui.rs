@@ -47,6 +47,19 @@ fn marker(wt: &Worktree, now: u64) -> (&'static str, Color) {
     }
 }
 
+/// The colour of a verdict.
+///
+/// Not `salvage_color` alone: a locked worktree has nothing to salvage and so
+/// would paint the same green as one that can actually go. The words were fixed
+/// once already while the colour still said go.
+fn verdict_color(wt: &Worktree) -> Color {
+    if wt.unremovable().is_some() {
+        Color::Yellow
+    } else {
+        salvage_color(wt.salvage())
+    }
+}
+
 fn salvage_color(s: Salvage) -> Color {
     match s {
         Salvage::Nothing => Color::Green,
@@ -636,7 +649,7 @@ fn worktree_detail<'a>(repo: &'a Repo, wt: &'a Worktree, now: u64, width: u16) -
     )));
 
     // The verdict is the whole point of the tool: say what is at stake.
-    let color = salvage_color(wt.salvage());
+    let color = verdict_color(wt);
     out.push(Line::raw(""));
     out.push(Line::from(vec![
         Span::styled("┃ ", Style::default().fg(color)),
@@ -862,7 +875,7 @@ fn repo_detail<'a>(repo: &'a Repo, now: u64, width: u16) -> Vec<Line<'a>> {
             Span::styled(" ".repeat(gap), Style::default()),
             Span::styled(
                 format!("{:<verdict_w$}", clip(&wt.verdict(), verdict_w)),
-                Style::default().fg(salvage_color(wt.salvage())),
+                Style::default().fg(verdict_color(wt)),
             ),
             Span::styled(
                 format!("{:>AGE$}", wt.age_label(now)),

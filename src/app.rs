@@ -969,18 +969,10 @@ pub struct Totals {
 
 /// Why this worktree cannot be removed, if it cannot.
 fn removable(w: &git::Worktree) -> Result<(), String> {
-    if w.is_main {
-        return Err("it is the main checkout, which git will not remove".into());
+    match w.unremovable() {
+        Some(reason) => Err(reason.why()),
+        None => Ok(()),
     }
-    if let Some(reason) = &w.locked {
-        return Err(format!("locked — {reason}"));
-    }
-    if w.broken {
-        // git worktree remove fails on a worktree it cannot read; prune is what
-        // clears the record it left behind.
-        return Err("git cannot read it — press p to prune the record".into());
-    }
-    Ok(())
 }
 
 /// The one line that says what this removal costs.
