@@ -2,12 +2,12 @@
 id: 51
 title: The repository detail's worktree rows do not fit their pane
 type: bug
-status: backlog
+status: done
 milestone: v0.2
 depends_on:
 - 20
 created: 2026-09-17
-updated: 2026-09-17
+updated: 2026-09-18
 priority: p1
 effort: s
 area: chrome
@@ -43,7 +43,7 @@ shows the wrapping.
 
 ## Acceptance criteria
 
-- [ ] The repository detail's worktree rows are exactly as wide as their pane
-- [ ] The verdict is clipped from the end, keeping the beginning
-- [ ] No row in the detail pane wraps at 80, 120 or 200 columns
-- [ ] The snapshot diff for this change shows the wrapping disappearing
+- [x] The repository detail's worktree rows are exactly as wide as their pane
+- [x] The verdict is clipped from the end, keeping the beginning
+- [x] No row in the detail pane wraps at 80, 120 or 200 columns
+- [x] The snapshot diff for this change shows the wrapping disappearing
