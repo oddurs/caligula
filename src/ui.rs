@@ -99,6 +99,10 @@ pub fn draw(f: &mut Frame, app: &mut App) {
     if app.confirm.is_some() {
         confirm(f, f.area(), app);
     }
+    if app.failure.is_some() {
+        let area = f.area();
+        failure(f, area, app);
+    }
 }
 
 // ------------------------------------------------------------------- header
@@ -1141,6 +1145,88 @@ fn help(f: &mut Frame, area: Rect) {
         })
         .collect();
     f.render_widget(Paragraph::new(lines), inner);
+}
+
+/// A failure, in full, over everything else.
+///
+/// Scrollable, because "in full" has to survive a screen that is not tall
+/// enough: git's useful sentence is usually the last of several, and a sweep
+/// puts one complaint per worktree in here.
+fn failure(f: &mut Frame, area: Rect, app: &mut App) {
+    let Some(fail) = &app.failure else { return };
+
+    let width = 78.min(area.width.saturating_sub(4)).max(8);
+    let text_width = width.saturating_sub(4).max(1) as usize;
+    let body: Vec<Line> = fail
+        .body
+        .lines()
+        .map(|line| {
+            // A command line is the part worth copying, so it is the part that
+            // is coloured.
+            let style = if line.starts_with("git ") {
+                Style::default().fg(ACCENT)
+            } else {
+                Style::default().fg(TEXT)
+            };
+            Line::from(Span::styled(line.to_string(), style))
+        })
+        .collect();
+
+    let rows: usize = fail
+        .body
+        .lines()
+        .map(|line| wrapped_rows(line, text_width))
+        .sum();
+    let wanted = (rows as u16).saturating_add(5);
+    let area = popup(area, width, wanted);
+    f.render_widget(Clear, area);
+
+    let block = Block::default()
+        .borders(Borders::ALL)
+        .border_type(BorderType::Rounded)
+        .border_style(Style::default().fg(Color::Red))
+        .title(Span::styled(
+            format!(" {} ", fail.title),
+            Style::default().fg(Color::Red).add_modifier(Modifier::BOLD),
+        ));
+    let inner = block.inner(area).inner(Margin {
+        horizontal: 1,
+        vertical: 0,
+    });
+    f.render_widget(block, area);
+
+    let split = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints([Constraint::Min(1), Constraint::Length(1)])
+        .split(inner);
+
+    let shown = split[0].height as usize;
+    let max_scroll = (rows.saturating_sub(shown)) as u16;
+    app.failure_scroll = app.failure_scroll.min(max_scroll);
+    f.render_widget(
+        Paragraph::new(body)
+            .wrap(Wrap { trim: false })
+            .scroll((app.failure_scroll, 0)),
+        split[0],
+    );
+
+    let hint = if max_scroll > 0 {
+        let left = max_scroll.saturating_sub(app.failure_scroll);
+        if left > 0 {
+            format!(
+                "↓ {left} more line{}  ·  any other key dismisses",
+                if left == 1 { "" } else { "s" }
+            )
+        } else {
+            "↑ scroll back  ·  any other key dismisses".to_string()
+        }
+    } else {
+        "any key dismisses".to_string()
+    };
+    f.render_widget(
+        Paragraph::new(Line::from(Span::styled(hint, Style::default().fg(DIM)))),
+        split[1],
+    );
 }
 
 fn confirm(f: &mut Frame, area: Rect, app: &App) {

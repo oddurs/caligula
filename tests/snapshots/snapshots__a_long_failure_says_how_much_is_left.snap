@@ -1,0 +1,24 @@
+---
+source: tests/snapshots.rs
+expression: "render(&mut app, 120, 20)"
+---
+ caligula  1 repo · 7 worktrees (6 linked) · 1 dirty · 4 stale · 2 safe to remove
+╭ sort activity · lens all ──────────────────────╮╭────────────────────────────────────────────────────────────────────╮
+│   BRANCH           ╭ 12 of 45 could not be removed ─────────────────────────────────────────────╮                    │
+│ ▾ fixture (6)      │ git -C ~/Code/r worktree remove ~/w/1                                      │                    │
+│ │ ◆ main           │ fatal: line 1                                                              │                    │
+│ │ ● feat/ahead     │                                                                            │                    │
+│ │ ● chore/clean    │ git -C ~/Code/r worktree remove ~/w/2                                      │                    │
+│ │ ● (3head000)     │ fatal: line 2                                                              │                    │
+│ │ ● feat/dirty     │                                                                            │                    │
+│ │ ✗ docs/gone      │ git -C ~/Code/r worktree remove ~/w/3                                      │                    │
+│ │ ● fix/locked     │ fatal: line 3                                                              │                    │
+│                    │                                                                            │ to salvage      2h │
+│                    │ git -C ~/Code/r worktree remove ~/w/4                                      │                 1d │
+│                    │ fatal: line 4                                                              │fe to remove     9d │
+│                    │                                                                            │fe to remove    40d │
+│                    │ git -C ~/Code/r worktree remove ~/w/5                                      │acked file      90d │
+│                    │ ↓ 77 more lines  ·  any other key dismisses                                │rktree — it m…   1y │
+│                    ╰────────────────────────────────────────────────────────────────────────────╯ld — nothing …   1y │
+╰────────────────────────────────────────────────╯╰────────────────────────────────────────────────────────────────────╯
+ j/k move  space mark  a sweep  ←/→ fold  d remove  D +branch  p prune  c shell  f lens  s sort  / find  ? help

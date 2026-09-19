@@ -208,3 +208,43 @@ fn a_worktree_git_cannot_read_is_not_offered_for_removal() {
     assert!(branches_on_disk(&root).contains(&"docs/gone".to_string()));
     drop(tmp);
 }
+
+#[test]
+fn a_failed_removal_is_reported_in_full() {
+    let (tmp, repo) = fixture::build_live();
+    let root = repo.root.clone();
+    let mut app = app_for(repo);
+
+    let clean = mark(&mut app, "chore/clean");
+    app.ask_remove(false);
+    // Removed from under caligula after the dialog opened, so its own removal
+    // fails and the whole of git's complaint has somewhere to go.
+    caligula::git::git_run(&root, &["worktree", "remove", clean.to_str().unwrap()])
+        .expect("the fixture worktree is removable");
+    app.run_confirmed();
+
+    let failure = app.failure.as_ref().expect("a failure should be reported");
+    assert!(
+        failure.title.contains("could not be removed"),
+        "{}",
+        failure.title
+    );
+    // The command has to be repeatable: the box is useless if it does not say
+    // which directory, in which repository.
+    assert!(
+        failure.body.contains("git -C ") && failure.body.contains("worktree remove"),
+        "the command must be there to repeat: {}",
+        failure.body
+    );
+    assert!(
+        failure.body.contains("clean"),
+        "the failing path must be named: {}",
+        failure.body
+    );
+    assert!(
+        failure.body.lines().count() >= 2,
+        "git's own words must survive alongside the command: {}",
+        failure.body
+    );
+    drop(tmp);
+}

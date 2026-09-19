@@ -163,6 +163,26 @@ fn drain_scan(app: &mut App, scan: &mut Scan) {
 }
 
 fn handle_key(app: &mut App, key: KeyEvent, scan: &mut Scan, args: &Args) {
+    // A failure is read and dismissed before anything else is decided: the list
+    // underneath is untouched, so nothing is lost by stopping to read it. It
+    // can be longer than the screen, so it scrolls — and ctrl-c still quits,
+    // because that is the one key that must always mean what it says.
+    if app.failure.is_some() {
+        match key.code {
+            KeyCode::Char('c') if key.modifiers.contains(KeyModifiers::CONTROL) => {
+                app.quit = true;
+            }
+            KeyCode::Down | KeyCode::Char('j') | KeyCode::PageDown => {
+                app.failure_scroll = app.failure_scroll.saturating_add(1);
+            }
+            KeyCode::Up | KeyCode::Char('k') | KeyCode::PageUp => {
+                app.failure_scroll = app.failure_scroll.saturating_sub(1);
+            }
+            _ => app.failure = None,
+        }
+        return;
+    }
+
     if app.confirm.is_some() {
         match key.code {
             KeyCode::Char('y') | KeyCode::Char('Y') | KeyCode::Enter => app.run_confirmed(),
