@@ -146,7 +146,7 @@ pub struct App {
     /// "Fold all" should hold for repos the scan has not reached yet.
     pub fold_new: bool,
     pub scanning: bool,
-    pub dirs_seen: usize,
+    pub scan: ScanProgress,
     pub now: u64,
     pub quit: bool,
     /// Set when a key asks for a shell; main drops the TUI and runs it.
@@ -180,7 +180,7 @@ impl App {
             help: false,
             fold_new: false,
             scanning: true,
-            dirs_seen: 0,
+            scan: ScanProgress::default(),
             now: git::now(),
             quit: false,
             shell_request: None,
@@ -991,6 +991,34 @@ impl App {
     }
 }
 
+/// What the scan has got through, as the header reports it.
+#[derive(Default, Clone, Copy)]
+pub struct ScanProgress {
+    pub dirs: usize,
+    pub found: usize,
+    pub probed: usize,
+    pub walking: bool,
+}
+
+impl ScanProgress {
+    /// One line saying what is happening, rather than a number that stops
+    /// moving while the slow part runs.
+    pub fn describe(&self) -> String {
+        if self.walking && self.found == 0 {
+            format!("walking {} directories", self.dirs)
+        } else if self.probed < self.found {
+            format!("reading {} of {} repositories", self.probed, self.found)
+        } else if self.walking {
+            format!(
+                "{} repositories · walking {} directories",
+                self.found, self.dirs
+            )
+        } else {
+            format!("{} repositories", self.found)
+        }
+    }
+}
+
 /// What removing the current marking would cost.
 #[derive(Default, PartialEq, Eq, Debug)]
 pub struct Stakes {
@@ -1112,6 +1140,35 @@ mod tests {
             app.add_repo(r);
         }
         app
+    }
+
+    #[test]
+    fn the_scan_says_what_it_is_doing_at_each_stage() {
+        let walking_only = ScanProgress {
+            dirs: 1204,
+            found: 0,
+            probed: 0,
+            walking: true,
+        };
+        assert_eq!(walking_only.describe(), "walking 1204 directories");
+
+        // The stage that used to look hung: the directory count has stopped
+        // moving and every remaining second is spent reading repositories.
+        let probing = ScanProgress {
+            dirs: 1204,
+            found: 92,
+            probed: 47,
+            walking: false,
+        };
+        assert_eq!(probing.describe(), "reading 47 of 92 repositories");
+
+        let done = ScanProgress {
+            dirs: 1204,
+            found: 92,
+            probed: 92,
+            walking: false,
+        };
+        assert_eq!(done.describe(), "92 repositories");
     }
 
     #[test]

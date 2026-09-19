@@ -159,7 +159,7 @@ fn header(f: &mut Frame, area: Rect, app: &App) {
             .duration_since(std::time::UNIX_EPOCH)
             .map(|d| d.as_millis() / 90)
             .unwrap_or(0)) as usize;
-        let text = format!("{} scanning {} dirs ", SPIN[phase % 8], app.dirs_seen);
+        let text = format!("{} {} ", SPIN[phase % 8], app.scan.describe());
         let w = text.chars().count() as u16;
         if area.width > w {
             let right = Rect {

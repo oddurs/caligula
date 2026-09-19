@@ -6,7 +6,7 @@
 
 use std::collections::HashSet;
 use std::path::{Path, PathBuf};
-use std::sync::atomic::{AtomicUsize, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use std::sync::mpsc::{Receiver, Sender, channel};
 use std::sync::{Arc, Mutex};
 use std::thread;
@@ -21,7 +21,21 @@ pub enum Event {
 
 pub struct Scan {
     pub rx: Receiver<Event>,
-    pub dirs_seen: Arc<AtomicUsize>,
+    pub progress: Progress,
+}
+
+/// What the scan is doing, readable while it does it.
+///
+/// Walking the disk takes well under a second; probing the repositories it
+/// finds takes the rest. A counter of directories therefore stops moving almost
+/// immediately and the tool looks hung for as long as the real work takes.
+#[derive(Clone, Default)]
+pub struct Progress {
+    pub dirs: Arc<AtomicUsize>,
+    /// Repositories claimed by a worker: the denominator, once walking is done.
+    pub found: Arc<AtomicUsize>,
+    pub probed: Arc<AtomicUsize>,
+    pub walking: Arc<AtomicBool>,
 }
 
 /// Directories that never contain interesting checkouts but cost a lot to walk.
@@ -42,7 +56,8 @@ const DENY: &[&str] = &[
 
 pub fn start(roots: Vec<PathBuf>, max_depth: usize) -> Scan {
     let (tx, rx) = channel();
-    let dirs_seen = Arc::new(AtomicUsize::new(0));
+    let progress = Progress::default();
+    progress.walking.store(true, Ordering::Relaxed);
 
     let (cand_tx, cand_rx) = channel::<PathBuf>();
     let cand_rx = Arc::new(Mutex::new(cand_rx));
@@ -57,6 +72,7 @@ pub fn start(roots: Vec<PathBuf>, max_depth: usize) -> Scan {
         let cand_rx = Arc::clone(&cand_rx);
         let seen_repos = Arc::clone(&seen_repos);
         let tx = tx.clone();
+        let progress = progress.clone();
         handles.push(thread::spawn(move || {
             loop {
                 let candidate = {
@@ -83,7 +99,10 @@ pub fn start(roots: Vec<PathBuf>, max_depth: usize) -> Scan {
                         continue;
                     }
                 }
-                if let Some(repo) = git::probe_repo(&candidate)
+                progress.found.fetch_add(1, Ordering::Relaxed);
+                let repo = git::probe_repo(&candidate);
+                progress.probed.fetch_add(1, Ordering::Relaxed);
+                if let Some(repo) = repo
                     && tx.send(Event::Found(Box::new(repo))).is_err()
                 {
                     break;
@@ -92,9 +111,10 @@ pub fn start(roots: Vec<PathBuf>, max_depth: usize) -> Scan {
         }));
     }
     let walk_tx = tx.clone();
-    let walk_seen = Arc::clone(&dirs_seen);
+    let walk_progress = progress.clone();
     thread::spawn(move || {
-        walk(roots, max_depth, &cand_tx, &walk_seen, &walk_tx);
+        walk(roots, max_depth, &cand_tx, &walk_progress.dirs, &walk_tx);
+        walk_progress.walking.store(false, Ordering::Relaxed);
         // Dropping the candidate sender is what tells the workers to stop.
         drop(cand_tx);
     });
@@ -107,7 +127,7 @@ pub fn start(roots: Vec<PathBuf>, max_depth: usize) -> Scan {
         let _ = tx.send(Event::Done);
     });
 
-    Scan { rx, dirs_seen }
+    Scan { rx, progress }
 }
 
 fn walk(
