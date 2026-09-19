@@ -2,7 +2,7 @@
 id: 56
 title: A locked or main worktree is told it is safe to remove
 type: bug
-status: backlog
+status: done
 milestone: v0.2
 created: 2026-09-18
 updated: 2026-09-18
@@ -29,8 +29,8 @@ same contradiction item 0052 fixed in the safe lens, left behind in the sentence
 
 ## Acceptance criteria
 
-- [ ] A locked worktree's verdict says it is locked, not that it is safe to remove
-- [ ] The main checkout's verdict does not claim it is removable either
-- [ ] A worktree that really is safe still says so
-- [ ] `is_safe_to_remove` is what decides, so the sentence and the lens cannot
+- [x] A locked worktree's verdict says it is locked, not that it is safe to remove
+- [x] The main checkout's verdict does not claim it is removable either
+- [x] A worktree that really is safe still says so
+- [x] `is_safe_to_remove` is what decides, so the sentence and the lens cannot
       disagree again

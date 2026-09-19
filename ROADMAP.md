@@ -19,7 +19,7 @@ Every git worktree on the machine, each one saying what it would cost to delete 
 
 ## v0.2 — Clear a repo in one pass
 
-`######····` 60% · 9 of 15 done · due 2026-10-03
+`#######···` 67% · 10 of 15 done · due 2026-10-03
 
 Mark many worktrees at once and clear a repository's dead ones in a single pass.
 
@@ -30,7 +30,6 @@ Mark many worktrees at once and clear a repository's dead ones in a single pass.
 - [ ] [`0021`](https://github.com/oddurs/caligula/blob/main/cairn/items/0021-work-in-a-terminal-narrower-than-100-columns.md) Work in a terminal narrower than 100 columns <sup>bug · p1 · chrome</sup>
 - [ ] [`0022`](https://github.com/oddurs/caligula/blob/main/cairn/items/0022-show-the-whole-error-when-an-action-fails.md) Show the whole error when an action fails <sup>bug · p1 · actions</sup>
 - [ ] [`0023`](https://github.com/oddurs/caligula/blob/main/cairn/items/0023-say-what-the-scan-is-doing-while-it-runs.md) Say what the scan is doing while it runs <sup>chore · p2 · runtime</sup>
-- [ ] [`0056`](https://github.com/oddurs/caligula/blob/main/cairn/items/0056-a-locked-or-main-worktree-is-told-it-is-safe-to-remove.md) A locked or main worktree is told it is safe to remove <sup>bug · p1 · verdict</sup>
 
 ### done
 
@@ -43,6 +42,7 @@ Mark many worktrees at once and clear a repository's dead ones in a single pass.
 - [x] [`0053`](https://github.com/oddurs/caligula/blob/main/cairn/items/0053-inherited-git-environment-points-every-query-at-the-wrong-repository.md) Inherited git environment points every query at the wrong repository <sup>bug · p0 · git</sup>
 - [x] [`0054`](https://github.com/oddurs/caligula/blob/main/cairn/items/0054-lay-the-list-out-as-a-real-table.md) Lay the list out as a real table <sup>feature · p0 · chrome</sup>
 - [x] [`0055`](https://github.com/oddurs/caligula/blob/main/cairn/items/0055-a-filter-hides-the-marking-from-the-footer.md) A filter hides the marking from the footer <sup>bug · p1 · chrome</sup>
+- [x] [`0056`](https://github.com/oddurs/caligula/blob/main/cairn/items/0056-a-locked-or-main-worktree-is-told-it-is-safe-to-remove.md) A locked or main worktree is told it is safe to remove <sup>bug · p1 · verdict</sup>
 
 ## v0.3 — Your machine, your rules
 

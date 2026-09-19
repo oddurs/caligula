@@ -266,10 +266,21 @@ impl Worktree {
             };
             parts.push(format!("{unpushed} {where_} commit{}", plural(unpushed)));
         }
-        if parts.is_empty() {
+        if !parts.is_empty() {
+            return parts.join(", ");
+        }
+        // Nothing to salvage is a statement about content; safe to remove is a
+        // statement about whether git will do it. They are not the same, and
+        // the one thing that decides the second is what the lens uses, so the
+        // sentence and the lens cannot drift apart.
+        if self.is_safe_to_remove() {
             "Nothing to salvage — safe to remove".into()
+        } else if self.is_main {
+            "Nothing to salvage — but this is the main checkout".into()
+        } else if let Some(reason) = &self.locked {
+            format!("Nothing to salvage — locked: {reason}")
         } else {
-            parts.join(", ")
+            "Nothing to salvage".into()
         }
     }
 }
@@ -862,6 +873,29 @@ mod tests {
         wt.locked = Some("in use by a build".into());
         assert_eq!(wt.salvage(), Salvage::Nothing, "it is still clean");
         assert!(!wt.is_safe_to_remove(), "but git refuses to remove it");
+        assert_eq!(
+            wt.verdict(),
+            "Nothing to salvage — locked: in use by a build",
+            "and the sentence must not say otherwise"
+        );
+    }
+
+    #[test]
+    fn only_a_worktree_that_can_go_is_told_it_can_go() {
+        let clean = test_worktree("x");
+        assert!(clean.verdict().contains("safe to remove"));
+
+        let mut main = test_worktree("main");
+        main.is_main = true;
+        assert!(
+            !main.verdict().contains("safe to remove"),
+            "{}",
+            main.verdict()
+        );
+
+        let mut broken = test_worktree("x");
+        broken.broken = true;
+        assert!(!broken.verdict().contains("safe to remove"));
     }
 
     #[test]

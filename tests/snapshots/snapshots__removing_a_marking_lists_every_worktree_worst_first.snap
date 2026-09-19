@@ -7,7 +7,7 @@ expression: "render(&mut app, 120, 24)"
 │   BRANCH                    ↑   ↓   ±     AGE  ││ main  active · last touched 2h  main checkout                      │
 │ ▾ fixture (6)               1       2      2h  ││ /fixture/repo                                                      │
 │ │ ◆ main                                   2h  ││                                                                    │
-│▌│ ● feat/ahead        ╭ Remove marked worktrees? ────────────────────────────────────────────╮                       │
+│▌│ ● feat/ahead        ╭ Remove marked worktrees? ────────────────────────────────────────────╮checkout               │
 │▌│ ● chore/clean       │ feat/dirty                          2 uncommitted files              │                       │
 │ │ ● (3head000)        │ feat/ahead                          1 off-base commit                │main                   │
 │▌│ ● feat/dirty        │ chore/clean                         Nothing to salvage — safe to     │                       │

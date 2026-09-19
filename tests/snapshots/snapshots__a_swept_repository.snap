@@ -13,12 +13,12 @@ expression: "render(&mut app, 120, 20)"
 │ │ ● feat/dirty                      2     90d  ││ dirty     1                                                        │
 │ │ ✗ docs/gone                          !   1y  ││                                                                    │
 │ │ ● fix/locked                         L   1y  ││ Worktrees                                                          │
-│                                                ││   ◆ main                Nothing to salvage — safe to remove     2h │
+│                                                ││   ◆ main                Nothing to salvage — but this is the…   2h │
 │                                                ││   ● feat/ahead          1 off-base commit                       1d │
 │                                                ││   ● chore/clean         Nothing to salvage — safe to remove     9d │
 │                                                ││   ● (3head000)          Nothing to salvage — safe to remove    40d │
 │                                                ││   ● feat/dirty          2 uncommitted files                    90d │
 │                                                ││   ✗ docs/gone           Git cannot read this worktree — it m…   1y │
-│                                                ││   ● fix/locked          Nothing to salvage — safe to remove     1y │
+│                                                ││   ● fix/locked          Nothing to salvage — locked: in use …   1y │
 ╰────────────────────────────────────────────────╯╰────────────────────────────────────────────────────────────────────╯
  2 marked  nothing to salvage in any of them   d removes them · esc clears   Marked 2 safe to remove in fixture — d remo
