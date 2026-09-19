@@ -21,4 +21,4 @@ expression: "render(&mut app, 120, 20)"
 │                                                ││ Recent commits                                                     │
 │                                                ││   4r000000  90d  init: the first commit                            │
 ╰────────────────────────────────────────────────╯╰────────────────────────────────────────────────────────────────────╯
- j/k move  space mark  ←/→ fold  d remove  D +branch  p prune  c shell  f lens  s sort  / find  ? help
+ j/k move  space mark  a sweep  ←/→ fold  d remove  D +branch  p prune  c shell  f lens  s sort  / find  ? help

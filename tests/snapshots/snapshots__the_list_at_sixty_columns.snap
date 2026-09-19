@@ -21,4 +21,4 @@ expression: "render(&mut app, 60, 20)"
 │                                ││ remove  2h             │
 │                                ││   ● feat/ahead         │
 ╰────────────────────────────────╯╰────────────────────────╯
- j/k move  space mark  ←/→ fold  d remove  D +branch  p prun
+ j/k move  space mark  a sweep  ←/→ fold  d remove  D +branc

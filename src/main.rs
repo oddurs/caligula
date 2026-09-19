@@ -220,6 +220,7 @@ fn handle_key(app: &mut App, key: KeyEvent, scan: &mut Scan, args: &Args) {
             app.say("Marking cleared", Tone::Info);
         }
         KeyCode::Char(' ') => app.toggle_mark(),
+        KeyCode::Char('a') => app.sweep_repo(),
         KeyCode::Char('q') | KeyCode::Esc => {
             if app.filter.is_empty() {
                 app.quit = true;

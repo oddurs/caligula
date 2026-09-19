@@ -21,4 +21,4 @@ expression: "render(&mut app, 120, 20)"
 │                                                ││                                                                    │
 │                                                ││                                                                    │
 ╰────────────────────────────────────────────────╯╰────────────────────────────────────────────────────────────────────╯
- 1 marked  nothing to salvage in any of them   esc clears · d still removes the row under the cursor   The only marked w
+ 1 marked  nothing to salvage in any of them   d removes them · esc clears   The only marked worktree cannot be removed:

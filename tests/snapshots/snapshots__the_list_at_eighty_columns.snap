@@ -21,4 +21,4 @@ expression: "render(&mut app, 80, 20)"
 │                                ││   ● chore/clean                 Nothing to │
 │                                ││ …lvage — safe to remove  9d                │
 ╰────────────────────────────────╯╰────────────────────────────────────────────╯
- j/k move  space mark  ←/→ fold  d remove  D +branch  p prune  c shell  f lens
+ j/k move  space mark  a sweep  ←/→ fold  d remove  D +branch  p prune  c shell

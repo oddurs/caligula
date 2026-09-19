@@ -915,7 +915,7 @@ fn footer(f: &mut Frame, area: Rect, app: &App) {
             ));
         }
         spans.push(Span::styled(
-            "   esc clears · d still removes the row under the cursor",
+            "   d removes them · esc clears",
             Style::default().fg(DIM),
         ));
         // A message is appended rather than allowed to replace this: what is
@@ -949,6 +949,7 @@ fn footer(f: &mut Frame, area: Rect, app: &App) {
     let keys = [
         ("j/k", "move"),
         ("space", "mark"),
+        ("a", "sweep"),
         ("←/→", "fold"),
         ("d", "remove"),
         ("D", "+branch"),
@@ -1014,6 +1015,7 @@ fn help(f: &mut Frame, area: Rect) {
     let rows: &[(&str, &str)] = &[
         ("j / k · ↓ / ↑", "move"),
         ("space", "mark a worktree, and step down"),
+        ("a", "mark everything safe to remove in this repo"),
         ("J / K", "jump to next / previous repo"),
         ("g / G", "first / last row"),
         ("← / → · enter", "fold or unfold a repo"),

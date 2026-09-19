@@ -21,4 +21,4 @@ expression: "render(&mut app, 120, 20)"
 │                                                ││                                                                    │
 │                                                ││                                                                    │
 ╰────────────────────────────────────────────────╯╰────────────────────────────────────────────────────────────────────╯
- 3 marked  2 uncommitted files · 1 commit only there   esc clears · d still removes the row under the cursor
+ 3 marked  2 uncommitted files · 1 commit only there   d removes them · esc clears
