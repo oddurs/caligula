@@ -14,7 +14,7 @@ expression: "render(&mut app, 120, 20)"
 │ │ ● (3head000)                            40d  ││                                                                    │
 │ │ ● fix/locked                         L   1y  ││ Worktrees                                                          │
 │                                                ││   ◆ main                Main checkout — nothing to salvage      2h │
-│                                                ││   ● feat/dirty          2 uncommitted files                    90d │
+│                                                ││   ● feat/dirty          1 modified file, 1 untracked file      90d │
 │                                                ││   ✗ docs/gone           Git cannot read this worktree — it m…   1y │
 │                                                ││   ● feat/ahead          1 off-base commit                       1d │
 │                                                ││   ● chore/clean         Nothing to salvage — safe to remove     9d │

@@ -89,6 +89,12 @@ pub struct Worktree {
     pub unstaged: u32,
     pub untracked: u32,
     pub conflicts: u32,
+    /// Distinct tracked paths that differ from HEAD.
+    ///
+    /// Not `staged + unstaged`: a file edited, staged, then edited again is one
+    /// file but two changes, and counting it twice made the verdict disagree
+    /// with the list of files printed under it.
+    pub tracked: u32,
     pub files: Vec<FileChange>,
 
     pub last_commit: Option<Commit>,
@@ -215,7 +221,15 @@ impl Worktree {
     }
 
     pub fn changed_files(&self) -> u32 {
-        self.staged + self.unstaged + self.untracked + self.conflicts
+        self.tracked_changes() + self.untracked
+    }
+
+    /// Files git is already following. Losing one of these loses your edits;
+    /// losing an untracked file loses the whole file. Both are unrecoverable,
+    /// which is why neither is treated as the lesser — but they are different
+    /// enough that a single number for both tells you nothing useful.
+    pub fn tracked_changes(&self) -> u32 {
+        self.tracked
     }
 
     /// Commits that exist nowhere else: ahead of upstream, or off the base branch.
@@ -298,11 +312,15 @@ impl Worktree {
             return "Git cannot read this worktree — it may be gone from disk".into();
         }
         let mut parts = Vec::new();
-        if self.changed_files() > 0 {
+        let tracked = self.tracked_changes();
+        if tracked > 0 {
+            parts.push(format!("{tracked} modified file{}", plural(tracked)));
+        }
+        if self.untracked > 0 {
             parts.push(format!(
-                "{} uncommitted file{}",
-                self.changed_files(),
-                plural(self.changed_files())
+                "{} untracked file{}",
+                self.untracked,
+                plural(self.untracked)
             ));
         }
         let unpushed = self.unpushed();
@@ -570,6 +588,7 @@ fn probe_worktree(e: Entry, is_main: bool, base: Option<&str>) -> Worktree {
         unstaged: 0,
         untracked: 0,
         conflicts: 0,
+        tracked: 0,
         files: Vec::new(),
         last_commit: None,
         recent: Vec::new(),
@@ -703,6 +722,7 @@ fn parse_status(out: &str, wt: &mut Worktree) {
             push_file(wt, "??", rest, FILE_CAP);
         } else if let Some(rest) = line.strip_prefix("u ") {
             wt.conflicts += 1;
+            wt.tracked += 1;
             let path = rest.split_whitespace().last().unwrap_or("");
             push_file(wt, "UU", path, FILE_CAP);
         } else if line.starts_with("1 ") || line.starts_with("2 ") {
@@ -719,6 +739,7 @@ fn parse_status(out: &str, wt: &mut Worktree) {
             if y != '.' {
                 wt.unstaged += 1;
             }
+            wt.tracked += 1;
             // Renames carry an extra score field before the path, and their
             // path field is "<new>\t<old>". Walk the fixed fields by hand so
             // that spaces and tabs inside the path survive.
@@ -811,6 +832,7 @@ pub(crate) fn test_worktree(label: &str) -> Worktree {
         unstaged: 0,
         untracked: 0,
         conflicts: 0,
+        tracked: 0,
         files: Vec::new(),
         last_commit: None,
         recent: Vec::new(),
@@ -882,7 +904,12 @@ mod tests {
         );
         assert_eq!(wt.files[0].path, "README.md");
         assert_eq!(wt.files[3].code, "??");
-        assert_eq!(wt.changed_files(), 6);
+        assert_eq!(
+            wt.changed_files(),
+            5,
+            "five paths are five files, however many changes each carries"
+        );
+        assert_eq!(wt.tracked_changes(), 4);
     }
 
     #[test]
@@ -946,6 +973,65 @@ mod tests {
         let mut wt = test_worktree("main");
         wt.is_main = true;
         assert!(!wt.is_safe_to_remove());
+    }
+
+    /// One number for "uncommitted" answered the wrong question: three modified
+    /// tracked files and three untracked ones are different situations, and the
+    /// sentence has to say which.
+    /// One number for "uncommitted" answered the wrong question: three modified
+    /// tracked files and three untracked ones are different situations, and the
+    /// sentence has to say which.
+    ///
+    /// Driven through the parser rather than by setting counters, so the
+    /// sentence cannot disagree with what git actually said.
+    #[test]
+    fn the_verdict_says_which_kind_of_uncommitted() {
+        let verdict_of = |status: &str| {
+            let mut wt = test_worktree("x");
+            parse_status(status, &mut wt);
+            wt.verdict()
+        };
+
+        let m = |path| format!("1 .M N... 100644 100644 100644 aaa bbb {path}\n");
+        assert_eq!(
+            verdict_of(&format!("{}{}{}", m("a"), m("b"), m("c"))),
+            "3 modified files"
+        );
+        assert_eq!(verdict_of("? a\n? b\n? c\n? d\n"), "4 untracked files");
+        assert_eq!(
+            verdict_of(&format!("{}{}? c\n", m("a"), m("b"))),
+            "2 modified files, 1 untracked file"
+        );
+        assert_eq!(
+            verdict_of("u UU N... 100644 100644 100644 100644 aa bb cc merge.rs\n"),
+            "1 modified file",
+            "a conflict is a tracked file"
+        );
+        assert_eq!(
+            verdict_of("1 MM N... 100644 100644 100644 aaa bbb both.rs\n"),
+            "1 modified file",
+            "edited, staged, and edited again is still one file"
+        );
+    }
+
+    #[test]
+    fn tracked_and_untracked_are_counted_apart_but_both_count() {
+        let mut wt = test_worktree("x");
+        wt.staged = 1;
+        wt.unstaged = 2;
+        wt.conflicts = 1;
+        wt.tracked = 3;
+        wt.untracked = 5;
+        assert_eq!(
+            wt.tracked_changes(),
+            3,
+            "two of the changes are to one file"
+        );
+        assert_eq!(wt.changed_files(), 8);
+        assert!(
+            !wt.is_safe_to_remove(),
+            "untracked files are unrecoverable too; neither kind is the lesser"
+        );
     }
 
     #[test]
