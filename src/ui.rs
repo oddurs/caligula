@@ -12,6 +12,10 @@ use crate::git::{self, Repo, Salvage, Staleness, Worktree};
 use crate::scan::shorten_home;
 use crate::text::{clip, truncate};
 
+/// As many stashes as are worth reading before the rest of the pane is pushed
+/// off the screen, matching the caps on the file and commit lists.
+const STASH_CAP: usize = 20;
+
 const ACCENT: Color = Color::Cyan;
 const DIM: Color = Color::DarkGray;
 const TEXT: Color = Color::Gray;
@@ -698,17 +702,17 @@ fn worktree_detail<'a>(repo: &'a Repo, wt: &'a Worktree, now: u64, width: u16) -
         format!("{}  {}", repo.name, shorten_home(&repo.root)),
         TEXT,
     ));
-    // Stashes of this worktree's own, which is what a stash count at the
-    // repository level could never tell you.
+    // Below the kv block, not inside it: a `locked` line rendered after the
+    // heading read as part of the stash list.
     if !wt.stashes.is_empty() {
         out.extend(section(format!(
             "Stashes on this branch ({})",
             wt.stashes.len()
         )));
-        for stash in &wt.stashes {
+        for stash in wt.stashes.iter().take(STASH_CAP) {
             out.push(Line::from(vec![
                 Span::styled(
-                    format!("  {:<10} ", stash.id),
+                    format!("  {} ", git::short_sha(&stash.sha)),
                     Style::default().fg(Color::Magenta),
                 ),
                 Span::styled(
@@ -721,12 +725,12 @@ fn worktree_detail<'a>(repo: &'a Repo, wt: &'a Worktree, now: u64, width: u16) -
                 ),
             ]));
         }
-    }
-    if let Some(reason) = &wt.locked {
-        out.push(kv("locked", reason.clone(), Color::Yellow));
-    }
-    if let Some(reason) = &wt.prunable {
-        out.push(kv("prunable", reason.clone(), Color::Yellow));
+        if wt.stashes.len() > STASH_CAP {
+            out.push(Line::from(Span::styled(
+                format!("  … {} more", wt.stashes.len() - STASH_CAP),
+                Style::default().fg(DIM),
+            )));
+        }
     }
 
     if wt.changed_files() > 0 {

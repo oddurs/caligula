@@ -15,7 +15,7 @@ expression: "render(&mut app, 120, 20)"
 │ │ ● fix/locked                         L   1y  ││ repo      fixture  /fixture/repo                                   │
 │                                                ││                                                                    │
 │                                                ││ Stashes on this branch (1)                                         │
-│                                                ││   stash@{1}   now  a stash worth finding                           │
+│                                                ││   2s000000   9d  a stash worth finding                             │
 │                                                ││                                                                    │
 │                                                ││ Recent commits                                                     │
 │                                                ││   2r000000   9d  init: the first commit                            │

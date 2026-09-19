@@ -11,7 +11,7 @@ expression: "render(&mut app, 120, 20)"
 │ │ ● chore/clean                            9d  ││                                                                    │
 │ │ ● (3head000)                            40d  ││ branch    docs/gone  unknown — git could not read it               │
 │ │ ● feat/dirty                      2     90d  ││ repo      fixture  /fixture/repo                                   │
-│ │ ✗ docs/gone                          !   1y  ││ prunable  gitdir file points to non-existent location              │
+│ │ ✗ docs/gone                          !   1y  ││                                                                    │
 │ │ ● fix/locked                         L   1y  ││                                                                    │
 │                                                ││                                                                    │
 │                                                ││                                                                    │

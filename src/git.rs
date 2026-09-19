@@ -119,8 +119,14 @@ pub struct Worktree {
 /// One stash entry, and the branch it was made on.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Stash {
-    /// `stash@{0}`, as `git stash apply` wants it.
+    /// `stash@{0}`.
+    ///
+    /// Positional, and it shifts on every push and drop — so it is shown next
+    /// to the sha rather than on its own. Copying an index off a display that
+    /// has gone stale applies a different stash than the one that was read.
     pub id: String,
+    /// The stash commit. Unlike the index, this does not move.
+    pub sha: String,
     /// The branch HEAD was on. `None` for a stash made on a detached head,
     /// which git records as `(no branch)`.
     pub branch: Option<String>,
@@ -458,9 +464,12 @@ pub fn probe_repo(member: &Path) -> Option<Repo> {
     let name = repo_name(&root, &common);
     let remote = git(&root, &["remote", "get-url", "origin"]).map(|s| s.trim().to_string());
     let base = default_base(&root);
-    let stashes = git(&root, &["stash", "list", "--format=%gd%x1f%gs%x1f%ct"])
-        .map(|out| parse_stashes(&out))
-        .unwrap_or_default();
+    let stashes = git(
+        &root,
+        &["stash", "list", "--format=%gd%x1f%gs%x1f%ct%x1f%H"],
+    )
+    .map(|out| parse_stashes(&out))
+    .unwrap_or_default();
 
     let mut worktrees: Vec<Worktree> = entries
         .into_iter()
@@ -812,7 +821,7 @@ fn push_file(wt: &mut Worktree, code: &str, path: &str, cap: usize) {
     }
 }
 
-/// `git stash list --format=%gd%x1f%gs%x1f%ct`.
+/// `git stash list --format=%gd%x1f%gs%x1f%ct%x1f%H`.
 ///
 /// The subject is `WIP on <branch>: …` for an automatic stash and
 /// `On <branch>: <message>` for `git stash push -m`. Splitting on the first
@@ -827,18 +836,27 @@ fn parse_stashes(out: &str) -> Vec<Stash> {
             let subject = fields.next()?;
             let time = fields.next().and_then(|t| t.parse().ok()).unwrap_or(0);
 
-            let rest = subject
+            let sha = fields.next().unwrap_or_default().to_string();
+
+            // Only a subject git wrote carries a branch. `git stash store`
+            // takes an arbitrary message, and splitting that on its first colon
+            // invents a branch out of the first word — "wip: refactor the
+            // parser" became branch `wip`, message `refactor the parser`.
+            let prefixed = subject
                 .strip_prefix("WIP on ")
-                .or_else(|| subject.strip_prefix("On "))
-                .unwrap_or(subject);
-            let (branch, message) = match rest.split_once(": ") {
-                Some((branch, message)) => (branch, message),
-                None => (rest, ""),
+                .or_else(|| subject.strip_prefix("On "));
+            let (branch, message) = match prefixed.and_then(|rest| rest.split_once(": ")) {
+                Some((branch, message)) => (
+                    (branch != "(no branch)").then(|| branch.to_string()),
+                    message.to_string(),
+                ),
+                None => (None, subject.to_string()),
             };
             Some(Stash {
                 id,
-                branch: (branch != "(no branch)").then(|| branch.to_string()),
-                message: message.to_string(),
+                sha,
+                branch,
+                message,
                 time,
             })
         })
@@ -1159,13 +1177,14 @@ mod tests {
     #[test]
     fn parses_the_shapes_git_actually_writes() {
         let out = concat!(
-            "stash@{0}\u{1f}WIP on worktree-agent-aba0f691: e08ba70 feat: a thing\u{1f}1775087388\n",
-            "stash@{1}\u{1f}On feat/x: work in progress\u{1f}1775087386\n",
-            "stash@{2}\u{1f}WIP on (no branch): 242b353 feat: on a detached head\u{1f}1774221743\n",
-            "stash@{3}\u{1f}On research/verification: c8aa59f a slash in the branch\u{1f}1774141909\n",
+            "stash@{0}\u{1f}WIP on worktree-agent-aba0f691: e08ba70 feat: a thing\u{1f}1775087388\u{1f}aaa\n",
+            "stash@{1}\u{1f}On feat/x: work in progress\u{1f}1775087386\u{1f}bbb\n",
+            "stash@{2}\u{1f}WIP on (no branch): 242b353 feat: on a detached head\u{1f}1774221743\u{1f}ccc\n",
+            "stash@{3}\u{1f}On research/verification: c8aa59f a slash in the branch\u{1f}1774141909\u{1f}ddd\n",
+            "stash@{4}\u{1f}wip: refactor the parser\u{1f}1774141900\u{1f}eee\n",
         );
         let stashes = parse_stashes(out);
-        assert_eq!(stashes.len(), 4);
+        assert_eq!(stashes.len(), 5);
 
         assert_eq!(stashes[0].id, "stash@{0}");
         assert_eq!(
@@ -1188,6 +1207,12 @@ mod tests {
             Some("research/verification"),
             "a slash is ordinary in a ref name; only the colon ends it"
         );
+
+        // `git stash store` takes any message. Splitting one on its first colon
+        // invents a branch out of its first word and eats it from the message.
+        assert_eq!(stashes[4].branch, None);
+        assert_eq!(stashes[4].message, "wip: refactor the parser");
+        assert_eq!(stashes[4].sha, "eee");
     }
 
     #[test]
@@ -1197,6 +1222,7 @@ mod tests {
         assert!(wt.stashes.is_empty());
         wt.stashes.push(Stash {
             id: "stash@{0}".into(),
+            sha: "abc1234".into(),
             branch: Some("feat/x".into()),
             message: "work in progress".into(),
             time: now(),
