@@ -8,8 +8,8 @@ expression: "render(&mut app, 120, 20)"
 │ ▾ fixture (6)               1       2      2h  ││ /fixture/repo                                                      │
 │ │ ◆ main                                   2h  ││                                                                    │
 │ │ ● feat/dirty                      2     90d  ││ origin    git@github.com:fixture/fixture.git                       │
-│ │ ● feat/ahead              1              1d  ││ base      main                                                     │
-│ │ ✗ docs/gone                          !   1y  ││ worktrees 7 (6 linked)                                             │
+│ │ ✗ docs/gone                          !   1y  ││ base      main                                                     │
+│ │ ● feat/ahead              1              1d  ││ worktrees 7 (6 linked)                                             │
 │ │ ● chore/clean                            9d  ││ dirty     1                                                        │
 │ │ ● (3head000)                            40d  ││                                                                    │
 │ │ ● fix/locked                         L   1y  ││ Worktrees                                                          │
@@ -17,8 +17,8 @@ expression: "render(&mut app, 120, 20)"
 │                                                ││  2h                                                                │
 │                                                ││   ● feat/dirty                  2 uncommitted files                │
 │                                                ││  90d                                                               │
-│                                                ││   ● feat/ahead                  1 off-base commit                  │
-│                                                ││  1d                                                                │
 │                                                ││   ● docs/gone                   Git cannot … may be gone from disk │
+│                                                ││  1y                                                                │
+│                                                ││   ● feat/ahead                  1 off-base commit                  │
 ╰────────────────────────────────────────────────╯╰────────────────────────────────────────────────────────────────────╯
  j/k move  space mark  ←/→ fold  d remove  D +branch  p prune  c shell  f lens  s sort  / find  ? help

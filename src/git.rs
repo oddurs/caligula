@@ -126,15 +126,18 @@ pub struct FileChange {
 pub enum Salvage {
     /// Clean, and everything it contains lives somewhere else too.
     Nothing,
+    /// Commits exist only here; removing the worktree keeps the branch, and the
+    /// reflog keeps the commits.
+    Commits,
     /// Git could not read it, so nothing can be claimed about it either way.
     ///
-    /// This is its own answer rather than a default, because the counters of an
-    /// unread worktree are all zero, and zero is indistinguishable from clean.
-    /// Saying "nothing to salvage" on the strength of a failed read is the one
-    /// mistake this tool must never make.
+    /// Above `Commits` deliberately: an unpushed commit is recoverable, and an
+    /// unreadable worktree may hold anything at all. It is its own answer
+    /// rather than a default, because the counters of an unread worktree are
+    /// all zero, and zero is indistinguishable from clean — saying "nothing to
+    /// salvage" on the strength of a failed read is the one mistake this tool
+    /// must never make.
     Unknown,
-    /// Commits exist only here; removing the worktree keeps the branch.
-    Commits,
     /// Uncommitted work. Deleting destroys it.
     Uncommitted,
 }
@@ -871,6 +874,10 @@ mod tests {
         wt.untracked = 1;
         assert_eq!(wt.salvage(), Salvage::Uncommitted);
         assert!(Salvage::Uncommitted > Salvage::Commits);
+        assert!(
+            Salvage::Unknown > Salvage::Commits,
+            "an unreadable worktree may hold anything; an unpushed commit is in the reflog"
+        );
     }
 
     #[test]

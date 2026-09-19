@@ -900,7 +900,15 @@ fn footer(f: &mut Frame, area: Rect, app: &App) {
                 Style::default().fg(Color::Yellow),
             ));
         }
-        if stakes.files == 0 && stakes.commits == 0 {
+        if stakes.unknown > 0 {
+            if stakes.files > 0 || stakes.commits > 0 {
+                spans.push(Span::styled(" · ", Style::default().fg(DIM)));
+            }
+            spans.push(Span::styled(
+                format!("{} unreadable", stakes.unknown),
+                Style::default().fg(Color::Yellow),
+            ));
+        } else if stakes.files == 0 && stakes.commits == 0 {
             spans.push(Span::styled(
                 "nothing to salvage in any of them",
                 Style::default().fg(Color::Green),

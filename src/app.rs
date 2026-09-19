@@ -405,6 +405,10 @@ impl App {
         for (ri, wi) in self.marked_worktrees() {
             let wt = &self.repos[ri].worktrees[wi];
             stakes.worktrees += 1;
+            if wt.salvage() == Salvage::Unknown {
+                stakes.unknown += 1;
+                continue;
+            }
             stakes.files += wt.changed_files();
             stakes.commits += wt.unpushed();
         }
@@ -900,6 +904,11 @@ pub struct Stakes {
     pub worktrees: usize,
     pub files: u32,
     pub commits: u32,
+    /// Marked worktrees git could not read. Their counters are zero because
+    /// nothing was read, so they cannot be added to the two above — and a total
+    /// that ignores them would report "nothing to salvage" over work nobody has
+    /// looked at.
+    pub unknown: usize,
 }
 
 #[derive(Default)]
@@ -920,6 +929,11 @@ fn removable(w: &git::Worktree) -> Result<(), String> {
     }
     if let Some(reason) = &w.locked {
         return Err(format!("locked — {reason}"));
+    }
+    if w.broken {
+        // git worktree remove fails on a worktree it cannot read; prune is what
+        // clears the record it left behind.
+        return Err("git cannot read it — press p to prune the record".into());
     }
     Ok(())
 }
@@ -1147,6 +1161,32 @@ mod tests {
         app.repos[0].worktrees.remove(1);
         app.prune_marks();
         assert!(app.marked.is_empty(), "the marking outlived the worktree");
+    }
+
+    /// The counters of an unreadable worktree are zero because nothing was read.
+    /// Summing them and calling the total "nothing to salvage" is the same
+    /// mistake the safe lens used to make, one screen further on.
+    #[test]
+    fn an_unreadable_worktree_is_never_totalled_as_nothing() {
+        let mut repo = test_repo("alpha", 1);
+        repo.worktrees[1].broken = true;
+        let mut app = app_with(vec![repo]);
+        app.go(2);
+        app.toggle_mark();
+
+        let stakes = app.marked_stakes();
+        assert_eq!(stakes.worktrees, 1);
+        assert_eq!(stakes.unknown, 1, "it must be counted as unreadable");
+        assert_eq!(stakes.files, 0);
+        assert_eq!(stakes.commits, 0);
+
+        // And the dialog must not claim otherwise either — nor offer to remove
+        // something git cannot read.
+        app.ask_remove(false);
+        assert!(
+            app.confirm.is_none(),
+            "there is nothing git can remove, so nothing should be asked"
+        );
     }
 
     #[test]
