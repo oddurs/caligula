@@ -442,6 +442,9 @@ fn no_detail_row_wraps_at_any_width() {
 fn a_repository_detail_at_eighty_columns() {
     let mut app = fixture_app();
     app.go(0);
+    // Below the threshold only one pane is drawn, so the detail has to be the
+    // one in focus or this stops testing the detail at all.
+    app.toggle_focus();
     insta::assert_snapshot!(render(&mut app, 80, 24));
 }
 
@@ -471,11 +474,6 @@ fn a_long_failure_says_how_much_is_left() {
 }
 
 /// Below the threshold there is one pane, and it uses the whole width.
-#[test]
-fn a_narrow_terminal_shows_the_list_alone() {
-    let mut app = fixture_app();
-    insta::assert_snapshot!(render(&mut app, 80, 20));
-}
 
 #[test]
 fn a_narrow_terminal_shows_the_detail_alone() {
@@ -483,12 +481,6 @@ fn a_narrow_terminal_shows_the_detail_alone() {
     select(&mut app, "feat/dirty");
     app.toggle_focus();
     insta::assert_snapshot!(render(&mut app, 80, 20));
-}
-
-#[test]
-fn a_narrow_terminal_at_sixty_columns() {
-    let mut app = fixture_app();
-    insta::assert_snapshot!(render(&mut app, 60, 20));
 }
 
 /// Nothing may be drawn outside the pane: every line is the full width or less,
@@ -524,10 +516,18 @@ fn resizing_across_the_threshold_keeps_the_selection() {
     select(&mut app, "feat/dirty");
     let before = app.selection_key();
 
-    let _ = render(&mut app, 60, 20);
-    assert_eq!(app.selection_key(), before, "narrowing moved the selection");
-    let _ = render(&mut app, 200, 20);
-    assert_eq!(app.selection_key(), before, "widening moved the selection");
-    let _ = render(&mut app, 60, 20);
-    assert_eq!(app.selection_key(), before);
+    // Asserted on the screen, not just the field: the detail pane names what is
+    // selected, so it is the thing that would betray a selection that moved.
+    for width in [60u16, 200, 60] {
+        let screen = render(&mut app, width, 20);
+        assert_eq!(
+            app.selection_key(),
+            before,
+            "at {width} the selection moved"
+        );
+        assert!(
+            screen.contains("feat/dirty"),
+            "at {width} the selected worktree left the screen:\n{screen}"
+        );
+    }
 }

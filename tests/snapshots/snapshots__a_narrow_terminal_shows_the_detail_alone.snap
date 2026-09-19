@@ -21,4 +21,4 @@ expression: "render(&mut app, 80, 20)"
 │ Recent commits                                                               │
 │   4r000000  90d  init: the first commit                                      │
 ╰──────────────────────────────────────────────────────────────────────────────╯
- detail   tab  back to the list   j/k move  d remove  ? help
+ detail  tab   j/k move  space mark  a sweep  d remove  ? help

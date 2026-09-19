@@ -155,7 +155,11 @@ fn header(f: &mut Frame, area: Rect, app: &App) {
     };
     let budget = (area.width as usize).saturating_sub(11 + spinner);
     while parts.len() > 1 {
-        let used: usize = parts.iter().map(|(text, _)| text.chars().count() + 3).sum();
+        let used: usize = parts
+            .iter()
+            .map(|(text, _)| text.chars().count())
+            .sum::<usize>()
+            + 3 * (parts.len() - 1);
         if used <= budget {
             break;
         }
@@ -945,39 +949,34 @@ fn repo_detail<'a>(repo: &'a Repo, now: u64, width: u16) -> Vec<Line<'a>> {
 // ------------------------------------------------------------------- footer
 
 fn footer(f: &mut Frame, area: Rect, app: &App) {
-    // Only one pane is drawn on a narrow terminal, so the footer is the only
-    // place that can say the other one exists.
-    if area.width < TWO_PANE_MIN && app.confirm.is_none() && app.failure.is_none() {
-        let (label, hint) = match app.focus {
-            Focus::List => ("list", "tab  the detail of this row"),
-            Focus::Detail => ("detail", "tab  back to the list"),
+    // The pane label is a prefix, not a replacement. Returning here once hid the
+    // filter, the marking and every status message below a hundred columns —
+    // which is to say it hid the line that tells you what a removal is about to
+    // destroy, at exactly the width where the panes cannot tell you themselves.
+    let narrow = area.width < TWO_PANE_MIN;
+    let mut spans: Vec<Span> = Vec::new();
+    if narrow && app.confirm.is_none() && app.failure.is_none() {
+        let label = match app.focus {
+            Focus::List => "list",
+            Focus::Detail => "detail",
         };
-        f.render_widget(
-            Paragraph::new(Line::from(vec![
-                Span::styled(
-                    format!(" {label} "),
-                    Style::default().fg(Color::Black).bg(ACCENT),
-                ),
-                Span::styled(format!("  {hint}   "), Style::default().fg(DIM)),
-                Span::styled("j/k move  d remove  ? help", Style::default().fg(DIM)),
-            ])),
-            area,
-        );
-        return;
+        spans.push(Span::styled(
+            format!(" {label} "),
+            Style::default().fg(Color::Black).bg(ACCENT),
+        ));
+        spans.push(Span::styled(" tab  ", Style::default().fg(DIM)));
     }
 
-    // Ordered by what it would cost to miss. A filter being typed wins outright,
-    // because you have to see what you are typing; after that the marking, which
-    // decides what a removal applies to; then everything else.
     if app.filtering || (!app.filter.is_empty() && app.marked.is_empty()) {
-        let mut spans = vec![
-            Span::styled(
-                " filter ",
-                Style::default().fg(Color::Black).bg(Color::Yellow),
-            ),
-            Span::raw(" "),
-            Span::styled(app.filter.clone(), Style::default().fg(BRIGHT)),
-        ];
+        spans.push(Span::styled(
+            " filter ",
+            Style::default().fg(Color::Black).bg(Color::Yellow),
+        ));
+        spans.push(Span::raw(" "));
+        spans.push(Span::styled(
+            app.filter.clone(),
+            Style::default().fg(BRIGHT),
+        ));
         if app.filtering {
             spans.push(Span::styled("▌", Style::default().fg(ACCENT)));
             spans.push(Span::styled(
@@ -993,13 +992,13 @@ fn footer(f: &mut Frame, area: Rect, app: &App) {
 
     let stakes = app.marked_stakes();
     if stakes.worktrees > 0 {
-        let mut spans = vec![Span::styled(
+        spans.push(Span::styled(
             format!(" {} marked ", stakes.worktrees),
             Style::default()
                 .fg(Color::Black)
                 .bg(ACCENT)
                 .add_modifier(Modifier::BOLD),
-        )];
+        ));
         // Beside the count, not after the hints: this line does not wrap, so
         // whatever sits last is the first thing a narrow terminal takes away. A
         // marking made under a filter is a marking of what the filter was
@@ -1070,32 +1069,42 @@ fn footer(f: &mut Frame, area: Rect, app: &App) {
     if let Some((msg, tone, at)) = &app.status
         && at.elapsed().as_secs() < 6
     {
-        f.render_widget(
-            Paragraph::new(Line::from(vec![
-                Span::raw(" "),
-                Span::styled(msg.clone(), Style::default().fg(tone_color(*tone))),
-            ])),
-            area,
-        );
+        spans.push(Span::raw(" "));
+        spans.push(Span::styled(
+            msg.clone(),
+            Style::default().fg(tone_color(*tone)),
+        ));
+        f.render_widget(Paragraph::new(Line::from(spans)), area);
         return;
     }
 
-    let keys = [
-        ("j/k", "move"),
-        ("space", "mark"),
-        ("a", "sweep"),
-        ("←/→", "fold"),
-        ("d", "remove"),
-        ("D", "+branch"),
-        ("p", "prune"),
-        ("c", "shell"),
-        ("f", "lens"),
-        ("s", "sort"),
-        ("/", "find"),
-        ("?", "help"),
-    ];
-    let mut spans = vec![Span::raw(" ")];
-    for (k, label) in keys {
+    // A narrow terminal has room for the keys that matter, not all of them.
+    let keys: &[(&str, &str)] = if narrow {
+        &[
+            ("j/k", "move"),
+            ("space", "mark"),
+            ("a", "sweep"),
+            ("d", "remove"),
+            ("?", "help"),
+        ]
+    } else {
+        &[
+            ("j/k", "move"),
+            ("space", "mark"),
+            ("a", "sweep"),
+            ("←/→", "fold"),
+            ("d", "remove"),
+            ("D", "+branch"),
+            ("p", "prune"),
+            ("c", "shell"),
+            ("f", "lens"),
+            ("s", "sort"),
+            ("/", "find"),
+            ("?", "help"),
+        ]
+    };
+    spans.push(Span::raw(" "));
+    for &(k, label) in keys {
         spans.push(Span::styled(k, Style::default().fg(ACCENT)));
         spans.push(Span::styled(
             format!(" {label}  "),
@@ -1172,6 +1181,7 @@ fn help(f: &mut Frame, area: Rect) {
         ("g / G", "first / last row"),
         ("← / → · enter", "fold or unfold a repo"),
         ("z / Z", "fold all / unfold all"),
+        ("tab", "swap list and detail (narrow terminals)"),
         ("esc", "clear the marking, then the filter"),
         ("PgUp / PgDn", "scroll the detail pane"),
         ("", ""),

@@ -21,4 +21,4 @@ expression: "render(&mut app, 80, 20)"
 │                                                                              │
 │                                                                              │
 ╰──────────────────────────────────────────────────────────────────────────────╯
- list   tab  the detail of this row   j/k move  d remove  ? help
+ list  tab   j/k move  space mark  a sweep  d remove  ? help
