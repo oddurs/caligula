@@ -38,3 +38,7 @@ see what you are typing.
 - [x] The filter is still visible in that state
 - [x] While the filter is being typed, the filter line wins
 - [x] A snapshot records a marking held with a filter set
+
+## 2026-09-18
+
+Review caught the fix half-done. The filter badge was appended after the key hints, and the footer does not wrap, so it was the first thing clipped — below about 115 columns it never appeared and the criterion it was meant to satisfy still failed. It now sits beside the count. The regression test was worse: under filter 'feat' nothing in the fixture is safe, so the sweep marked nothing and the single mark came from a manual toggle — the filter-then-a path that produced the report would have regressed undetected. It now filters to something that has a safe worktree and asserts the sweep itself made the marking.

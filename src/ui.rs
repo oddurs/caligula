@@ -870,16 +870,24 @@ fn footer(f: &mut Frame, area: Rect, app: &App) {
 
     let stakes = app.marked_stakes();
     if stakes.worktrees > 0 {
-        let mut spans = vec![
-            Span::styled(
-                format!(" {} marked ", stakes.worktrees),
-                Style::default()
-                    .fg(Color::Black)
-                    .bg(ACCENT)
-                    .add_modifier(Modifier::BOLD),
-            ),
-            Span::raw(" "),
-        ];
+        let mut spans = vec![Span::styled(
+            format!(" {} marked ", stakes.worktrees),
+            Style::default()
+                .fg(Color::Black)
+                .bg(ACCENT)
+                .add_modifier(Modifier::BOLD),
+        )];
+        // Beside the count, not after the hints: this line does not wrap, so
+        // whatever sits last is the first thing a narrow terminal takes away. A
+        // marking made under a filter is a marking of what the filter was
+        // showing, which is the thing worth knowing before pressing d.
+        if !app.filter.is_empty() {
+            spans.push(Span::styled(
+                format!(" filter {} ", app.filter),
+                Style::default().fg(Color::Black).bg(Color::Yellow),
+            ));
+        }
+        spans.push(Span::raw(" "));
         if stakes.files > 0 {
             spans.push(Span::styled(
                 format!(
@@ -921,15 +929,6 @@ fn footer(f: &mut Frame, area: Rect, app: &App) {
             "   d removes them · esc clears",
             Style::default().fg(DIM),
         ));
-        // Said alongside rather than instead: a marking made under a filter is
-        // a marking of what the filter is showing, and that is worth knowing
-        // before pressing d.
-        if !app.filter.is_empty() {
-            spans.push(Span::styled(
-                format!("   filter {}", app.filter),
-                Style::default().fg(Color::Yellow),
-            ));
-        }
         // A message is appended rather than allowed to replace this: what is
         // marked decides what a removal applies to, and must not vanish for six
         // seconds because a sort was cycled.
