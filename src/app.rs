@@ -311,6 +311,29 @@ impl App {
         self.rebuild(None);
     }
 
+    /// What a repository row says, over the worktrees actually shown beneath it.
+    ///
+    /// Computed here rather than on `Repo`, because a repository does not know
+    /// which of its worktrees a lens is hiding — and a row that totals rows
+    /// which are not on screen contradicts the ones that are.
+    pub fn repo_summary(&self, repo: usize) -> RepoSummary {
+        let r = &self.repos[repo];
+        let mut summary = RepoSummary::default();
+        for wt in r.worktrees.iter().filter(|wt| self.matches(r, wt)) {
+            if !wt.is_main {
+                summary.linked += 1;
+            }
+            // Added up where adding up means something. Files and commits are
+            // distinct per worktree and sum; forty-five worktrees behind the
+            // same upstream are behind by that much, not by forty-five times it.
+            summary.files += wt.changed_files();
+            summary.ahead += wt.unpushed();
+            summary.behind = summary.behind.max(wt.behind);
+            summary.newest = summary.newest.max(wt.last_touched);
+        }
+        summary
+    }
+
     pub fn row_key(&self, row: Row) -> PathBuf {
         match row {
             Row::Repo { repo } => self.repos[repo].common_dir.clone(),
@@ -1009,6 +1032,16 @@ impl App {
     }
 }
 
+/// A repository row's numbers, over the worktrees the view is showing.
+#[derive(Default, Debug, PartialEq, Eq)]
+pub struct RepoSummary {
+    pub linked: usize,
+    pub files: u32,
+    pub ahead: u32,
+    pub behind: u32,
+    pub newest: u64,
+}
+
 /// What the scan has got through, as the header reports it.
 #[derive(Default, Clone, Copy)]
 pub struct ScanProgress {
@@ -1199,6 +1232,70 @@ mod tests {
             done.describe(),
             "92 repositories",
             "and the total is repositories actually produced, not checkouts examined"
+        );
+    }
+
+    /// A repository row describes the rows beneath it. Totalling the whole
+    /// repository made the row contradict its own children under a lens —
+    /// "8 files at risk" printed above three clean worktrees.
+    #[test]
+    fn a_repository_row_totals_only_what_is_shown_beneath_it() {
+        let mut repo = test_repo("alpha", 2);
+        repo.worktrees[0].untracked = 8; // the main checkout, which the lens hides
+        repo.worktrees[0].behind = 58;
+        repo.worktrees[1].upstream = Some("origin/main".into());
+        repo.worktrees[1].ahead = 2;
+        let mut app = app_with(vec![repo]);
+
+        let whole = app.repo_summary(0);
+        assert_eq!(whole.files, 8);
+        assert_eq!(whole.linked, 2);
+        assert_eq!(whole.ahead, 2);
+        assert_eq!(whole.behind, 58);
+
+        app.lens = Lens::Safe;
+        app.rebuild(None);
+        let shown = app.repo_summary(0);
+        assert_eq!(
+            shown.files, 0,
+            "the dirty worktree is hidden, so its files are not the row's"
+        );
+        assert_eq!(shown.linked, 1, "only one worktree is safe to remove");
+        assert_eq!(shown.behind, 0, "the behind count belonged to a hidden row");
+    }
+
+    #[test]
+    fn a_repository_row_sums_what_sums_and_takes_the_worst_of_what_does_not() {
+        let mut repo = test_repo("alpha", 2);
+        repo.worktrees[1].untracked = 3;
+        repo.worktrees[1].behind = 79;
+        repo.worktrees[2].untracked = 4;
+        repo.worktrees[2].behind = 79;
+        let app = app_with(vec![repo]);
+
+        let summary = app.repo_summary(0);
+        assert_eq!(
+            summary.files, 7,
+            "distinct files in distinct worktrees add up"
+        );
+        assert_eq!(
+            summary.behind, 79,
+            "two worktrees behind the same upstream are behind by 79, not 158"
+        );
+    }
+
+    #[test]
+    fn a_filter_narrows_a_repository_row_too() {
+        let mut repo = test_repo("alpha", 2);
+        repo.worktrees[1].untracked = 5;
+        repo.worktrees[2].untracked = 6;
+        let mut app = app_with(vec![repo]);
+        app.filter = "branch-0".into();
+        app.refilter();
+        assert_eq!(
+            app.repo_summary(0).files,
+            5,
+            "only the matching worktree counts"
         );
     }
 

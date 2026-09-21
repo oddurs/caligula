@@ -281,7 +281,7 @@ fn list(f: &mut Frame, area: Rect, app: &mut App) {
     for (i, row) in app.rows.iter().enumerate().skip(app.offset).take(height) {
         let selected = i == app.selected;
         lines.push(match *row {
-            Row::Repo { repo } => repo_line(&app.repos[repo], app, selected, plan),
+            Row::Repo { repo } => repo_line(&app.repos[repo], app, repo, selected, plan),
             Row::Worktree { repo, wt } => {
                 let worktree = &app.repos[repo].worktrees[wt];
                 worktree_line(worktree, app.now, selected, app.is_marked(worktree), plan)
@@ -294,7 +294,7 @@ fn list(f: &mut Frame, area: Rect, app: &mut App) {
         let sticky = Rect { height: 1, ..text };
         f.render_widget(Clear, sticky);
         f.render_widget(
-            Paragraph::new(repo_line(&app.repos[*repo], app, false, plan)),
+            Paragraph::new(repo_line(&app.repos[*repo], app, *repo, false, plan)),
             sticky,
         );
     }
@@ -483,14 +483,15 @@ fn value_columns(plan: Plan, base: Style, v: Values) -> Vec<Span<'static>> {
     spans
 }
 
-fn repo_line<'a>(repo: &'a Repo, app: &App, selected: bool, plan: Plan) -> Line<'a> {
+fn repo_line<'a>(repo: &'a Repo, app: &App, index: usize, selected: bool, plan: Plan) -> Line<'a> {
+    let summary = app.repo_summary(index);
     let collapsed = app.collapsed.contains(&repo.common_dir);
     let arrow = if collapsed { "▸" } else { "▾" };
 
     // The count of worktrees belongs to the name, not to a column: it says how
     // big the group is, not how much is wrong with it. It was previously
     // coloured by the dirty count, which made a neutral number wear an alarm.
-    let linked = repo.linked_count();
+    let linked = summary.linked;
     let name_w = plan.name + 2;
     let mut suffix = if linked > 0 {
         format!(" ({linked})")
@@ -517,22 +518,21 @@ fn repo_line<'a>(repo: &'a Repo, app: &App, selected: bool, plan: Plan) -> Line<
         Span::styled(" ".repeat(pad), base),
     ];
 
-    let totals = repo.totals();
-    let newest = repo.last_touched();
+    let newest = summary.newest;
     spans.extend(value_columns(
         plan,
         base,
         Values {
-            ahead: totals.ahead,
-            behind: totals.behind,
-            files: totals.files,
+            ahead: summary.ahead,
+            behind: summary.behind,
+            files: summary.files,
             flags: String::new(),
             age: if newest == 0 {
                 "—".into()
             } else {
                 git::ago(app.now.saturating_sub(newest))
             },
-            age_color: stale_color(repo.staleness(app.now)),
+            age_color: stale_color(git::Staleness::of(app.now.saturating_sub(newest))),
         },
     ));
     Line::from(spans)
@@ -1488,10 +1488,17 @@ mod tests {
 
     #[test]
     fn repo_rows_are_exactly_as_wide_as_the_pane() {
-        let app = App::new();
         for width in [20u16, 34, 58, 120] {
             let repo = crate::git::test_repo("a-repository-with-a-long-name", 3);
-            let line = repo_line(&repo, &app, false, Plan::for_width(width as usize));
+            let mut app = App::new();
+            app.add_repo(repo);
+            let line = repo_line(
+                &app.repos[0],
+                &app,
+                0,
+                false,
+                Plan::for_width(width as usize),
+            );
             assert_eq!(line.width(), width as usize, "width {width}");
         }
     }

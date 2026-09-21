@@ -43,7 +43,7 @@ Mark many worktrees at once and clear a repository's dead ones in a single pass.
 
 ## v0.3 — Your machine, your rules
 
-`··········` 0% · 0 of 11 done · due 2026-10-24
+`#·········` 8% · 1 of 13 done · due 2026-10-24
 
 Configured for your disk, and no longer losing work when it removes something.
 
@@ -60,6 +60,11 @@ Configured for your disk, and no longer losing work when it removes something.
 - [ ] [`0032`](https://github.com/oddurs/caligula/blob/main/cairn/items/0032-describe-the-machine-without-starting-the-interface.md) Describe the machine without starting the interface <sup>feature · p0 · cli</sup>
 - [ ] [`0033`](https://github.com/oddurs/caligula/blob/main/cairn/items/0033-machine-readable-output.md) Machine-readable output <sup>feature · p1 · cli</sup>
 - [ ] [`0034`](https://github.com/oddurs/caligula/blob/main/cairn/items/0034-filter-the-non-interactive-output-the-way-the-lenses-do.md) Filter the non-interactive output the way the lenses do <sup>feature · p1 · cli</sup>
+- [ ] [`0058`](https://github.com/oddurs/caligula/blob/main/cairn/items/0058-sweep-everything-the-lens-is-showing-not-one-repository.md) Sweep everything the lens is showing, not one repository <sup>feature · p1 · actions</sup>
+
+### done
+
+- [x] [`0057`](https://github.com/oddurs/caligula/blob/main/cairn/items/0057-a-repository-row-describes-worktrees-the-lens-is-hiding.md) A repository row describes worktrees the lens is hiding <sup>bug · p0 · chrome</sup>
 
 ## v1.0 — The promise
 
