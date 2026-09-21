@@ -134,6 +134,9 @@ pub struct Confirm {
 pub struct App {
     pub repos: Vec<Repo>,
     pub rows: Vec<Row>,
+    /// One per repository, over the worktrees the view is showing. Computed in
+    /// `rebuild`, where the visible set is already being walked.
+    summaries: Vec<RepoSummary>,
     pub selected: usize,
     pub offset: usize,
     pub collapsed: HashSet<PathBuf>,
@@ -174,6 +177,7 @@ impl App {
         App {
             repos: Vec::new(),
             rows: Vec::new(),
+            summaries: Vec::new(),
             selected: 0,
             offset: 0,
             collapsed: HashSet::new(),
@@ -237,15 +241,47 @@ impl App {
                     .then_with(|| a.path.cmp(&b.path))
             });
         }
-        self.repos.sort_by(|a, b| match sort {
-            Sort::Name => a.name.to_lowercase().cmp(&b.name.to_lowercase()),
-            Sort::Activity => b.last_touched().cmp(&a.last_touched()),
-            Sort::Risk => b
-                .salvage_count()
-                .cmp(&a.salvage_count())
-                .then_with(|| b.dirty_count().cmp(&a.dirty_count()))
-                .then_with(|| b.linked_count().cmp(&a.linked_count())),
+
+        // Ordered by what is on screen, like the numbers beside it. Sorting on
+        // the whole repository while the row described only the visible part
+        // put the list out of order under a lens: a row reading 40d above one
+        // reading 2d, under a header that says "sort activity".
+        let keys: Vec<(u64, usize, usize, String)> = (0..self.repos.len())
+            .map(|i| {
+                let repo = &self.repos[i];
+                let shown: Vec<&git::Worktree> = repo
+                    .worktrees
+                    .iter()
+                    .filter(|wt| self.matches(repo, wt))
+                    .collect();
+                (
+                    shown.iter().map(|w| w.last_touched).max().unwrap_or(0),
+                    shown
+                        .iter()
+                        .filter(|w| w.salvage() != Salvage::Nothing)
+                        .count(),
+                    shown.iter().filter(|w| w.is_dirty()).count(),
+                    repo.name.to_lowercase(),
+                )
+            })
+            .collect();
+
+        let mut order: Vec<usize> = (0..self.repos.len()).collect();
+        order.sort_by(|&a, &b| match sort {
+            Sort::Name => keys[a].3.cmp(&keys[b].3),
+            Sort::Activity => keys[b].0.cmp(&keys[a].0),
+            Sort::Risk => keys[b]
+                .1
+                .cmp(&keys[a].1)
+                .then_with(|| keys[b].2.cmp(&keys[a].2))
+                .then_with(|| keys[a].3.cmp(&keys[b].3)),
         });
+
+        let mut taken: Vec<Option<Repo>> = self.repos.drain(..).map(Some).collect();
+        self.repos = order
+            .into_iter()
+            .map(|i| taken[i].take().expect("each repository is taken once"))
+            .collect();
     }
 
     // ------------------------------------------------------------- row model
@@ -292,6 +328,7 @@ impl App {
             }
         }
         self.rows = rows;
+        self.summaries = (0..self.repos.len()).map(|i| self.summarise(i)).collect();
 
         if let Some(key) = keep
             && let Some(idx) = self.rows.iter().position(|r| self.row_key(*r) == key)
@@ -308,6 +345,7 @@ impl App {
         self.selected = 0;
         self.offset = 0;
         self.detail_scroll = 0;
+        self.sort_repos();
         self.rebuild(None);
     }
 
@@ -316,13 +354,21 @@ impl App {
     /// Computed here rather than on `Repo`, because a repository does not know
     /// which of its worktrees a lens is hiding — and a row that totals rows
     /// which are not on screen contradicts the ones that are.
-    pub fn repo_summary(&self, repo: usize) -> RepoSummary {
+    pub fn repo_summary(&self, repo: usize) -> &RepoSummary {
+        static EMPTY: RepoSummary = RepoSummary::empty();
+        self.summaries.get(repo).unwrap_or(&EMPTY)
+    }
+
+    /// Whether this worktree is on screen under that repository.
+    pub fn shows(&self, repo: usize, wt: &git::Worktree) -> bool {
+        self.matches(&self.repos[repo], wt)
+    }
+
+    fn summarise(&self, repo: usize) -> RepoSummary {
         let r = &self.repos[repo];
         let mut summary = RepoSummary::default();
         for wt in r.worktrees.iter().filter(|wt| self.matches(r, wt)) {
-            if !wt.is_main {
-                summary.linked += 1;
-            }
+            summary.shown += 1;
             // Added up where adding up means something. Files and commits are
             // distinct per worktree and sum; forty-five worktrees behind the
             // same upstream are behind by that much, not by forty-five times it.
@@ -1035,11 +1081,25 @@ impl App {
 /// A repository row's numbers, over the worktrees the view is showing.
 #[derive(Default, Debug, PartialEq, Eq)]
 pub struct RepoSummary {
-    pub linked: usize,
+    /// Worktrees on screen under this row — the same set every other number
+    /// here is taken over, main checkout included.
+    pub shown: usize,
     pub files: u32,
     pub ahead: u32,
     pub behind: u32,
     pub newest: u64,
+}
+
+impl RepoSummary {
+    const fn empty() -> RepoSummary {
+        RepoSummary {
+            shown: 0,
+            files: 0,
+            ahead: 0,
+            behind: 0,
+            newest: 0,
+        }
+    }
 }
 
 /// What the scan has got through, as the header reports it.
@@ -1249,7 +1309,7 @@ mod tests {
 
         let whole = app.repo_summary(0);
         assert_eq!(whole.files, 8);
-        assert_eq!(whole.linked, 2);
+        assert_eq!(whole.shown, 3, "three worktrees, main included");
         assert_eq!(whole.ahead, 2);
         assert_eq!(whole.behind, 58);
 
@@ -1260,7 +1320,7 @@ mod tests {
             shown.files, 0,
             "the dirty worktree is hidden, so its files are not the row's"
         );
-        assert_eq!(shown.linked, 1, "only one worktree is safe to remove");
+        assert_eq!(shown.shown, 1, "only one worktree is safe to remove");
         assert_eq!(shown.behind, 0, "the behind count belonged to a hidden row");
     }
 
