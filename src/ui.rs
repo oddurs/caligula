@@ -110,7 +110,8 @@ pub fn draw(f: &mut Frame, app: &mut App) {
     footer(f, chunks[2], app);
 
     if app.help {
-        help(f, f.area());
+        let area = f.area();
+        help(f, area, app);
     }
     if app.confirm.is_some() {
         confirm(f, f.area(), app);
@@ -1102,7 +1103,7 @@ fn footer(f: &mut Frame, area: Rect, app: &App) {
         &[
             ("j/k", "move"),
             ("space", "mark"),
-            ("a", "sweep"),
+            ("a/A", "sweep"),
             ("d", "remove"),
             ("?", "help"),
         ]
@@ -1110,7 +1111,7 @@ fn footer(f: &mut Frame, area: Rect, app: &App) {
         &[
             ("j/k", "move"),
             ("space", "mark"),
-            ("a", "sweep"),
+            ("a/A", "sweep"),
             ("←/→", "fold"),
             ("d", "remove"),
             ("D", "+branch"),
@@ -1191,11 +1192,12 @@ fn popup(area: Rect, width: u16, height: u16) -> Rect {
     }
 }
 
-fn help(f: &mut Frame, area: Rect) {
+fn help(f: &mut Frame, area: Rect, app: &mut App) {
     let rows: &[(&str, &str)] = &[
         ("j / k · ↓ / ↑", "move"),
         ("space", "mark a worktree, and step down"),
         ("a", "mark everything safe to remove in this repo"),
+        ("A", "the same, everywhere the view is showing"),
         ("J / K", "jump to next / previous repo"),
         ("g / G", "first / last row"),
         ("← / → · enter", "fold or unfold a repo"),
@@ -1221,6 +1223,9 @@ fn help(f: &mut Frame, area: Rect) {
         ("q", "quit"),
     ];
 
+    // Scrolled rather than clipped. Adding one binding once pushed `q` off the
+    // bottom, so the overlay stopped saying how to quit — on the screen whose
+    // entire job is to say how to do things.
     let area = popup(area, 78, rows.len() as u16 + 4);
     f.render_widget(Clear, area);
     let block = Block::default()
@@ -1237,6 +1242,15 @@ fn help(f: &mut Frame, area: Rect) {
     });
     f.render_widget(block, area);
 
+    let split = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints([Constraint::Min(1), Constraint::Length(1)])
+        .split(inner);
+
+    let shown = split[0].height as usize;
+    let max_scroll = rows.len().saturating_sub(shown) as u16;
+    app.help_scroll = app.help_scroll.min(max_scroll);
+
     let lines: Vec<Line> = rows
         .iter()
         .map(|(k, v)| {
@@ -1246,7 +1260,22 @@ fn help(f: &mut Frame, area: Rect) {
             ])
         })
         .collect();
-    f.render_widget(Paragraph::new(lines), inner);
+    f.render_widget(Paragraph::new(lines).scroll((app.help_scroll, 0)), split[0]);
+
+    let hint = if max_scroll > 0 {
+        let left = max_scroll.saturating_sub(app.help_scroll);
+        if left > 0 {
+            format!("↓ {left} more  ·  any other key closes")
+        } else {
+            "↑ scroll back  ·  any other key closes".to_string()
+        }
+    } else {
+        "any key closes".to_string()
+    };
+    f.render_widget(
+        Paragraph::new(Line::from(Span::styled(hint, Style::default().fg(DIM)))),
+        split[1],
+    );
 }
 
 /// A failure, in full, over everything else.

@@ -21,4 +21,4 @@ expression: "render(&mut app, 60, 20)"
 │                                                          │
 │                                                          │
 ╰──────────────────────────────────────────────────────────╯
- list  tab   j/k move  space mark  a sweep  d remove  ? help
+ list  tab   j/k move  space mark  a/A sweep  d remove  ? he

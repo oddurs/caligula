@@ -6,8 +6,8 @@ expression: "render(&mut app, 120, 20)"
 ╭ sort activity · lens safe to remove ───────────╮╭────────────────────────────────────────────────────────────────────╮
 │   BRANCH                    ↑   ↓   ±     AGE  ││ fixture                                                            │
 │ ▾ fixture (2)                              9d  ││ /fixture/repo                                                      │
-│ │ ● chore/clean                            9d  ││                                                                    │
-│ │ ● (3head000)                            40d  ││ origin    git@github.com:fixture/fixture.git                       │
+│▌│ ● chore/clean                            9d  ││                                                                    │
+│▌│ ● (3head000)                            40d  ││ origin    git@github.com:fixture/fixture.git                       │
 │                                                ││ base      main                                                     │
 │                                                ││ worktrees 2 of 7 shown                                             │
 │                                                ││ dirty     0                                                        │
@@ -21,4 +21,4 @@ expression: "render(&mut app, 120, 20)"
 │                                                ││                                                                    │
 │                                                ││                                                                    │
 ╰────────────────────────────────────────────────╯╰────────────────────────────────────────────────────────────────────╯
- j/k move  space mark  a/A sweep  ←/→ fold  d remove  D +branch  p prune  c shell  f lens  s sort  / find  ? help
+ 2 marked  nothing to salvage in any of them   d removes them · esc clears   Marked 2 safe to remove across 1 repository

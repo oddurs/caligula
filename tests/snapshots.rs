@@ -174,6 +174,36 @@ fn the_help_overlay() {
     insta::assert_snapshot!(render(&mut app, 120, 30));
 }
 
+/// Adding one binding once pushed `q` off the bottom, so the screen whose job
+/// is to say how to do things stopped saying how to quit.
+#[test]
+fn the_help_overlay_can_always_reach_quit() {
+    for height in [20u16, 24, 30, 40] {
+        let mut app = fixture_app();
+        app.help = true;
+        let screen = render(&mut app, 120, height);
+        if screen.contains("quit") {
+            continue;
+        }
+        // Not on the first page: it must at least say there is more, and
+        // scrolling must reach it.
+        assert!(
+            screen.contains("more"),
+            "at height {height} the help clipped with no sign of it:\n{screen}"
+        );
+        for _ in 0..40 {
+            app.help_scroll += 1;
+            if render(&mut app, 120, height).contains("quit") {
+                break;
+            }
+        }
+        assert!(
+            render(&mut app, 120, height).contains("quit"),
+            "at height {height} scrolling never reached quit"
+        );
+    }
+}
+
 #[test]
 fn the_safe_lens_hides_everything_with_something_in_it() {
     let mut app = fixture_app();
@@ -530,4 +560,13 @@ fn resizing_across_the_threshold_keeps_the_selection() {
             "at {width} the selected worktree left the screen:\n{screen}"
         );
     }
+}
+
+#[test]
+fn a_sweep_of_everything_the_lens_shows() {
+    let mut app = fixture_app();
+    app.lens = caligula::app::Lens::Safe;
+    app.refilter();
+    app.sweep_everything();
+    insta::assert_snapshot!(render(&mut app, 120, 20));
 }

@@ -21,4 +21,4 @@ expression: "render(&mut app, 120, 20)"
 │                                                ││   ● chore/clean         Nothing to salvage — safe to remove     9d │
 │                                                ││   ● (3head000)          Nothing to salvage — safe to remove    40d │
 ╰────────────────────────────────────────────────╯╰────────────────────────────────────────────────────────────────────╯
- j/k move  space mark  a sweep  ←/→ fold  d remove  D +branch  p prune  c shell  f lens  s sort  / find  ? help
+ j/k move  space mark  a/A sweep  ←/→ fold  d remove  D +branch  p prune  c shell  f lens  s sort  / find  ? help

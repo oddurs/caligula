@@ -102,6 +102,7 @@ shows its last five commits instead, so you can still tell what it was for.
 | `j` `k` `↓` `↑` | move |
 | `space` | mark a worktree, and step down |
 | `a` | mark everything in this repo that is safe to remove |
+| `A` | the same, across everything the view is showing |
 | `J` `K` | jump to the next / previous repo |
 | `←` `→` `enter` | fold or unfold a repo |
 | `z` `Z` | fold all / unfold all |
