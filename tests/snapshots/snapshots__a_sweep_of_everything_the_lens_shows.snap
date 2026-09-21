@@ -1,0 +1,24 @@
+---
+source: tests/snapshots.rs
+expression: "render(&mut app, 120, 20)"
+---
+ caligula  1 repo · 7 worktrees (6 linked) · 1 dirty · 4 stale · 2 safe to remove
+╭ sort activity · lens safe to remove ───────────╮╭────────────────────────────────────────────────────────────────────╮
+│   BRANCH                    ↑   ↓   ±     AGE  ││ fixture                                                            │
+│ ▾ fixture (2)                              9d  ││ /fixture/repo                                                      │
+│▌│ ● chore/clean                            9d  ││                                                                    │
+│▌│ ● (3head000)                            40d  ││ origin    git@github.com:fixture/fixture.git                       │
+│                                                ││ base      main                                                     │
+│                                                ││ worktrees 2 of 7 shown                                             │
+│                                                ││ dirty     0                                                        │
+│                                                ││ stashes   1 on no live branch — nothing else will surface it       │
+│                                                ││                                                                    │
+│                                                ││ Worktrees                                                          │
+│                                                ││   ● chore/clean         Nothing to salvage — safe to remove     9d │
+│                                                ││   ● (3head000)          Nothing to salvage — safe to remove    40d │
+│                                                ││                                                                    │
+│                                                ││                                                                    │
+│                                                ││                                                                    │
+│                                                ││                                                                    │
+╰────────────────────────────────────────────────╯╰────────────────────────────────────────────────────────────────────╯
+ 2 marked  nothing to salvage in any of them   d removes them · esc clears   Marked 2 safe to remove across 1 repository

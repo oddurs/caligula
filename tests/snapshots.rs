@@ -531,3 +531,12 @@ fn resizing_across_the_threshold_keeps_the_selection() {
         );
     }
 }
+
+#[test]
+fn a_sweep_of_everything_the_lens_shows() {
+    let mut app = fixture_app();
+    app.lens = caligula::app::Lens::Safe;
+    app.refilter();
+    app.sweep_everything();
+    insta::assert_snapshot!(render(&mut app, 120, 20));
+}

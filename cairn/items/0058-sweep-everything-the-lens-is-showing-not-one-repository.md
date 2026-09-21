@@ -2,7 +2,7 @@
 id: 58
 title: Sweep everything the lens is showing, not one repository
 type: feature
-status: backlog
+status: done
 milestone: v0.3
 created: 2026-09-20
 updated: 2026-09-20
@@ -31,9 +31,9 @@ machine, which is exactly what the confirmation dialog is for.
 
 ## Acceptance criteria
 
-- [ ] `A` marks every visible worktree that is safe to remove, across repositories
-- [ ] It respects the lens and the filter, reaching no further than what is shown
-- [ ] It never marks the main checkout, a locked worktree, or an unreadable one
-- [ ] Pressing it again clears that marking rather than doubling it
-- [ ] It says how many it marked and across how many repositories
-- [ ] The key is in the help overlay and the README
+- [x] `A` marks every visible worktree that is safe to remove, across repositories
+- [x] It respects the lens and the filter, reaching no further than what is shown
+- [x] It never marks the main checkout, a locked worktree, or an unreadable one
+- [x] Pressing it again clears that marking rather than doubling it
+- [x] It says how many it marked and across how many repositories
+- [x] The key is in the help overlay and the README

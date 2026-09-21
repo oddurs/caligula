@@ -517,6 +517,57 @@ impl App {
         };
     }
 
+    /// Mark everything the view is showing that is safe to remove.
+    ///
+    /// The lens gathers every removable worktree on the machine onto one
+    /// screen; this is the key for acting on what it found, rather than
+    /// visiting ten repositories and pressing the same two keys in each. It
+    /// reaches no further than what is on screen — with no lens and no filter
+    /// that is the whole machine, which is what the confirmation is for.
+    pub fn sweep_everything(&mut self) {
+        let safe: Vec<PathBuf> = self
+            .repos
+            .iter()
+            .flat_map(|repo| {
+                repo.worktrees
+                    .iter()
+                    .filter(|wt| wt.is_safe_to_remove() && self.matches(repo, wt))
+                    .map(|wt| wt.path.clone())
+            })
+            .collect();
+        let repos = self
+            .repos
+            .iter()
+            .filter(|repo| {
+                repo.worktrees
+                    .iter()
+                    .any(|wt| wt.is_safe_to_remove() && self.matches(repo, wt))
+            })
+            .count();
+
+        if safe.is_empty() {
+            self.say("Nothing on screen is safe to remove", Tone::Info);
+            return;
+        }
+        if safe.iter().all(|p| self.marked.contains(p)) {
+            for path in &safe {
+                self.marked.remove(path);
+            }
+            self.say(format!("Unmarked {}", safe.len()), Tone::Info);
+            return;
+        }
+
+        let n = safe.len();
+        self.marked.extend(safe);
+        self.say(
+            format!(
+                "Marked {n} safe to remove across {repos} repositor{} — d removes them",
+                if repos == 1 { "y" } else { "ies" }
+            ),
+            Tone::Good,
+        );
+    }
+
     pub fn clear_marks(&mut self) {
         self.marked.clear();
     }
@@ -1452,6 +1503,67 @@ mod tests {
             ["feat/branch-3"],
             "the dirty, locked, unreadable and main rows must all be left alone"
         );
+    }
+
+    #[test]
+    fn a_view_wide_sweep_crosses_repositories() {
+        let mut app = app_with(vec![test_repo("alpha", 2), test_repo("beta", 2)]);
+        app.go(0);
+        app.sweep_everything();
+
+        let marked: Vec<String> = app
+            .repos
+            .iter()
+            .flat_map(|r| r.worktrees.iter())
+            .filter(|w| app.marked.contains(&w.path))
+            .map(|w| w.path.to_string_lossy().into_owned())
+            .collect();
+        assert_eq!(marked.len(), 4, "two from each repository: {marked:?}");
+        assert!(marked.iter().any(|p| p.contains("alpha")));
+        assert!(marked.iter().any(|p| p.contains("beta")));
+    }
+
+    #[test]
+    fn a_view_wide_sweep_never_marks_what_cannot_go() {
+        let mut repo = test_repo("alpha", 3);
+        repo.worktrees[1].untracked = 1;
+        repo.worktrees[2].locked = Some("in use".into());
+        repo.worktrees[3].broken = true;
+        let mut app = app_with(vec![repo]);
+        app.sweep_everything();
+        assert!(
+            app.marked.is_empty(),
+            "dirty, locked, unreadable and main are all off limits: {:?}",
+            app.marked
+        );
+    }
+
+    #[test]
+    fn a_view_wide_sweep_reaches_no_further_than_the_filter() {
+        let mut app = app_with(vec![test_repo("alpha", 2), test_repo("beta", 2)]);
+        app.filter = "beta".into();
+        app.refilter();
+        app.sweep_everything();
+        assert!(
+            !app.marked.is_empty(),
+            "the filter still leaves something to sweep"
+        );
+        assert!(
+            app.marked
+                .iter()
+                .all(|p| p.to_string_lossy().contains("beta")),
+            "it must not reach past what is on screen: {:?}",
+            app.marked
+        );
+    }
+
+    #[test]
+    fn a_view_wide_sweep_is_its_own_undo() {
+        let mut app = app_with(vec![test_repo("alpha", 2), test_repo("beta", 2)]);
+        app.sweep_everything();
+        assert_eq!(app.marked.len(), 4);
+        app.sweep_everything();
+        assert!(app.marked.is_empty());
     }
 
     #[test]

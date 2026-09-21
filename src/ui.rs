@@ -1196,6 +1196,7 @@ fn help(f: &mut Frame, area: Rect) {
         ("j / k · ↓ / ↑", "move"),
         ("space", "mark a worktree, and step down"),
         ("a", "mark everything safe to remove in this repo"),
+        ("A", "the same, everywhere the view is showing"),
         ("J / K", "jump to next / previous repo"),
         ("g / G", "first / last row"),
         ("← / → · enter", "fold or unfold a repo"),

@@ -251,6 +251,7 @@ fn handle_key(app: &mut App, key: KeyEvent, scan: &mut Scan, args: &Args) {
         KeyCode::Tab | KeyCode::BackTab => app.toggle_focus(),
         KeyCode::Char(' ') => app.toggle_mark(),
         KeyCode::Char('a') => app.sweep_repo(),
+        KeyCode::Char('A') => app.sweep_everything(),
         KeyCode::Char('q') | KeyCode::Esc => {
             if app.filter.is_empty() {
                 app.quit = true;
