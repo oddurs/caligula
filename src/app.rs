@@ -156,6 +156,7 @@ pub struct App {
     pub failure: Option<Failure>,
     pub failure_scroll: u16,
     pub help: bool,
+    pub help_scroll: u16,
     /// "Fold all" should hold for repos the scan has not reached yet.
     pub fold_new: bool,
     pub scanning: bool,
@@ -193,6 +194,7 @@ impl App {
             failure: None,
             failure_scroll: 0,
             help: false,
+            help_scroll: 0,
             fold_new: false,
             scanning: true,
             scan: ScanProgress::default(),
@@ -502,10 +504,10 @@ impl App {
             return;
         }
 
-        let n = safe.len();
+        let added = safe.iter().filter(|p| !self.marked.contains(*p)).count();
         self.marked.extend(safe);
         self.say(
-            format!("Marked {n} safe to remove in {name} — d removes them"),
+            format!("Marked {added} safe to remove in {name} — d removes them"),
             Tone::Good,
         );
     }
@@ -535,16 +537,6 @@ impl App {
                     .map(|wt| wt.path.clone())
             })
             .collect();
-        let repos = self
-            .repos
-            .iter()
-            .filter(|repo| {
-                repo.worktrees
-                    .iter()
-                    .any(|wt| wt.is_safe_to_remove() && self.matches(repo, wt))
-            })
-            .count();
-
         if safe.is_empty() {
             self.say("Nothing on screen is safe to remove", Tone::Info);
             return;
@@ -557,11 +549,20 @@ impl App {
             return;
         }
 
-        let n = safe.len();
+        let added = safe.iter().filter(|p| !self.marked.contains(*p)).count();
+        let repos = self
+            .repos
+            .iter()
+            .filter(|repo| {
+                repo.worktrees
+                    .iter()
+                    .any(|wt| wt.is_safe_to_remove() && self.matches(repo, wt))
+            })
+            .count();
         self.marked.extend(safe);
         self.say(
             format!(
-                "Marked {n} safe to remove across {repos} repositor{} — d removes them",
+                "Marked {added} safe to remove across {repos} repositor{} — d removes them",
                 if repos == 1 { "y" } else { "ies" }
             ),
             Tone::Good,

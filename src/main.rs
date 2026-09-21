@@ -204,7 +204,15 @@ fn handle_key(app: &mut App, key: KeyEvent, scan: &mut Scan, args: &Args) {
     }
 
     if app.help {
-        app.help = false;
+        match key.code {
+            KeyCode::Down | KeyCode::Char('j') | KeyCode::PageDown => {
+                app.help_scroll = app.help_scroll.saturating_add(1);
+            }
+            KeyCode::Up | KeyCode::Char('k') | KeyCode::PageUp => {
+                app.help_scroll = app.help_scroll.saturating_sub(1);
+            }
+            _ => app.help = false,
+        }
         return;
     }
 
@@ -317,7 +325,10 @@ fn handle_key(app: &mut App, key: KeyEvent, scan: &mut Scan, args: &Args) {
             *scan = scan::start(args.roots.clone(), args.depth);
             app.say("Rescanning", Tone::Info);
         }
-        KeyCode::Char('?') => app.help = true,
+        KeyCode::Char('?') => {
+            app.help = true;
+            app.help_scroll = 0;
+        }
         _ => {}
     }
 }

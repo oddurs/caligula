@@ -25,4 +25,4 @@ expression: "render(&mut app, 80, 24)"
 │                                                                              │
 │                                                                              │
 ╰──────────────────────────────────────────────────────────────────────────────╯
- detail  tab   j/k move  space mark  a sweep  d remove  ? help
+ detail  tab   j/k move  space mark  a/A sweep  d remove  ? help
