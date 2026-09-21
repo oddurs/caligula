@@ -5,7 +5,7 @@ expression: "render(&mut app, 120, 20)"
  caligula  1 repo · 7 worktrees (6 linked) · 1 dirty · 4 stale · 2 safe to remove
 ╭ sort activity · lens all ──────────────────────╮╭────────────────────────────────────────────────────────────────────╮
 │   BRANCH           ╭ 12 of 45 could not be removed ─────────────────────────────────────────────╮                    │
-│ ▾ fixture (6)      │ git -C ~/Code/r worktree remove ~/w/1                                      │                    │
+│ ▾ fixture (7)      │ git -C ~/Code/r worktree remove ~/w/1                                      │                    │
 │ │ ◆ main           │ fatal: line 1                                                              │                    │
 │ │ ● feat/ahead     │                                                                            │                    │
 │ │ ● chore/clean    │ git -C ~/Code/r worktree remove ~/w/2                                      │                    │

@@ -134,6 +134,9 @@ pub struct Confirm {
 pub struct App {
     pub repos: Vec<Repo>,
     pub rows: Vec<Row>,
+    /// One per repository, over the worktrees the view is showing. Computed in
+    /// `rebuild`, where the visible set is already being walked.
+    summaries: Vec<RepoSummary>,
     pub selected: usize,
     pub offset: usize,
     pub collapsed: HashSet<PathBuf>,
@@ -174,6 +177,7 @@ impl App {
         App {
             repos: Vec::new(),
             rows: Vec::new(),
+            summaries: Vec::new(),
             selected: 0,
             offset: 0,
             collapsed: HashSet::new(),
@@ -237,15 +241,47 @@ impl App {
                     .then_with(|| a.path.cmp(&b.path))
             });
         }
-        self.repos.sort_by(|a, b| match sort {
-            Sort::Name => a.name.to_lowercase().cmp(&b.name.to_lowercase()),
-            Sort::Activity => b.last_touched().cmp(&a.last_touched()),
-            Sort::Risk => b
-                .salvage_count()
-                .cmp(&a.salvage_count())
-                .then_with(|| b.dirty_count().cmp(&a.dirty_count()))
-                .then_with(|| b.linked_count().cmp(&a.linked_count())),
+
+        // Ordered by what is on screen, like the numbers beside it. Sorting on
+        // the whole repository while the row described only the visible part
+        // put the list out of order under a lens: a row reading 40d above one
+        // reading 2d, under a header that says "sort activity".
+        let keys: Vec<(u64, usize, usize, String)> = (0..self.repos.len())
+            .map(|i| {
+                let repo = &self.repos[i];
+                let shown: Vec<&git::Worktree> = repo
+                    .worktrees
+                    .iter()
+                    .filter(|wt| self.matches(repo, wt))
+                    .collect();
+                (
+                    shown.iter().map(|w| w.last_touched).max().unwrap_or(0),
+                    shown
+                        .iter()
+                        .filter(|w| w.salvage() != Salvage::Nothing)
+                        .count(),
+                    shown.iter().filter(|w| w.is_dirty()).count(),
+                    repo.name.to_lowercase(),
+                )
+            })
+            .collect();
+
+        let mut order: Vec<usize> = (0..self.repos.len()).collect();
+        order.sort_by(|&a, &b| match sort {
+            Sort::Name => keys[a].3.cmp(&keys[b].3),
+            Sort::Activity => keys[b].0.cmp(&keys[a].0),
+            Sort::Risk => keys[b]
+                .1
+                .cmp(&keys[a].1)
+                .then_with(|| keys[b].2.cmp(&keys[a].2))
+                .then_with(|| keys[a].3.cmp(&keys[b].3)),
         });
+
+        let mut taken: Vec<Option<Repo>> = self.repos.drain(..).map(Some).collect();
+        self.repos = order
+            .into_iter()
+            .map(|i| taken[i].take().expect("each repository is taken once"))
+            .collect();
     }
 
     // ------------------------------------------------------------- row model
@@ -292,6 +328,7 @@ impl App {
             }
         }
         self.rows = rows;
+        self.summaries = (0..self.repos.len()).map(|i| self.summarise(i)).collect();
 
         if let Some(key) = keep
             && let Some(idx) = self.rows.iter().position(|r| self.row_key(*r) == key)
@@ -308,7 +345,39 @@ impl App {
         self.selected = 0;
         self.offset = 0;
         self.detail_scroll = 0;
+        self.sort_repos();
         self.rebuild(None);
+    }
+
+    /// What a repository row says, over the worktrees actually shown beneath it.
+    ///
+    /// Computed here rather than on `Repo`, because a repository does not know
+    /// which of its worktrees a lens is hiding — and a row that totals rows
+    /// which are not on screen contradicts the ones that are.
+    pub fn repo_summary(&self, repo: usize) -> &RepoSummary {
+        static EMPTY: RepoSummary = RepoSummary::empty();
+        self.summaries.get(repo).unwrap_or(&EMPTY)
+    }
+
+    /// Whether this worktree is on screen under that repository.
+    pub fn shows(&self, repo: usize, wt: &git::Worktree) -> bool {
+        self.matches(&self.repos[repo], wt)
+    }
+
+    fn summarise(&self, repo: usize) -> RepoSummary {
+        let r = &self.repos[repo];
+        let mut summary = RepoSummary::default();
+        for wt in r.worktrees.iter().filter(|wt| self.matches(r, wt)) {
+            summary.shown += 1;
+            // Added up where adding up means something. Files and commits are
+            // distinct per worktree and sum; forty-five worktrees behind the
+            // same upstream are behind by that much, not by forty-five times it.
+            summary.files += wt.changed_files();
+            summary.ahead += wt.unpushed();
+            summary.behind = summary.behind.max(wt.behind);
+            summary.newest = summary.newest.max(wt.last_touched);
+        }
+        summary
     }
 
     pub fn row_key(&self, row: Row) -> PathBuf {
@@ -1009,6 +1078,30 @@ impl App {
     }
 }
 
+/// A repository row's numbers, over the worktrees the view is showing.
+#[derive(Default, Debug, PartialEq, Eq)]
+pub struct RepoSummary {
+    /// Worktrees on screen under this row — the same set every other number
+    /// here is taken over, main checkout included.
+    pub shown: usize,
+    pub files: u32,
+    pub ahead: u32,
+    pub behind: u32,
+    pub newest: u64,
+}
+
+impl RepoSummary {
+    const fn empty() -> RepoSummary {
+        RepoSummary {
+            shown: 0,
+            files: 0,
+            ahead: 0,
+            behind: 0,
+            newest: 0,
+        }
+    }
+}
+
 /// What the scan has got through, as the header reports it.
 #[derive(Default, Clone, Copy)]
 pub struct ScanProgress {
@@ -1199,6 +1292,70 @@ mod tests {
             done.describe(),
             "92 repositories",
             "and the total is repositories actually produced, not checkouts examined"
+        );
+    }
+
+    /// A repository row describes the rows beneath it. Totalling the whole
+    /// repository made the row contradict its own children under a lens —
+    /// "8 files at risk" printed above three clean worktrees.
+    #[test]
+    fn a_repository_row_totals_only_what_is_shown_beneath_it() {
+        let mut repo = test_repo("alpha", 2);
+        repo.worktrees[0].untracked = 8; // the main checkout, which the lens hides
+        repo.worktrees[0].behind = 58;
+        repo.worktrees[1].upstream = Some("origin/main".into());
+        repo.worktrees[1].ahead = 2;
+        let mut app = app_with(vec![repo]);
+
+        let whole = app.repo_summary(0);
+        assert_eq!(whole.files, 8);
+        assert_eq!(whole.shown, 3, "three worktrees, main included");
+        assert_eq!(whole.ahead, 2);
+        assert_eq!(whole.behind, 58);
+
+        app.lens = Lens::Safe;
+        app.rebuild(None);
+        let shown = app.repo_summary(0);
+        assert_eq!(
+            shown.files, 0,
+            "the dirty worktree is hidden, so its files are not the row's"
+        );
+        assert_eq!(shown.shown, 1, "only one worktree is safe to remove");
+        assert_eq!(shown.behind, 0, "the behind count belonged to a hidden row");
+    }
+
+    #[test]
+    fn a_repository_row_sums_what_sums_and_takes_the_worst_of_what_does_not() {
+        let mut repo = test_repo("alpha", 2);
+        repo.worktrees[1].untracked = 3;
+        repo.worktrees[1].behind = 79;
+        repo.worktrees[2].untracked = 4;
+        repo.worktrees[2].behind = 79;
+        let app = app_with(vec![repo]);
+
+        let summary = app.repo_summary(0);
+        assert_eq!(
+            summary.files, 7,
+            "distinct files in distinct worktrees add up"
+        );
+        assert_eq!(
+            summary.behind, 79,
+            "two worktrees behind the same upstream are behind by 79, not 158"
+        );
+    }
+
+    #[test]
+    fn a_filter_narrows_a_repository_row_too() {
+        let mut repo = test_repo("alpha", 2);
+        repo.worktrees[1].untracked = 5;
+        repo.worktrees[2].untracked = 6;
+        let mut app = app_with(vec![repo]);
+        app.filter = "branch-0".into();
+        app.refilter();
+        assert_eq!(
+            app.repo_summary(0).files,
+            5,
+            "only the matching worktree counts"
         );
     }
 

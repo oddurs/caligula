@@ -281,7 +281,7 @@ fn list(f: &mut Frame, area: Rect, app: &mut App) {
     for (i, row) in app.rows.iter().enumerate().skip(app.offset).take(height) {
         let selected = i == app.selected;
         lines.push(match *row {
-            Row::Repo { repo } => repo_line(&app.repos[repo], app, selected, plan),
+            Row::Repo { repo } => repo_line(&app.repos[repo], app, repo, selected, plan),
             Row::Worktree { repo, wt } => {
                 let worktree = &app.repos[repo].worktrees[wt];
                 worktree_line(worktree, app.now, selected, app.is_marked(worktree), plan)
@@ -294,7 +294,7 @@ fn list(f: &mut Frame, area: Rect, app: &mut App) {
         let sticky = Rect { height: 1, ..text };
         f.render_widget(Clear, sticky);
         f.render_widget(
-            Paragraph::new(repo_line(&app.repos[*repo], app, false, plan)),
+            Paragraph::new(repo_line(&app.repos[*repo], app, *repo, false, plan)),
             sticky,
         );
     }
@@ -483,20 +483,20 @@ fn value_columns(plan: Plan, base: Style, v: Values) -> Vec<Span<'static>> {
     spans
 }
 
-fn repo_line<'a>(repo: &'a Repo, app: &App, selected: bool, plan: Plan) -> Line<'a> {
+fn repo_line<'a>(repo: &'a Repo, app: &App, index: usize, selected: bool, plan: Plan) -> Line<'a> {
+    let summary = app.repo_summary(index);
     let collapsed = app.collapsed.contains(&repo.common_dir);
     let arrow = if collapsed { "▸" } else { "▾" };
 
     // The count of worktrees belongs to the name, not to a column: it says how
     // big the group is, not how much is wrong with it. It was previously
     // coloured by the dirty count, which made a neutral number wear an alarm.
-    let linked = repo.linked_count();
+    let shown = summary.shown;
     let name_w = plan.name + 2;
-    let mut suffix = if linked > 0 {
-        format!(" ({linked})")
-    } else {
-        String::new()
-    };
+    // How many rows are under this one — the same set every number beside it
+    // is taken over. Counting only the linked ones left a repository whose one
+    // visible worktree was the main checkout with no count at all.
+    let mut suffix = format!(" ({shown})");
     // The name comes first: a pane too narrow for both keeps the repository's
     // name and gives up the count.
     if suffix.chars().count() + 3 > name_w {
@@ -517,22 +517,27 @@ fn repo_line<'a>(repo: &'a Repo, app: &App, selected: bool, plan: Plan) -> Line<
         Span::styled(" ".repeat(pad), base),
     ];
 
-    let totals = repo.totals();
-    let newest = repo.last_touched();
+    let newest = summary.newest;
     spans.extend(value_columns(
         plan,
         base,
         Values {
-            ahead: totals.ahead,
-            behind: totals.behind,
-            files: totals.files,
+            ahead: summary.ahead,
+            behind: summary.behind,
+            files: summary.files,
             flags: String::new(),
             age: if newest == 0 {
                 "—".into()
             } else {
                 git::ago(app.now.saturating_sub(newest))
             },
-            age_color: stale_color(repo.staleness(app.now)),
+            // Nothing known is not the same as very old, and a small clock
+            // must not make an unknown age look fresh.
+            age_color: stale_color(if newest == 0 {
+                git::Staleness::Ancient
+            } else {
+                git::Staleness::of(app.now.saturating_sub(newest))
+            }),
         },
     ));
     Line::from(spans)
@@ -625,7 +630,7 @@ fn detail(f: &mut Frame, area: Rect, app: &mut App) {
             app.now,
             inner.width,
         ),
-        Some(Row::Repo { repo }) => repo_detail(&app.repos[repo], app.now, inner.width),
+        Some(Row::Repo { repo }) => repo_detail(app, repo, inner.width),
         None => vec![Line::from(Span::styled(
             "nothing selected",
             Style::default().fg(DIM),
@@ -633,13 +638,15 @@ fn detail(f: &mut Frame, area: Rect, app: &mut App) {
     };
 
     let max_scroll = (lines.len() as u16).saturating_sub(inner.height);
-    app.detail_scroll = app.detail_scroll.min(max_scroll);
+    let scroll = app.detail_scroll.min(max_scroll);
     f.render_widget(
         Paragraph::new(lines)
-            .scroll((app.detail_scroll, 0))
+            .scroll((scroll, 0))
             .wrap(Wrap { trim: false }),
         inner,
     );
+    // Written back after the lines are rendered: they borrow `app` until then.
+    app.detail_scroll = scroll;
 }
 
 fn kv<'a>(key: &'a str, value: impl Into<String>, color: Color) -> Line<'a> {
@@ -853,7 +860,16 @@ fn worktree_detail<'a>(repo: &'a Repo, wt: &'a Worktree, now: u64, width: u16) -
     out
 }
 
-fn repo_detail<'a>(repo: &'a Repo, now: u64, width: u16) -> Vec<Line<'a>> {
+fn repo_detail(app: &App, index: usize, width: u16) -> Vec<Line<'_>> {
+    let repo = &app.repos[index];
+    let now = app.now;
+    // The same set as the row one column over. Listing every worktree here
+    // beside a row that counted two put the contradiction back on screen.
+    let shown: Vec<&Worktree> = repo
+        .worktrees
+        .iter()
+        .filter(|wt| app.shows(index, wt))
+        .collect();
     let mut out = vec![
         Line::from(Span::styled(
             repo.name.clone(),
@@ -873,10 +889,14 @@ fn repo_detail<'a>(repo: &'a Repo, now: u64, width: u16) -> Vec<Line<'a>> {
     }
     out.push(kv(
         "worktrees",
-        format!("{} ({} linked)", repo.worktrees.len(), repo.linked_count()),
+        if shown.len() == repo.worktrees.len() {
+            format!("{} ({} linked)", repo.worktrees.len(), repo.linked_count())
+        } else {
+            format!("{} of {} shown", shown.len(), repo.worktrees.len())
+        },
         TEXT,
     ));
-    let dirty = repo.dirty_count();
+    let dirty = shown.iter().filter(|wt| wt.is_dirty()).count();
     out.push(kv(
         "dirty",
         dirty.to_string(),
@@ -898,7 +918,6 @@ fn repo_detail<'a>(repo: &'a Repo, now: u64, width: u16) -> Vec<Line<'a>> {
         ));
     }
     out.extend(section("Worktrees"));
-
     // Laid out from the width given, like the list rows, rather than from fixed
     // column widths that happened to suit one pane: a row wider than its pane
     // wraps, and the age ends up alone on the following line.
@@ -919,7 +938,7 @@ fn repo_detail<'a>(repo: &'a Repo, now: u64, width: u16) -> Vec<Line<'a>> {
         (avail, 0, 0)
     };
 
-    for wt in &repo.worktrees {
+    for wt in shown {
         let stale = wt.staleness(now);
         out.push(Line::from(vec![
             Span::styled(
@@ -1488,10 +1507,17 @@ mod tests {
 
     #[test]
     fn repo_rows_are_exactly_as_wide_as_the_pane() {
-        let app = App::new();
         for width in [20u16, 34, 58, 120] {
             let repo = crate::git::test_repo("a-repository-with-a-long-name", 3);
-            let line = repo_line(&repo, &app, false, Plan::for_width(width as usize));
+            let mut app = App::new();
+            app.add_repo(repo);
+            let line = repo_line(
+                &app.repos[0],
+                &app,
+                0,
+                false,
+                Plan::for_width(width as usize),
+            );
             assert_eq!(line.width(), width as usize, "width {width}");
         }
     }

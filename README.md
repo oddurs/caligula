@@ -71,9 +71,10 @@ Everything else has its own column, so you can run your eye down one:
 | | `L` locked, `!` git has marked it prunable or cannot read it |
 | `AGE` | time since the last git activity |
 
-Blank means zero, so there is no glyph to decode. On a repository row the
-columns carry the whole group: `±` and `↑` are its totals, `↓` is its worst,
-and `(45)` is how many linked worktrees it has.
+Blank means zero, so there is no glyph to decode. A repository row carries its
+group in the same columns — `±` and `↑` are its totals, `↓` is its worst — and
+`(45)` is how many rows are under it. All of that follows the lens and the
+filter: a row describes what is on screen beneath it, never what is hidden.
 
 Columns are given up as the pane narrows, least useful first — the behind-count
 goes before the commits, and both go before the flags, which say a worktree

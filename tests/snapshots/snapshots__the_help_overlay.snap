@@ -5,7 +5,7 @@ expression: "render(&mut app, 120, 30)"
  caligula  1 repo · 7 worktrees (6 linked) · 1 dirty · 4 stale · 2 safe to remove
 ╭ sort activity · lens all ──────────────────────╮╭────────────────────────────────────────────────────────────────────╮
 │   BRANCH           ╭ keys ──────────────────────────────────────────────────────────────────────╮                    │
-│ ▾ fixture (6)      │ j / k · ↓ / ↑  move                                                        │                    │
+│ ▾ fixture (7)      │ j / k · ↓ / ↑  move                                                        │                    │
 │ │ ◆ main           │ space          mark a worktree, and step down                              │                    │
 │ │ ● feat/ahead     │ a              mark everything safe to remove in this repo                 │                    │
 │ │ ● chore/clean    │ J / K          jump to next / previous repo                                │                    │
