@@ -25,8 +25,9 @@ notes=$(awk -v want="## [$version]" '
   found { print }
 ' CHANGELOG.md)
 
-# Trim the blank lines an exact section boundary leaves at both ends.
-notes=$(printf '%s\n' "$notes" | sed -e '/./,$!d' | sed -e ':a' -e '/^\s*$/{$d;N;ba' -e '}')
+# Drop the blank lines the heading leaves at the front. The trailing ones are
+# already gone: $(…) strips them.
+notes=$(printf '%s\n' "$notes" | sed -e '/./,$!d')
 
 [ -n "$notes" ] || {
   printf 'scripts/changelog: no section for %s in CHANGELOG.md\n' "$version" >&2

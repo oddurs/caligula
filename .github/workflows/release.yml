@@ -22,19 +22,26 @@ jobs:
     name: check
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
 
       # Before anything is built: a tag that disagrees with the crate produces
       # a release whose binaries report a different version than the page they
       # are attached to, and that cannot be fixed after the fact.
+      # Two steps because they check two different things, and one command
+      # cannot do both: `--no-deps` skips resolution entirely, so `--locked`
+      # alongside it has nothing to verify and exits 0 over a stale lock —
+      # measured, not assumed. Resolving the graph is what reads the lock.
+      - name: The lock is current
+        run: cargo metadata --locked --format-version 1 >/dev/null
+
       - name: The tag and the crate agree
         if: github.ref_type == 'tag'
         run: |
           set -eu
           tag="${GITHUB_REF_NAME#v}"
           crate=$(cargo metadata --no-deps --format-version 1 |
-            sed -n 's/.*"version":"\([^"]*\)".*/\1/p' | head -1)
+            jq -r '.packages[] | select(.name == "caligula") | .version')
           if [ "$tag" != "$crate" ]; then
             printf 'tag v%s does not match Cargo.toml %s\n' "$tag" "$crate" >&2
             exit 1
@@ -73,15 +80,18 @@ jobs:
           # on Windows — and claiming a platform nobody has tested is worse than
           # not shipping it.
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       # rust-toolchain.toml pins the compiler and rustup honours it per
       # directory, so an action that installs `stable` and adds a target to it
-      # adds the target to a toolchain cargo will not use. `rustup show`
-      # installs what the file names; `rustup target add` then lands on it.
+      # adds the target to a toolchain cargo will not use.
       - name: Install the pinned toolchain and the target
         run: |
-          rustup show active-toolchain
+          # `rustup toolchain install` with no argument reads
+          # rust-toolchain.toml. `rustup show` happens to install it too, but
+          # by an auto-install path rustup has deprecated — and when that goes,
+          # the next line adds the target to a toolchain cargo will not use.
+          rustup toolchain install
           rustup target add ${{ matrix.target }}
 
       # musl gives a static binary, so one Linux artefact works on any distro.
@@ -103,7 +113,7 @@ jobs:
           case "${GITHUB_REF_TYPE}" in
           tag) version="${GITHUB_REF_NAME#v}" ;;
           *) version="$(cargo metadata --no-deps --format-version 1 |
-                sed -n 's/.*"version":"\([^"]*\)".*/\1/p' | head -1)" ;;
+                jq -r '.packages[] | select(.name == "caligula") | .version')" ;;
           esac
           name="caligula-${version}-${{ matrix.target }}"
           mkdir -p "dist/${name}"
@@ -149,7 +159,7 @@ jobs:
       id-token: write
       attestations: write
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - uses: actions/download-artifact@v4
         with:
           path: dist
@@ -180,5 +190,14 @@ jobs:
           # notes are a list of commit subjects that credits whoever appears in
           # the history, which is not what a reader of a release page wants.
           ./scripts/changelog "$tag" > notes.md
+          # A semver prerelease carries a hyphen after the version. Publishing
+          # one as the latest release points every new reader at a candidate.
+          case "$tag" in
+          *-*) prerelease=--prerelease ;;
+          *) prerelease= ;;
+          esac
+          # Idempotent: a re-run after a transient failure part-way through
+          # finishes the job instead of needing the release deleted by hand.
           gh release create "$tag" --title "$tag" --notes-file notes.md \
-            --verify-tag dist/*
+            --verify-tag $prerelease dist/* ||
+            gh release upload "$tag" --clobber dist/*
