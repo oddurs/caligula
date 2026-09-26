@@ -1,0 +1,36 @@
+#!/bin/sh
+# Print one version's section of CHANGELOG.md, for release notes.
+#
+# The notes people read on a release page are the ones written by hand at the
+# time, not a list of commit subjects: `--generate-notes` credits whoever
+# appears in the history and says nothing about what changed for a user.
+#
+#   scripts/changelog 0.2.0
+set -eu
+
+cd "$(dirname "$0")/.."
+
+version=${1:-}
+[ -n "$version" ] || {
+  printf 'usage: scripts/changelog <version>\n' >&2
+  exit 2
+}
+version=${version#v}
+
+# From the heading for this version to the next heading, exclusive, with the
+# heading itself dropped: the release page already says which version it is.
+notes=$(awk -v want="## [$version]" '
+  index($0, want) == 1 { found = 1; next }
+  found && /^## / { exit }
+  found { print }
+' CHANGELOG.md)
+
+# Trim the blank lines an exact section boundary leaves at both ends.
+notes=$(printf '%s\n' "$notes" | sed -e '/./,$!d' | sed -e ':a' -e '/^\s*$/{$d;N;ba' -e '}')
+
+[ -n "$notes" ] || {
+  printf 'scripts/changelog: no section for %s in CHANGELOG.md\n' "$version" >&2
+  exit 1
+}
+
+printf '%s\n' "$notes"
