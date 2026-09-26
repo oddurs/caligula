@@ -1,6 +1,6 @@
 [package]
 name = "caligula"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2024"
 description = "A terminal browser for git worktrees: what they are, how stale they are, and what you would lose by deleting them"
 license = "MIT"

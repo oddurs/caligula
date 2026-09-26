@@ -127,6 +127,14 @@ the lot. The dialog lists every worktree it is about to
 remove, worst first, totals the files and commits that exist nowhere else, and
 names the ones it is keeping and why.
 
+## Versioning
+
+The command-line interface, the keymap, and the configuration file once there is
+one are held stable and broken only with a major version. The arrangement of the
+screen is not an interface: it is held to recorded snapshots so it cannot change
+by accident, but it is expected to change on purpose. [CHANGELOG.md](CHANGELOG.md)
+says what landed in each release.
+
 ## Development
 
 Everything automation does goes through one seam, so CI and your machine cannot
