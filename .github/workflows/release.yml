@@ -1,0 +1,203 @@
+name: release
+
+# Tagging v0.2.0 builds a binary for every supported platform and attaches them
+# to the GitHub release with checksums. Nothing is built by hand, so what people
+# download is what CI produced from the tag.
+#
+# `workflow_dispatch` runs the same build and packaging and stops before
+# publishing anything, which is how a release is rehearsed without cutting one.
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  check:
+    name: check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+
+      # Before anything is built: a tag that disagrees with the crate produces
+      # a release whose binaries report a different version than the page they
+      # are attached to, and that cannot be fixed after the fact.
+      # Two steps because they check two different things, and one command
+      # cannot do both: `--no-deps` skips resolution entirely, so `--locked`
+      # alongside it has nothing to verify and exits 0 over a stale lock —
+      # measured, not assumed. Resolving the graph is what reads the lock.
+      - name: The lock is current
+        run: cargo metadata --locked --format-version 1 >/dev/null
+
+      - name: The tag and the crate agree
+        if: github.ref_type == 'tag'
+        run: |
+          set -eu
+          tag="${GITHUB_REF_NAME#v}"
+          crate=$(cargo metadata --no-deps --format-version 1 |
+            jq -r '.packages[] | select(.name == "caligula") | .version')
+          if [ "$tag" != "$crate" ]; then
+            printf 'tag v%s does not match Cargo.toml %s\n' "$tag" "$crate" >&2
+            exit 1
+          fi
+          printf 'tag v%s matches the crate\n' "$tag"
+
+      # And that the notes exist, for the same reason: found after the build is
+      # found too late.
+      - name: The changelog has an entry
+        if: github.ref_type == 'tag'
+        run: ./scripts/changelog "${GITHUB_REF_NAME}" >/dev/null
+
+      - run: ./scripts/task check
+
+  build:
+    name: ${{ matrix.target }}
+    needs: [check]
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-latest
+            target: aarch64-apple-darwin
+          # Cross-compiled from the arm64 runner rather than built on an Intel
+          # one: Apple ships both toolchains and GitHub is retiring the Intel
+          # runners.
+          - os: macos-latest
+            target: x86_64-apple-darwin
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-musl
+          - os: ubuntu-24.04-arm
+            target: aarch64-unknown-linux-musl
+          # No Windows target. caligula drives a terminal through crossterm and
+          # shells out to git for everything else, but nothing here has ever run
+          # on Windows — and claiming a platform nobody has tested is worse than
+          # not shipping it.
+    steps:
+      - uses: actions/checkout@v7
+
+      # rust-toolchain.toml pins the compiler and rustup honours it per
+      # directory, so an action that installs `stable` and adds a target to it
+      # adds the target to a toolchain cargo will not use.
+      - name: Install the pinned toolchain and the target
+        run: |
+          # `rustup toolchain install` with no argument reads
+          # rust-toolchain.toml. `rustup show` happens to install it too, but
+          # by an auto-install path rustup has deprecated — and when that goes,
+          # the next line adds the target to a toolchain cargo will not use.
+          rustup toolchain install
+          rustup target add ${{ matrix.target }}
+
+      # musl gives a static binary, so one Linux artefact works on any distro.
+      - name: Install musl tools
+        if: endsWith(matrix.target, '-musl')
+        run: sudo apt-get update && sudo apt-get install -y musl-tools
+
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+        with:
+          key: ${{ matrix.target }}
+
+      - run: cargo build --release --locked --target ${{ matrix.target }}
+
+      - name: Package
+        shell: bash
+        run: |
+          set -eu
+          # On a dispatch there is no tag, so the version comes from the crate.
+          case "${GITHUB_REF_TYPE}" in
+          tag) version="${GITHUB_REF_NAME#v}" ;;
+          *) version="$(cargo metadata --no-deps --format-version 1 |
+                jq -r '.packages[] | select(.name == "caligula") | .version')" ;;
+          esac
+          name="caligula-${version}-${{ matrix.target }}"
+          mkdir -p "dist/${name}"
+          cp "target/${{ matrix.target }}/release/caligula" "dist/${name}/"
+          cp README.md LICENSE CHANGELOG.md "dist/${name}/"
+          cd dist
+          tar czf "${name}.tar.gz" "${name}"
+          shasum -a 256 "${name}.tar.gz" | cut -d' ' -f1 > "${name}.tar.gz.sha256"
+
+      - name: It runs
+        run: |
+          set -eu
+          # Only where the runner can execute what it just built: a
+          # cross-compiled x86_64 binary does not run on an arm64 Mac.
+          case "${{ matrix.target }}" in
+          x86_64-apple-darwin) echo "cross-compiled; not run here" ;;
+          *)
+            ./target/${{ matrix.target }}/release/caligula --version
+            ./target/${{ matrix.target }}/release/caligula --help >/dev/null
+            ;;
+          esac
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.target }}
+          path: |
+            dist/*.tar.gz
+            dist/*.sha256
+
+  publish:
+    name: publish
+    needs: [build]
+    # Only a tag publishes. A dispatch has proved the build and stops here.
+    if: github.ref_type == 'tag'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      # GitHub signs an attestation saying which workflow, from which commit,
+      # produced which file. It needs no key of ours, and it is the one thing
+      # checksums cannot give: they come from the same workflow as the
+      # artefacts, so they prove the download arrived intact and nothing about
+      # where it came from.
+      id-token: write
+      attestations: write
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+
+      - name: Collect the checksums
+        run: |
+          set -eu
+          cd dist
+          for f in *.sha256; do
+            printf '%s  %s\n' "$(cat "$f")" "${f%.sha256}"
+          done > SHA256SUMS
+          rm -f ./*.sha256
+          cat SHA256SUMS
+
+      - name: Attest what built these
+        uses: actions/attest-build-provenance@v3
+        with:
+          subject-path: dist/*.tar.gz
+
+      - name: Create the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -eu
+          tag="${GITHUB_REF_NAME}"
+          # The notes are the ones written by hand for this version. Generated
+          # notes are a list of commit subjects that credits whoever appears in
+          # the history, which is not what a reader of a release page wants.
+          ./scripts/changelog "$tag" > notes.md
+          # A semver prerelease carries a hyphen after the version. Publishing
+          # one as the latest release points every new reader at a candidate.
+          case "$tag" in
+          *-*) prerelease=--prerelease ;;
+          *) prerelease= ;;
+          esac
+          # Idempotent: a re-run after a transient failure part-way through
+          # finishes the job instead of needing the release deleted by hand.
+          gh release create "$tag" --title "$tag" --notes-file notes.md \
+            --verify-tag $prerelease dist/* ||
+            gh release upload "$tag" --clobber dist/*

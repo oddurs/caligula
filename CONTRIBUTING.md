@@ -78,3 +78,33 @@ proposal, and how you will know it is done.
 A bug fix arrives with the test that would have caught it. The interface is held
 to recorded screens; if your change moves the layout on purpose, re-record and
 read the diff — that diff is the review of your change to the interface.
+
+## Releasing
+
+The version lives in `Cargo.toml` and the notes live in `CHANGELOG.md`. A tag
+ties them together; everything else is done by CI, so what people download is
+what the workflow built from that tag.
+
+Rehearse it first. `workflow_dispatch` on the release workflow runs the whole
+build and packaging for every platform and stops before publishing anything:
+
+```sh
+gh workflow run release.yml          # builds, packages, publishes nothing
+gh run watch                         # four targets, ~5 minutes
+```
+
+Then cut it:
+
+```sh
+scripts/agent start chore/release-0-2-0
+# bump the version in Cargo.toml, run scripts/task check to update Cargo.lock,
+# and move CHANGELOG's [Unreleased] to [0.2.0] with today's date
+scripts/agent pr                     # merged like anything else
+
+git switch main && git pull
+git tag -a v0.2.0 -m v0.2.0 && git push origin v0.2.0
+```
+
+The workflow refuses before building if the tag and `Cargo.toml` disagree, or
+if `CHANGELOG.md` has no section for that version — both are things that cannot
+be fixed once a release is published.
