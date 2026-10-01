@@ -176,7 +176,7 @@ jobs:
           cat SHA256SUMS
 
       - name: Attest what built these
-        uses: actions/attest-build-provenance@v3
+        uses: actions/attest-build-provenance@v4
         with:
           subject-path: dist/*.tar.gz
 
